@@ -47,28 +47,33 @@
 
     <!-- designers you may like -->
     <div class="flex-1 overflow-y-auto p-7 mx-5 mr-8">
-      <div class="flex items-center mb-5">
-        <h2 class="text-2xl text-gray-700 mr-2">你可能會喜歡</h2>
-        <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <div v-for="design in sortedDesign" :key="design.id" class="bg-white p-4 rounded-xl shadow hover:shadow-lg">
-          <img :src="design.image" class="w-full h-48 object-cover rounded-md mb-3" />
-          <div class="flex items-center justify-between mb-1">
-            <h3 class="text-[#c68f84]">{{ design.studio }}</h3>
-            <p class="text-[#dcb876] text-sm">★ {{ design.rating }}</p>
-          </div>
-          <p class="text-gray-500 text-sm mb-2">$ {{ design.priceLow }}-{{ design.priceHigh }}</p>
-          <div class="mb-2">
-            <div class="flex flex-wrap gap-2">
-              <span v-for="(tag, index) in design.tags" :key="index" class="bg-[#c68f84] text-white text-xs py-1 px-3 rounded-full">
-                {{ tag }}
-              </span>
-            </div>
+    <div class="flex items-center mb-5">
+      <h2 class="text-2xl text-gray-700 mr-2">你可能會喜歡</h2>
+      <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div 
+        v-for="design in sortedDesign" 
+        :key="design.id" 
+        class="bg-white p-4 rounded-xl shadow hover:shadow-lg cursor-pointer" 
+        @click="goToProfile(design.id)"
+      >
+        <img :src="design.image" class="w-full h-48 object-cover rounded-md mb-3" />
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="text-[#c68f84]">{{ design.studio }}</h3>
+          <p class="text-[#dcb876] text-sm">★ {{ design.rating }}</p>
+        </div>
+        <p class="text-gray-500 text-sm mb-2">$ {{ design.priceLow }}-{{ design.priceHigh }}</p>
+        <div class="mb-2">
+          <div class="flex flex-wrap gap-2">
+            <span v-for="(tag, index) in design.tags" :key="index" class="bg-[#c68f84] text-white text-xs py-1 px-3 rounded-full">
+              {{ tag }}
+            </span>
           </div>
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 
@@ -95,6 +100,12 @@ const closeMenu = (event) => {
 
 const goSearch = () => {
   router.push('/search')
+}
+
+// 跳轉到 profile 頁面
+const goToProfile = (studio) => {
+  // 假設要用 studio 作為參數來進入 profile 頁面
+  router.push(`/profile/${studio}`)
 }
 
 // 假資料：靈感牆作品
