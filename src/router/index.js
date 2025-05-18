@@ -7,7 +7,7 @@ import Booking from '../pages/Booking.vue'
 import Chat from '../pages/Chat.vue'
 import Register from '../pages/Register.vue'
 import Appointments from '../pages/Appointments.vue'
-
+import Reviews from '../pages/Reviews.vue'
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
@@ -18,6 +18,7 @@ const routes = [
   { path: '/booking/:id', component: Booking },
   { path: '/chat', component: Chat },
   { path: '/appointments', component: Appointments },
+  { path: '/reviews', component: Reviews },
 ]
 
 export const router = createRouter({

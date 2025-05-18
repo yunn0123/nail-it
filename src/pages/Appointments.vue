@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-[#efddda]">
+  <div class="min-h-screen bg-[#efddda] flex flex-col" @click="closeMenu">
     <!-- Navbar -->
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
