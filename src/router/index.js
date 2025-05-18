@@ -8,6 +8,8 @@ import Chat from '../pages/Chat.vue'
 import Register from '../pages/Register.vue'
 import Appointments from '../pages/Appointments.vue'
 import Reviews from '../pages/Reviews.vue'
+import Settings from '../pages/Settings.vue'
+
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
@@ -19,6 +21,7 @@ const routes = [
   { path: '/chat', component: Chat },
   { path: '/appointments', component: Appointments },
   { path: '/reviews', component: Reviews },
+  { path: '/settings', component: Settings },
 ]
 
 export const router = createRouter({
