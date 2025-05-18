@@ -8,10 +8,12 @@
         <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
       </div>
 
-      <!-- 中間：搜尋框 -->
-      <div class="flex-1 mx-1">
-        <input v-model="searchKeyword" @keyup.enter="goSearch" placeholder="搜尋美甲師或作品..."
-               class="w-2/3 p-2 border rounded-lg" />
+      <!-- 假搜尋欄，但其實是 router link -->
+      <div 
+        @click="router.push('/search')" 
+        class="w-2/3 cursor-pointer bg-white rounded-lg py-2 px-4 text-gray-400 shadow-sm border hover:shadow transition"
+      >
+        搜尋美甲師或作品...
       </div>
 
       <!-- 右側（保留未來可以放頭像） -->
@@ -96,10 +98,6 @@ const closeMenu = (event) => {
   if (!event.target.closest('.fixed') && showMenu.value) {
     showMenu.value = false
   }
-}
-
-const goSearch = () => {
-  router.push('/search')
 }
 
 // 跳轉到 profile 頁面

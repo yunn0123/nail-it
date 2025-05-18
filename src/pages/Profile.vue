@@ -1,5 +1,36 @@
 <template>
   <div class="min-h-screen flex flex-col bg-[#efddda]">
+    <!-- Navbar -->
+    <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
+      <!-- 左側：Logo 和漢堡選單 -->
+      <div class="flex items-center">
+        <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
+        <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
+      </div>
+
+      <!-- 假搜尋欄，但其實是 router link -->
+      <div 
+        @click="router.push('/search')" 
+        class="w-2/3 cursor-pointer bg-white rounded-lg py-2 px-4 text-gray-400 shadow-sm border hover:shadow transition"
+      >
+        搜尋美甲師或作品...
+      </div>
+
+      <!-- 右側（保留未來可以放頭像） -->
+      <div class="w-10 h-10 bg-[#c68f84] rounded-full"></div>
+    </div>
+
+    <!-- 左側選單 -->
+    <div v-if="showMenu" class="fixed top-7 left-0 w-48 h-auto bg-white shadow-lg p-6 z-50" @click.stop>
+      <ul class="space-y-4">
+        <li><router-link to="/profile/self" class="hover:text-[#c68f84]">個人檔案</router-link></li>
+        <li><router-link to="/chat" class="hover:text-[#c68f84]">聊聊</router-link></li>
+        <li><router-link to="/appointments" class="hover:text-[#c68f84]">預約紀錄</router-link></li>
+        <li><router-link to="/reviews" class="hover:text-[#c68f84]">評分紀錄</router-link></li>
+        <li><router-link to="/settings" class="hover:text-[#c68f84]">隱私設定</router-link></li>
+        <li><router-link to="/login" class="hover:text-[#c68f84]">登出</router-link></li>
+      </ul>
+    </div>
     <div class="p-6 mx-5 mr-8">
       <div class="flex flex-col md:flex-row md:items-center mb-8">
         
@@ -173,6 +204,21 @@ import BookingView from '../pages/Booking.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+const showMenu = ref(false)
+const searchKeyword = ref('')
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value
+}
+
+// 檢查點擊是否在選單外部，並在外部點擊時關閉選單
+const closeMenu = (event) => {
+  // 確保點擊的是選單外部區域，否則不關閉選單
+  if (!event.target.closest('.fixed') && showMenu.value) {
+    showMenu.value = false
+  }
+}
 
 // 控制是否顯示圖片備用內容
 const showFallback = ref(false);
@@ -399,6 +445,11 @@ const navigateToChat = () => {
   }
 }
 </script>
+
+
+
+
+
 
 <style scoped>
 .avatar-container {

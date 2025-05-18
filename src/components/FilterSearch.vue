@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-white flex justify-center pt-12 px-4">
+    <div class="min-h-screen bg-[#efddda] flex justify-center pt-12 px-4">
       <div class="bg-white p-6 rounded-2xl shadow max-w-xl w-full">
       <!-- 標題 + icon -->
       <h2 class="text-2xl font-semibold text-[#5f4c47] mb-6 flex items-center">
