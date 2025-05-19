@@ -1,20 +1,35 @@
 <template>
-  <div class="flex flex-col items-center">
-    <div class="border-2 border-dashed border-pink-300 w-64 h-64 flex items-center justify-center mb-4">
+  <div class="flex flex-col items-center bg-white p-6 rounded-xl shadow hover:shadow-lg">
+    <!-- 上傳區塊 -->
+    <div 
+      class="w-64 h-64 flex flex-col items-center justify-center border-2 border-dashed border-[#c68f84] rounded-xl cursor-pointer hover:bg-[#f3e4e1] transition mb-6"
+      @click="$refs.fileInput.click()"
+    >
       <input type="file" @change="handleUpload" class="hidden" ref="fileInput" />
-      <button @click="$refs.fileInput.click()" class="text-pink-500 hover:underline">點擊上傳照片</button>
+      <div v-if="!uploadedImage" class="text-center text-[#c68f84]">
+        點擊上傳照片
+      </div>
+      <div v-else>
+        <img :src="uploadedImage" alt="Uploaded" class="w-full h-full object-cover rounded-xl" />
+      </div>
     </div>
 
+    <!-- 搜尋結果區 -->
     <div v-if="uploadedImage">
-      <h2 class="text-xl font-bold mb-4">找到類似的作品</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div v-for="(work, index) in similarWorks" :key="index" class="bg-white p-2 rounded-lg shadow">
-          <img :src="work" class="w-full h-40 object-cover rounded" />
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">找到類似的作品</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div 
+          v-for="(work, index) in similarWorks" 
+          :key="index" 
+          class="bg-white p-3 rounded-xl shadow hover:shadow-lg"
+        >
+          <img :src="work" class="w-full h-40 object-cover rounded-md" />
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref } from 'vue'

@@ -6,6 +6,9 @@ import Profile from '../pages/Profile.vue'
 import Booking from '../pages/Booking.vue' 
 import Chat from '../pages/Chat.vue'
 import Register from '../pages/Register.vue'
+import Appointments from '../pages/Appointments.vue'
+import Reviews from '../pages/Reviews.vue'
+import Settings from '../pages/Settings.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -16,6 +19,9 @@ const routes = [
   { path: '/profile/:id', component: Profile },
   { path: '/booking/:id', component: Booking },
   { path: '/chat', component: Chat },
+  { path: '/appointments', component: Appointments },
+  { path: '/reviews', component: Reviews },
+  { path: '/settings', component: Settings },
 ]
 
 export const router = createRouter({
