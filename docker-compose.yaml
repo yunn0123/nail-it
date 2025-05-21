@@ -1,0 +1,34 @@
+version: '3.8'
+ 
+services:
+  frontend:
+    image: yunn0123/nail-it-frontend:test
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    restart: always
+ 
+  backend:
+    image: yunn0123/nail-it-backend:test
+    ports:
+      - "5000:5000"
+    environment:
+      # - {database}
+      - PORT=5000
+    depends_on:
+      - mongo
+    restart: always
+ 
+  # mongo:
+  #   image: mongo:latest
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - todo-db-data:/data/db
+  #   restart: always
+ 
+volumes:
+  todo-db-data:
