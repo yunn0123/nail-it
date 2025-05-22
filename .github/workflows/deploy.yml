@@ -86,11 +86,11 @@ jobs:
       
       - name: Deploy to Railway
         run: |
-          # 使用Railway CLI登入
-          # 嘗試新的登入方式
-          railway login
+          # Railway CLI 會自動使用 RAILWAY_TOKEN 環境變數
+          # 不需要明確登入命令
           
           # 設置項目和環境
+          echo "正在連接 Railway 專案..."
           railway link -p debd9c55-da98-4f2e-9871-197b8b08220d
           
           # 添加卷（如果需要）- 目前只建立uploads卷用於靜態文件存儲
@@ -133,9 +133,8 @@ jobs:
       
       - name: Cleanup PR Environment
         run: |
-          # 使用Railway CLI登入
-          # 嘗試新的登入方式
-          railway login 
+          # Railway CLI 會自動使用 RAILWAY_TOKEN 環境變數
+          # 不需要明確登入命令
           
           PR_NUMBER=${{ github.event.pull_request.number }}
           echo "Cleaning up PR #${PR_NUMBER} environment"
