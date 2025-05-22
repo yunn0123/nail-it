@@ -104,7 +104,7 @@ jobs:
           # 使用服務ID和環境變數直接部署，符合Railway最佳實踐
           echo "Deploying to Railway..."
           export CI=true
-          railway up --service=nail-it-app --detach
+          railway up --service=8539e20b-45a5-4ea3-b253-17a133121025 --detach
           
           # 等待部署完成
           echo "Waiting for deployment to complete..."
