@@ -88,7 +88,7 @@ jobs:
         run: |
           # 使用Railway CLI登入
           # 嘗試新的登入方式
-          railway login --browserless
+          railway login
           
           # 設置項目和環境
           railway link -p debd9c55-da98-4f2e-9871-197b8b08220d
@@ -135,7 +135,7 @@ jobs:
         run: |
           # 使用Railway CLI登入
           # 嘗試新的登入方式
-          railway login --browserless
+          railway login 
           
           PR_NUMBER=${{ github.event.pull_request.number }}
           echo "Cleaning up PR #${PR_NUMBER} environment"
