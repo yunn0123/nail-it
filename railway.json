@@ -10,15 +10,5 @@
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/",
     "healthcheckTimeout": 300
-  },
-  "environments": [
-    {
-      "name": "production"
-    },
-    {
-      "name": "preview",
-      "prViaBot": true,
-      "autoDelete": true
-    }
-  ]
+  }
 }
