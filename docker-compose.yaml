@@ -20,8 +20,8 @@ services:
   backend:
     image: yunn0123/nail-it-backend:${VERSION_TAG:-latest}
     build:
-      context: .
-      dockerfile: ./backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
       args:
         - GITHUB_SHA=${GITHUB_SHA:-local}
         - VERSION=${VERSION_TAG:-local}

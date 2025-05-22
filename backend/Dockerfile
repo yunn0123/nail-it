@@ -5,13 +5,13 @@ FROM node:18-alpine
 WORKDIR /app
 
 # 複製package.json和package-lock.json（如果存在）
-COPY ./backend/nail-resv/package*.json ./
+COPY nail-resv/package*.json ./
 
 # 安裝依賴
 RUN npm install
 
 # 複製專案文件
-COPY ./backend/nail-resv/ ./
+COPY nail-resv/ ./
 
 # 設置環境變數
 ENV PORT=5000
