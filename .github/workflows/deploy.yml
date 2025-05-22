@@ -49,6 +49,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          # 禁用緩存，確保每次都使用最新代碼
+          no-cache: true
           tags: |
             yunn0123/nail-it-frontend:latest
             yunn0123/nail-it-frontend:${{ env.VERSION }}
@@ -56,6 +58,7 @@ jobs:
             GITHUB_SHA=${{ github.sha }}
             VERSION=${{ env.VERSION }}
             ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
+            BUILD_DATE=$(date +%Y%m%d%H%M%S)
             # Supabase相關參數 - 目前先註釋掉
             # SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             # SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
@@ -101,12 +104,13 @@ jobs:
           #   echo "Created supabase-data volume"
           # fi
           
-          # 設置環境變數 - 只設置版本號
+          # 設置環境變數 - 設置版本號和構建日期
           echo "Setting VERSION=${{ env.VERSION }}"
           railway variables set VERSION=${{ env.VERSION }}
+          railway variables set BUILD_DATE=$(date +%Y%m%d%H%M%S)
           
-          # 部署應用 - 僅部署前端
-          railway up
+          # 部署應用 - 強制使用最新映像
+          railway up --force
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
   

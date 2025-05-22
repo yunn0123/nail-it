@@ -5,17 +5,16 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - GITHUB_SHA=${GITHUB_SHA:-local}
-        - VERSION=${VERSION_TAG:-local}
-        - ENVIRONMENT=${ENVIRONMENT:-development}
+        GITHUB_SHA: ${GITHUB_SHA:-local}
+        VERSION: ${VERSION_TAG:-local}
+        ENVIRONMENT: ${ENVIRONMENT:-development}
+        BUILD_DATE: "$(date +%Y%m%d%H%M%S)"  # 添加時間戳參數破壞緩存
     ports:
-      - "3000:3000"
+      - "80:80"  # 修改為標準 HTTP 端口，與 Nginx 配置一致
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:5001/api
       - VERSION=${VERSION_TAG:-local}
-    # 由於後端被註釋掉，暫時移除依賴
-    # depends_on:
-    #   - backend
+    volumes:
+      - ./frontend/src:/app/src:ro  # 只讀掛載源碼以便調試 (不影響容器內部的構建)
     restart: always
  
   # 暫時註釋掉後端服務以僅運行前端
@@ -26,18 +25,18 @@ services:
   #     dockerfile: Dockerfile
   #     args:
   #       - GITHUB_SHA=${GITHUB_SHA:-local}
-  #       - VERSION=${VERSION_TAG:-local}
-  #       - ENVIRONMENT=${ENVIRONMENT:-development}
-  #   ports:
-  #     - "5001:5000"
-  #   environment:
-  #     # - {database}
-  #     - PORT=5000
-  #     - VERSION=${VERSION_TAG:-local}
-  #   # 移除依賴，因為我們目前不使用任何數據庫
-  #   # depends_on:
-  #   #   - supabase
-  #   restart: always
+        - VERSION=${VERSION_TAG:-local}
+        - ENVIRONMENT=${ENVIRONMENT:-development}
+    ports:
+      - "5001:5000"
+    environment:
+      # - {database}
+      - PORT=5000
+      - VERSION=${VERSION_TAG:-local}
+    # 移除依賴，因為我們目前不使用任何數據庫
+    # depends_on:
+    #   - supabase
+    restart: always
   
   # 註釋掉Supabase服務，未來需要時再取消註釋
   # supabase:
