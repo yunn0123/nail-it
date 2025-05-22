@@ -8,7 +8,7 @@ services:
         GITHUB_SHA: ${GITHUB_SHA:-local}
         VERSION: ${VERSION_TAG:-local}
         ENVIRONMENT: ${ENVIRONMENT:-development}
-        BUILD_DATE: "$(date +%Y%m%d%H%M%S)"  # 添加時間戳參數破壞緩存
+        BUILD_DATE: "${BUILD_DATE:-$(date +%Y%m%d%H%M%S)}"  # 添加時間戳參數破壞緩存
     ports:
       - "80:80"  # 修改為標準 HTTP 端口，與 Nginx 配置一致
     environment:
@@ -24,19 +24,19 @@ services:
   #     context: ./backend
   #     dockerfile: Dockerfile
   #     args:
-  #       - GITHUB_SHA=${GITHUB_SHA:-local}
-        - VERSION=${VERSION_TAG:-local}
-        - ENVIRONMENT=${ENVIRONMENT:-development}
-    ports:
-      - "5001:5000"
-    environment:
-      # - {database}
-      - PORT=5000
-      - VERSION=${VERSION_TAG:-local}
-    # 移除依賴，因為我們目前不使用任何數據庫
-    # depends_on:
-    #   - supabase
-    restart: always
+  #       GITHUB_SHA: ${GITHUB_SHA:-local}
+  #       VERSION: ${VERSION_TAG:-local}
+  #       ENVIRONMENT: ${ENVIRONMENT:-development}
+  #   ports:
+  #     - "5001:5000"
+  #   environment:
+  #     # - {database}
+  #     - PORT=5000
+  #     - VERSION=${VERSION_TAG:-local}
+  #   # 移除依賴，因為我們目前不使用任何數據庫
+  #   # depends_on:
+  #   #   - supabase
+  #   restart: always
   
   # 註釋掉Supabase服務，未來需要時再取消註釋
   # supabase:
