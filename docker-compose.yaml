@@ -2,7 +2,10 @@ version: '3.8'
  
 services:
   frontend:
-    image: yunn0123/nail-it-frontend:test
+    image: yunn0123/nail-it-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -12,7 +15,10 @@ services:
     restart: always
  
   backend:
-    image: yunn0123/nail-it-backend:test
+    image: yunn0123/nail-it-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
@@ -21,14 +27,14 @@ services:
     depends_on:
       - mongo
     restart: always
- 
-  # mongo:
-  #   image: mongo:latest
+  # supabase:
+  #   image: supabase/postgres:latest
   #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - todo-db-data:/data/db
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_DB: nailit
   #   restart: always
- 
 volumes:
   todo-db-data:
