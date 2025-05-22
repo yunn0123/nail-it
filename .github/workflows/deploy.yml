@@ -60,23 +60,23 @@ jobs:
             # SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             # SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
       
-      # 後端映像建置和推送
-      - name: Build and Push Backend Image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: true
-          tags: |
-            yunn0123/nail-it-backend:latest
-            yunn0123/nail-it-backend:${{ env.VERSION }}
-          build-args: |
-            GITHUB_SHA=${{ github.sha }}
-            VERSION=${{ env.VERSION }}
-            ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
-            # Supabase相關參數 - 目前先註釋掉
-            # SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-            # SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+      # 後端映像建置和推送 - 暫時註釋掉以僅測試前端
+      # - name: Build and Push Backend Image
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: ./backend
+      #     file: ./backend/Dockerfile
+      #     push: true
+      #     tags: |
+      #       yunn0123/nail-it-backend:latest
+      #       yunn0123/nail-it-backend:${{ env.VERSION }}
+      #     build-args: |
+      #       GITHUB_SHA=${{ github.sha }}
+      #       VERSION=${{ env.VERSION }}
+      #       ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
+      #       # Supabase相關參數 - 目前先註釋掉
+      #       # SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+      #       # SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
       
       - name: Install Railway CLI
         run: npm install -g @railway/cli
@@ -105,7 +105,7 @@ jobs:
           echo "Setting VERSION=${{ env.VERSION }}"
           railway variables set VERSION=${{ env.VERSION }}
           
-          # 部署應用
+          # 部署應用 - 僅部署前端
           railway up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
