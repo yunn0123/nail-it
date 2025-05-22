@@ -104,7 +104,10 @@ jobs:
           # 使用服務ID和環境變數直接部署，符合Railway最佳實踐
           echo "Deploying to Railway..."
           export CI=true
-          railway up --service=8539e20b-45a5-4ea3-b253-17a133121025 --detach
+          # 使用環境變數或直接使用 ID 進行部署
+          RAILWAY_SERVICE_ID="${{ secrets.RAILWAY_SERVICE_ID}}"
+          echo "使用服務 ID: $RAILWAY_SERVICE_ID"
+          railway up --service=$RAILWAY_SERVICE_ID --detach
           
           # 等待部署完成
           echo "Waiting for deployment to complete..."
@@ -131,7 +134,9 @@ jobs:
           
           # 使用服務ID直接操作
           export CI=true
+          # 使用環境變數或直接使用 ID 進行清理
+          RAILWAY_SERVICE_ID="${{ secrets.RAILWAY_SERVICE_ID}}"
           # 目前先註釋掉，需要時可以啟用
-          # railway service delete --confirm --service=8539e20b-45a5-4ea3-b253-17a133121025-pr-${PR_NUMBER}
+          # railway service delete --confirm --service=$RAILWAY_SERVICE_ID-pr-${PR_NUMBER}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
