@@ -14,7 +14,7 @@ Nail-It 是一個美甲預約與設計分享平台，讓用戶可以瀏覽美甲
 
 - **前端**: Vue 3 + Vite
 - **後端**: Node.js + Express
-- **資料庫**: MongoDB
+- **資料庫**: Supabase (計劃中)
 - **部署**: Docker + Railway + GitHub Actions
 
 ## 架構

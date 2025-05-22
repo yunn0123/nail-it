@@ -68,7 +68,8 @@ jobs:
             GITHUB_SHA=${{ github.sha }}
             VERSION=${{ env.VERSION }}
             ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
-            # Supabase相關參數 - 目前先註釋掉
+            # 資料庫相關參數 - 目前先註釋掉
+            # DATABASE_URL=${{ secrets.DATABASE_URL }}
             # SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             # SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
       
@@ -83,17 +84,16 @@ jobs:
           # 設置項目和環境
           railway link -p debd9c55-da98-4f2e-9871-197b8b08220d
           
-          # 添加卷（如果需要）- 目前只建立uploads卷用於靜態文件存儲
+          # 添加卷（如果需要）
           if ! railway volume list | grep -q "uploads"; then
             railway volume add uploads --mountPath=/app/uploads
             echo "Created uploads volume"
           fi
           
-          # 暫時不創建資料庫相關的卷
-          # if ! railway volume list | grep -q "supabase-data"; then
-          #   railway volume add supabase-data --mountPath=/var/lib/postgresql/data
-          #   echo "Created supabase-data volume"
-          # fi
+          if ! railway volume list | grep -q "db-data"; then
+            railway volume add db-data --mountPath=/data/db
+            echo "Created db-data volume"
+          fi
           
           # 設置環境變數 - 只設置版本號
           echo "Setting VERSION=${{ env.VERSION }}"

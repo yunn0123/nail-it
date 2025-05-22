@@ -5,7 +5,7 @@
       <!-- 左側：Logo 和漢堡選單 -->
       <div class="flex items-center">
         <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
-        <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
+        <img src="LOGO" alt="Logo" class="w-60 h-auto" />
       </div>
 
       <!-- 假搜尋欄，但其實是 router link -->
@@ -36,7 +36,7 @@
     <div class="flex-1 overflow-y-auto p-7 mx-5 mr-8">
       <div class="flex items-center mb-5">
         <h2 class="text-2xl text-gray-700 mr-2">靈感牆</h2>
-        <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+        <img src="FLOWER" alt="Flower" class="w-10 h-auto" /> 
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div v-for="work in sortedWorks" :key="work.id" class="bg-white p-4 rounded-xl shadow hover:shadow-lg">
@@ -105,6 +105,9 @@ const goToProfile = (studio) => {
   // 假設要用 studio 作為參數來進入 profile 頁面
   router.push(`/profile/${studio}`)
 }
+
+import LOGO from '../assets/logo.png'
+import FLOWER from '../assets/flower.png'
 
 // 假資料：靈感牆作品
 import work1 from '../assets/temp/work1.jpg'
