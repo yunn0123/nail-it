@@ -61,6 +61,7 @@ if command -v railway &> /dev/null; then
     echo "${GREEN}✓ Railway CLI 已安裝${NC}"
     echo "\n運行以下命令檢查 Railway 狀態:"
     echo "export RAILWAY_TOKEN=\"你的Railway令牌\""
+    echo "railway login --browserless"
     echo "railway status"
 else
     echo "${RED}✗ Railway CLI 未安裝${NC}"

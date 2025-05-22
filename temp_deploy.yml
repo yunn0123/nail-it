@@ -27,14 +27,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       
-      - name: Get Version
+      - name: Get Version and Build Date
         id: get_version
         run: |
           PR_NUMBER=${{ github.event.pull_request.number || 'main' }}
           SHA=$(git rev-parse --short HEAD)
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           echo "VERSION=v-${PR_NUMBER:-main}-${SHA}-${TIMESTAMP}" >> $GITHUB_ENV
-          echo "VERSION_TAG=${{ env.VERSION }}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=${TIMESTAMP}" >> $GITHUB_ENV
       
       # 前端映像建置和推送
       - name: Build and Push Frontend Image
@@ -52,7 +52,7 @@ jobs:
             GITHUB_SHA=${{ github.sha }}
             VERSION=${{ env.VERSION }}
             ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
-            BUILD_DATE=$(date +%Y%m%d%H%M%S)
+            BUILD_DATE=${{ env.BUILD_DATE }}
       
       # 後端映像建置和推送
       - name: Build and Push Backend Image
@@ -70,15 +70,16 @@ jobs:
             GITHUB_SHA=${{ github.sha }}
             VERSION=${{ env.VERSION }}
             ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
-            BUILD_DATE=$(date +%Y%m%d%H%M%S)
+            BUILD_DATE=${{ env.BUILD_DATE }}
       
       - name: Install Railway CLI
         run: npm install -g @railway/cli
       
       - name: Deploy to Railway
         run: |
-          # 使用Railway CLI登入 (通過環境變數)
-          # Railway CLI會自動使用RAILWAY_TOKEN環境變數進行認證
+          # 使用Railway CLI登入
+          # 嘗試新的登入方式
+          railway login --browserless
           
           # 設置項目和環境
           railway link -p debd9c55-da98-4f2e-9871-197b8b08220d
@@ -97,7 +98,7 @@ jobs:
           # 設置環境變數 - 設置版本號和構建時間
           echo "Setting VERSION=${{ env.VERSION }}"
           railway variables set VERSION=${{ env.VERSION }}
-          railway variables set BUILD_DATE=$(date +%Y%m%d%H%M%S)
+          railway variables set BUILD_DATE=${{ env.BUILD_DATE }}
           
           # 強制部署應用
           echo "Deploying to Railway..."
@@ -122,13 +123,14 @@ jobs:
       
       - name: Cleanup PR Environment
         run: |
-          # 使用Railway CLI登入 (通過環境變數)
-          # Railway CLI會自動使用RAILWAY_TOKEN環境變數進行認證
+          # 使用Railway CLI登入
+          # 嘗試新的登入方式
+          railway login --browserless
           
           PR_NUMBER=${{ github.event.pull_request.number }}
           echo "Cleaning up PR #${PR_NUMBER} environment"
           
-          # 根據PR號碼刪除或清理環境 - 目前先註釋掉
+          # 根據PR號碼刪除或清理環境 - 目前先註解掉，請根據需要解除註解使用
           # railway environment delete pr-${PR_NUMBER}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
