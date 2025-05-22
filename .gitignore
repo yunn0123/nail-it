@@ -47,3 +47,4 @@ coverage
 # 其他
 .vercel
 .netlify
+.sh
