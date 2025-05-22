@@ -33,5 +33,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # 設置正確的 MIME 類型
 RUN echo "include /etc/nginx/mime.types;" >> /etc/nginx/conf.d/default.conf
 
+# 清除任何預設的 VOLUME 指令（Railway 不允許 VOLUME）
+RUN rm -rf /var/cache/nginx
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -13,8 +13,9 @@ services:
       - "80:80"  # 修改為標準 HTTP 端口，與 Nginx 配置一致
     environment:
       - VERSION=${VERSION_TAG:-local}
-    volumes:
-      - ./frontend/src:/app/src:ro  # 只讀掛載源碼以便調試 (不影響容器內部的構建)
+    # 移除 volumes 設置，使用 Railway Volumes 代替
+    # volumes:
+    #   - ./frontend/src:/app/src:ro
     restart: always
  
   # 暫時註釋掉後端服務以僅運行前端
