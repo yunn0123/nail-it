@@ -2,28 +2,38 @@ version: '3.8'
  
 services:
   frontend:
-    image: yunn0123/nail-it-frontend:latest
+    image: yunn0123/nail-it-frontend:${VERSION_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - GITHUB_SHA=${GITHUB_SHA:-local}
+        - VERSION=${VERSION_TAG:-local}
+        - ENVIRONMENT=${ENVIRONMENT:-development}
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+      - VERSION=${VERSION_TAG:-local}
     depends_on:
       - backend
     restart: always
  
   backend:
-    image: yunn0123/nail-it-backend:latest
+    image: yunn0123/nail-it-backend:${VERSION_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        - GITHUB_SHA=${GITHUB_SHA:-local}
+        - VERSION=${VERSION_TAG:-local}
+        - ENVIRONMENT=${ENVIRONMENT:-development}
     ports:
       - "5000:5000"
     environment:
       # - {database}
       - PORT=5000
+      - VERSION=${VERSION_TAG:-local}
     depends_on:
       - mongo
     restart: always

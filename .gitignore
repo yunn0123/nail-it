@@ -1,0 +1,49 @@
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# 編輯器和 IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+
+# 操作系統
+.DS_Store
+Thumbs.db
+
+# 環境變數
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# 構建輸出
+dist
+build
+out
+.next
+
+# 日誌
+logs
+*.log
+
+# 部署記錄
+.deployments
+
+# Docker
+.docker-data
+
+# 測試覆蓋率
+coverage
+.nyc_output
+
+# 其他
+.vercel
+.netlify

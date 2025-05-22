@@ -1,0 +1,94 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [ opened, synchronize, reopened, closed ]
+
+jobs:
+  build-and-deploy:
+    if: (github.event_name == 'push') || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.yunn0123 }}
+          password: ${{ secrets.Aa230904836 }}
+      
+      - name: Get Version
+        id: get_version
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number || 'main' }}
+          SHA=$(git rev-parse --short HEAD)
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          echo "VERSION=v-${PR_NUMBER:-main}-${SHA}-${TIMESTAMP}" >> $GITHUB_ENV
+          echo "VERSION_TAG=${{ env.VERSION }}" >> $GITHUB_OUTPUT
+      
+      # 前端映像建置和推送
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            yunn0123/nail-it-frontend:latest
+            yunn0123/nail-it-frontend:${{ env.VERSION }}
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            VERSION=${{ env.VERSION }}
+            ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
+      
+      # 後端映像建置和推送
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            yunn0123/nail-it-backend:latest
+            yunn0123/nail-it-backend:${{ env.VERSION }}
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            VERSION=${{ env.VERSION }}
+            ENVIRONMENT=${{ github.event_name == 'pull_request' && 'pr' || 'production' }}
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Deploy to Railway
+        run: railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  
+  cleanup-pr:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Cleanup PR Environment
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          # 這裡可以添加清理 PR 環境的邏輯
+          echo "Cleaning up PR #${PR_NUMBER} environment"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
