@@ -60,7 +60,7 @@ echo "\n${BLUE}檢查 Railway 配置:${NC}"
 if command -v railway &> /dev/null; then
     echo "${GREEN}✓ Railway CLI 已安裝${NC}"
     echo "\n運行以下命令檢查 Railway 狀態:"
-    echo "railway login --token \$RAILWAY_TOKEN"
+    echo "echo \"\$RAILWAY_TOKEN\" | railway login"
     echo "railway status"
 else
     echo "${RED}✗ Railway CLI 未安裝${NC}"

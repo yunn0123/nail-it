@@ -110,7 +110,12 @@ jobs:
           railway variables set BUILD_DATE=$(date +%Y%m%d%H%M%S)
           
           # 部署應用 - 強制使用最新映像
-          railway up --force
+          echo "Deploying to Railway..."
+          railway up --force --detach
+          
+          # 等待部署完成
+          echo "Waiting for deployment to complete..."
+          railway service list --json | jq -r '.[].deployments[0].status'
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
   
