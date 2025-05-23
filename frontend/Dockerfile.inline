@@ -10,11 +10,21 @@ WORKDIR /app
 
 # 先複製 package.json 以利用快取
 COPY package*.json ./
-# 使用 npm ci 代替 npm install，並添加重試和超時設定
-RUN npm config set fetch-retries 5 \
-    && npm config set fetch-retry-mintimeout 20000 \
-    && npm config set fetch-retry-maxtimeout 120000 \
-    && npm ci --quiet || npm install --quiet
+
+# 更健壯的安裝過程 - 檢查 package-lock.json 是否存在，選擇合適的安裝方法
+RUN if [ -f package-lock.json ]; then \
+      echo "Found package-lock.json, using npm ci..." && \
+      npm config set fetch-retries 5 && \
+      npm config set fetch-retry-mintimeout 20000 && \
+      npm config set fetch-retry-maxtimeout 120000 && \
+      npm ci --quiet; \
+    else \
+      echo "No package-lock.json found, using npm install..." && \
+      npm config set fetch-retries 5 && \
+      npm config set fetch-retry-mintimeout 20000 && \
+      npm config set fetch-retry-maxtimeout 120000 && \
+      npm install --quiet; \
+    fi
 
 # 複製其餘文件
 COPY . .

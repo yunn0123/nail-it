@@ -1,0 +1,38 @@
+# 簡化版 Dockerfile，減少潛在問題
+# ===== 第一階段：建置應用 =====
+FROM node:18-alpine AS builder
+
+# 基本環境設置
+WORKDIR /app
+
+# 複製整個項目，確保所有文件都在
+COPY . .
+
+# 使用最基本的 npm 安裝命令，避免複雜設置
+RUN npm install
+RUN npm run build
+
+# ===== 第二階段：部署靜態檔案 =====
+FROM nginx:alpine
+
+# 複製建置完成的檔案到 nginx 的公開資料夾
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 使用內聯 nginx 配置
+RUN echo 'server { \
+    listen 80; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    \
+    # 正確設定 MIME 類型 \
+    include /etc/nginx/mime.types; \
+    \
+    # 所有請求都導向 index.html 以支援前端路由 \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
