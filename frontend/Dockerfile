@@ -1,6 +1,9 @@
 # ===== 第一階段：建置應用 =====
 FROM node:18-alpine AS builder
 
+# 設置鏡像源為國內源，加速構建
+ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+
 WORKDIR /app
 
 # 先複製 package.json 以利用快取
@@ -28,10 +31,13 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 添加 nginx 配置以支持 SPA 路由
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 使用明確的相對路徑指定源文件
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
-# 設置正確的 MIME 類型
-RUN echo "include /etc/nginx/mime.types;" >> /etc/nginx/conf.d/default.conf
+# 設置正確的 MIME 類型 - 避免重複設置
+# 檢查 nginx.conf 是否已包含 mime.types
+RUN grep -q "mime.types" /etc/nginx/conf.d/default.conf || \
+    echo "include /etc/nginx/mime.types;" >> /etc/nginx/conf.d/default.conf
 
 # 清除任何預設的 VOLUME 指令（Railway 不允許 VOLUME）
 RUN rm -rf /var/cache/nginx
