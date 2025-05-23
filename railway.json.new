@@ -9,10 +9,5 @@
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/",
     "healthcheckTimeout": 300
-  },
-  "variables": {
-    "VERSION_TAG": "railway",
-    "ENVIRONMENT": "production",
-    "BUILD_DATE": "20250523000000"
   }
 }
