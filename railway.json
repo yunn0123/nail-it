@@ -18,20 +18,4 @@
     "ENVIRONMENT": "production",
     "BUILD_DATE": "20250523000000"
   }
-}tps://railway.app/railway.schema.json",
-  "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "./frontend/Dockerfile"
-  },
-  "deploy": {
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10,
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 60
-  },
-  "variables": {
-    "VERSION_TAG": "railway",
-    "ENVIRONMENT": "production",
-    "BUILD_DATE": "20250523000000"
-  }
 }
