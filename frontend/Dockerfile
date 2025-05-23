@@ -5,7 +5,7 @@ WORKDIR /app
 
 # 先複製 package.json 以利用快取
 COPY package*.json ./
-# RUN npm install
+RUN npm install
 
 # 設置 Git 相關環境變數（可選）
 ARG GITHUB_SHA
