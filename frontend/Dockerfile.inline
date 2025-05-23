@@ -2,11 +2,19 @@
 # ===== 第一階段：建置應用 =====
 FROM node:18-alpine AS builder
 
+# 設置鏡像源為 npm 官方鏡像，提高穩定性
+ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 WORKDIR /app
 
 # 先複製 package.json 以利用快取
 COPY package*.json ./
-RUN npm install
+# 使用 npm ci 代替 npm install，並添加重試和超時設定
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm ci --quiet || npm install --quiet
 
 # 複製其餘文件
 COPY . .
