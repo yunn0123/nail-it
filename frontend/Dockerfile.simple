@@ -5,18 +5,12 @@ FROM node:18-alpine AS builder
 # 基本環境設置
 WORKDIR /app
 
-# 先複製 package.json 文件
-COPY package*.json ./
-
-# 顯示目錄內容以進行診斷
-RUN ls -la
-
-# 使用最基本的 npm 安裝命令，避免複雜設置
-# RUN npm install --verbose
-
-# 複製其餘文件
+# 複製所有文件
 COPY . .
-RUN npm run build
+
+# # 安裝依賴並構建
+# RUN npm install
+# RUN npm run build
 
 # ===== 第二階段：部署靜態檔案 =====
 FROM nginx:alpine
