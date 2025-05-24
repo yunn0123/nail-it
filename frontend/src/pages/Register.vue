@@ -20,7 +20,7 @@
       </div>
 
       <!-- 用戶註冊 -->
-      <form v-else-if="role === 'user'" @submit.prevent="handleRegister">
+      <form v-else-if="role === 'user'" @submit.prevent="handleRegister" @keydown.enter.prevent="handleFormEnter">
         <div class="mb-4">
           <label class="block text-gray-700 mb-1">使用者名稱*</label>
           <input v-model="username" type="text" class="w-full px-4 py-2 border rounded-xl" required/>
@@ -51,7 +51,7 @@
       </form>
 
       <!-- 美甲師註冊 -->
-      <form v-else @submit.prevent="handleRegister">
+      <form v-else @submit.prevent="handleRegister" @keydown.enter.prevent="handleFormEnter">
         <div class="mb-4">
           <label class="block text-gray-700 mb-1">工作室名稱*</label>
           <input v-model="studio" type="text" class="w-full px-4 py-2 border rounded-xl" required />
@@ -112,7 +112,7 @@
           <div class="flex space-x-2">
             <input 
               v-model="newStyle" 
-              @keyup.enter="addStyle"
+              @keydown.enter.prevent="addStyle"
               type="text"
               class="flex-1 px-4 py-2 border rounded-xl focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
               placeholder="新增風格標籤"
@@ -220,6 +220,14 @@ const selectRole = (selectedRole) => {
   role.value = selectedRole
 }
 
+// 處理表單內的 Enter 按鍵事件（阻止提交）
+const handleFormEnter = (event) => {
+  // 如果按下 Enter 的不是風格標籤輸入框，就阻止預設行為（表單提交）
+  if (!event.target.classList.contains('style-input')) {
+    event.preventDefault()
+  }
+}
+
 const handleRegister = () => {
   if (password.value !== confirmPassword.value) {
     alert('密碼與確認密碼不一致！')
@@ -240,7 +248,7 @@ const handleRegister = () => {
     }
     
     console.log('美甲師註冊資料:', artistData)
-    alert(`註冊成功！歡迎，美甲師 ${studio.value}！\n擅長風格：${styleList.value.join(', ') || '無'}`)
+    alert(`註冊成功！歡迎，美甲師 ${studio.value}。`)
   }
   
   router.push('/login')
