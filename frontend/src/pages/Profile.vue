@@ -1,5 +1,6 @@
+<!-- Profile.vue -->
 <template>
-  <div class="min-h-screen flex flex-col bg-[#efddda]">
+  <div class="min-h-screen flex flex-col bg-[#efddda]" @click="closeMenu">
     <!-- Navbar -->
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
@@ -16,14 +17,17 @@
         搜尋美甲師或作品...
       </div>
 
-      <!-- 右側（保留未來可以放頭像） -->
-      <div class="w-10 h-10 bg-[#c68f84] rounded-full"></div>
+      <!-- 右側：點擊回到自己的 profile -->
+      <div 
+        @click="goToSelfProfile" 
+        class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors"
+      ></div>
     </div>
 
     <!-- 左側選單 -->
     <div v-if="showMenu" class="fixed top-7 left-0 w-48 h-auto bg-white shadow-lg p-6 z-50" @click.stop>
       <ul class="space-y-4">
-        <li><router-link to="/profile/self" class="hover:text-[#c68f84]">個人檔案</router-link></li>
+        <li><a @click="goToSelfProfile" class="hover:text-[#c68f84] cursor-pointer">個人檔案</a></li>
         <li><router-link to="/chat" class="hover:text-[#c68f84]">聊聊</router-link></li>
         <li><router-link to="/appointments" class="hover:text-[#c68f84]">預約紀錄</router-link></li>
         <li><router-link to="/reviews" class="hover:text-[#c68f84]">評分紀錄</router-link></li>
@@ -31,18 +35,19 @@
         <li><router-link to="/login" class="hover:text-[#c68f84]">登出</router-link></li>
       </ul>
     </div>
+
     <div class="p-6 mx-5 mr-8">
       <div class="flex flex-col md:flex-row md:items-center mb-8">
         
         <!-- 頭像 -->
         <div class="avatar-container w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6 overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
           <img 
-            :src="artist.image" 
+            :src="currentArtist.image" 
             alt="" 
             class="w-full h-full object-cover" 
             @error="handleImageError"
             v-show="!showFallback"
-          >
+          />
           <!-- 默認頭像 -->
           <div v-if="showFallback" class="absolute inset-0 flex items-center justify-center">
             <svg width="100" height="100" viewBox="0 0 100 100" class="w-30 h-30" fill="none" stroke="#c68f84" stroke-width="4">
@@ -50,63 +55,231 @@
               <path d="M20,85 C20,60 80,60 80,85" />
             </svg>
           </div>
+          <!-- 編輯模式下的頭像上傳按鈕 -->
+          <div v-if="editMode" class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer" @click="triggerImageUpload">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <input ref="imageInput" type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
         </div>
         
-        <div>
-          <h2 class="text-3xl text-gray-700 font-bold">{{ artist.studio }} </h2>
+        <div class="flex-1">
+          <!-- 工作室名稱 -->
+          <div v-if="!editMode">
+            <h2 class="text-3xl text-gray-700 font-bold">{{ currentArtist.studio }}</h2>
+          </div>
+          <div v-else class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">工作室名稱</label>
+            <input 
+              v-model="editData.studio" 
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+              placeholder="請輸入工作室名稱"
+            />
+          </div>
 
-          <!--rating-->
+          <!-- 評分 (不可編輯) -->
           <p class="text-gray-700 mt-2 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
             </svg>
-            {{ artist.rating }}
+            {{ currentArtist.rating }}
           </p>
           
-          <!--location-->
-          <p class="text-gray-700 mt-2 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>      
-            {{ artist.city }} {{ artist.district }}
-          </p>
-          <!--price-->
-          <p class="text-gray-700 mt-2 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ artist.priceLow }} - {{ artist.priceHigh }}
-          </p>
-          <!--bio-->
-          <p class="text-gray-700 mt-2 flex items-start">
-            {{ artist.bio }}
-          </p>
+          <!-- 地址 -->
+          <div v-if="!editMode">
+            <p class="text-gray-700 mt-2 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>      
+              {{ currentArtist.city }} {{ currentArtist.district }}
+            </p>
+          </div>
+          <div v-else class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">地址</label>
+            <!-- 縣市選擇 -->
+            <div class="mb-2">
+              <select v-model="editData.city" @change="updateDistricts" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent">
+                <option value="">請選擇縣市</option>
+                <option v-for="(city, index) in cities" :key="index" :value="city.name">{{ city.name }}</option>
+              </select>
+            </div>
+            <!-- 區域選擇 -->
+            <div v-if="editData.city">
+              <select v-model="editData.district" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent">
+                <option value="">請選擇區域</option>
+                <option v-for="(district, index) in districts" :key="index" :value="district">{{ district }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 價格 -->
+          <div v-if="!editMode">
+            <p class="text-gray-700 mt-2 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              ${{ currentArtist.priceLow }} - ${{ currentArtist.priceHigh }}
+            </p>
+          </div>
+          <div v-else class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">價格區間</label>
+            <div class="flex items-center space-x-2">
+              <input 
+                v-model.number="editData.priceLow" 
+                type="number"
+                class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+                placeholder="最低價格"
+              />
+              <span class="text-gray-500">-</span>
+              <input 
+                v-model.number="editData.priceHigh" 
+                type="number"
+                class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+                placeholder="最高價格"
+              />
+            </div>
+          </div>
+
+          <!-- 簡介 -->
+          <div v-if="!editMode">
+            <p class="text-gray-700 mt-2 flex items-start">
+              {{ currentArtist.bio }}
+            </p>
+          </div>
+          <div v-else class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">個人簡介</label>
+            <textarea 
+              v-model="editData.bio" 
+              rows="3"
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+              placeholder="介紹一下您的專長和特色..."
+            ></textarea>
+          </div>
+
           <!-- 擅長風格標籤 -->
-          <p class="text-gray-500 text-sm mt-2">
-            <span v-for="(style, index) in artist.styles" :key="index" class="mr-2">
-              #{{ style }}
-            </span>
-          </p>
-          <!--按鈕群組-->
-          <div class="mt-4 flex space-x-3">
-            <button @click="openBookingModal" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">預約</button>
-            <button @click="navigateToChat" class="bg-white border border-[#c68f84] text-[#c68f84] px-4 py-2 rounded-lg  hover:border-[#c67868] hover:text-[#c67868] hover:font-semibold">
-              <span class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                聊聊
+          <div v-if="!editMode">
+            <p class="text-gray-500 text-sm mt-2">
+              <span v-for="(style, index) in currentArtist.styles" :key="index" class="mr-2">
+                #{{ style }}
               </span>
-            </button>
+            </p>
+          </div>
+          <div v-else class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">擅長風格</label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              <span 
+                v-for="(style, index) in editData.styles" 
+                :key="index" 
+                class="bg-[#c68f84] text-white text-sm py-1 px-3 rounded-full flex items-center"
+              >
+                {{ style }}
+                <button 
+                  @click="removeStyle(index)" 
+                  class="ml-2 text-white hover:text-red-200"
+                >
+                  ×
+                </button>
+              </span>
+            </div>
+            <div class="flex space-x-2">
+              <input 
+                v-model="newStyle" 
+                @keyup.enter="addStyle"
+                class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+                placeholder="新增風格標籤"
+              />
+              <button 
+                @click="addStyle"
+                class="px-4 py-2 bg-[#c68f84] text-white rounded-lg hover:bg-[#c67868]"
+              >
+                新增
+              </button>
+            </div>
+          </div>
+
+          <!-- 編輯按鈕群組 -->
+          <div class="mt-4 flex space-x-3">
+            <!-- 只有在查看自己的檔案時才顯示編輯按鈕 -->
+            <div v-if="!editMode && isOwnProfile">
+              <button @click="startEdit" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">編輯資料</button>
+            </div>
+            <!-- 如果不是自己的檔案，顯示預約和聊聊按鈕 -->
+            <div v-if="!editMode && !isOwnProfile" class="flex space-x-3">
+              <button @click="openBookingModal" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">預約</button>
+              <button @click="navigateToChat" class="bg-white border border-[#c68f84] text-[#c68f84] px-4 py-2 rounded-lg hover:border-[#c67868] hover:text-[#c67868] hover:font-semibold">
+                <span class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  聊聊
+                </span>
+              </button>
+            </div>
+            <!-- 編輯模式下的按鈕 -->
+            <div v-if="editMode" class="flex space-x-3">
+              <button @click="saveChanges" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">儲存</button>
+              <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">取消</button>
+            </div>
           </div>
         </div>
       </div>
-  
+
+      <!-- 時段管理 - 只有在自己的檔案才顯示 -->
+      <div v-if="isOwnProfile" class="mb-8">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center">
+            <h3 class="text-2xl text-gray-700 mr-2">營業時段管理</h3>
+            <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+          </div>
+          <button 
+            @click="openScheduleModal"
+            class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868] text-sm"
+          >
+            設定時段
+          </button>
+        </div>
+
+        <!-- 目前時段顯示 -->
+        <div class="bg-white rounded-xl p-6 shadow">
+          <h4 class="text-lg font-medium text-gray-700 mb-4">目前營業時段</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="(daySchedule, dayName) in weeklySchedule" :key="dayName" class="flex items-center justify-between py-2 border-b border-gray-200">
+              <span class="font-medium text-gray-700 w-16">{{ getDayDisplayName(dayName) }}</span>
+              <div class="flex-1 ml-4">
+                <div v-if="daySchedule.isOpen && daySchedule.timeSlots.length > 0" class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="slot in daySchedule.timeSlots" 
+                    :key="slot"
+                    class="bg-[#f3d7d3] text-[#c67868] text-sm px-3 py-1 rounded-full"
+                  >
+                    {{ slot }}
+                  </span>
+                </div>
+                <span v-else class="text-gray-400 text-sm">休息</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 作品牆管理 -->
       <div class="mb-8">
-        <div class="flex items-center mb-5">
-          <h3 class="text-2xl text-gray-700 mr-2">作品牆</h3>
-          <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center">
+            <h3 class="text-2xl text-gray-700 mr-2">作品牆</h3>
+            <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+          </div>
+          <!-- 新增作品按鈕 - 只有在自己的檔案才顯示 -->
+          <button 
+            v-if="isOwnProfile" 
+            @click="showAddWorkModal = true"
+            class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868] text-sm"
+          >
+            新增作品
+          </button>
         </div>
         
         <!-- 作品牆 -->
@@ -114,8 +287,25 @@
           <div 
             v-for="work in sortedWorks" 
             :key="work.id" 
-            class="bg-white rounded-xl shadow overflow-hidden flex flex-col"
+            class="bg-white rounded-xl shadow overflow-hidden flex flex-col relative group"
           >
+            <!-- 編輯和刪除按鈕 - 只有在自己的檔案才顯示 -->
+            <div v-if="isOwnProfile" class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <button 
+                @click="editWork(work)"
+                class="bg-[#c68f84] text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[#c67868]"
+                title="編輯作品"
+              >
+                ✎
+              </button>
+              <button 
+                @click="removeWork(work.id)"
+                class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-500"
+                title="刪除作品"
+              >
+                ×
+              </button>
+            </div>
             <img :src="work.image" class="w-full h-44 object-cover" @error="handleWorkImageError($event)" />
             <div class="p-3 flex flex-col flex-grow">
               <p class="text-gray-500 text-sm mb-1">{{ formatDate(work.date) }}</p>
@@ -130,7 +320,7 @@
         </div>
       </div>
       
-      <!-- 顧客評價 -->
+      <!-- 顧客評價 (只顯示，不可編輯) -->
       <div>
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
@@ -172,31 +362,227 @@
         </div>
       </div>
     </div>
-  
-    <!-- 預約彈窗模式 -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-        <BookingView 
-          :artist-id="artist.id" 
-          @close="showModal = false"
-        />
+
+    <!-- 新增/編輯作品彈窗 -->
+    <div v-if="showAddWorkModal || showEditWorkModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-700 mb-4">
+          {{ showEditWorkModal ? '編輯作品' : '新增作品' }}
+        </h3>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">作品圖片</label>
+          <!-- 顯示當前圖片（編輯模式） -->
+          <div v-if="showEditWorkModal && editingWork.image" class="mb-2">
+            <img :src="editingWork.image" alt="當前作品圖片" class="w-20 h-20 object-cover rounded-lg">
+            <p class="text-xs text-gray-500 mt-1">當前圖片（可上傳新圖片替換）</p>
+          </div>
+          <input 
+            ref="workImageInput" 
+            type="file" 
+            accept="image/*" 
+            @change="handleWorkImageUpload"
+            class="w-full p-2 border border-gray-300 rounded-lg"
+          />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">作品描述</label>
+          <textarea 
+            v-model="workFormData.description" 
+            rows="3"
+            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+            placeholder="描述這個作品的特色..."
+          ></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <span 
+              v-for="(tag, index) in workFormData.tags" 
+              :key="index" 
+              class="bg-[#c68f84] text-white text-sm py-1 px-3 rounded-full flex items-center"
+            >
+              {{ tag }}
+              <button 
+                @click="removeWorkTag(index)" 
+                class="ml-2 text-white hover:text-red-200"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+          <div class="flex space-x-2">
+            <input 
+              v-model="newWorkTag" 
+              @keyup.enter="addWorkTag"
+              class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+              placeholder="新增標籤"
+            />
+            <button 
+              @click="addWorkTag"
+              class="px-4 py-2 bg-[#c68f84] text-white rounded-lg hover:bg-[#c67868]"
+            >
+              新增
+            </button>
+          </div>
+        </div>
+
+        <div class="flex space-x-3">
+          <button 
+            @click="showEditWorkModal ? updateWork() : addWork()"
+            class="flex-1 bg-[#c68f84] text-white py-2 rounded-lg hover:bg-[#c67868]"
+          >
+            {{ showEditWorkModal ? '更新作品' : '新增作品' }}
+          </button>
+          <button 
+            @click="cancelWorkForm"
+            class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
+          >
+            取消
+          </button>
+        </div>
       </div>
     </div>
-    
-    <!-- 預約側邊欄模式 -->
-    <div v-if="showSidebar" 
-         class="fixed top-0 right-0 h-full w-96 bg-white shadow-lg transform transition-transform duration-300 z-40 flex flex-col"
-         :class="{'translate-x-0': showSidebar, 'translate-x-full': !showSidebar}">
-      <div class="flex-1 overflow-y-auto">
+
+    <!-- 時段管理彈窗 -->
+    <div v-if="showScheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold text-gray-700">設定營業時段</h3>
+          <button @click="closeScheduleModal" class="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-6">
+          <div v-for="(daySchedule, dayName) in tempSchedule" :key="dayName" class="border rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-medium text-gray-700">{{ getDayDisplayName(dayName) }}</h4>
+              <label class="flex items-center">
+                <input 
+                  type="checkbox" 
+                  v-model="daySchedule.isOpen"
+                  @change="updateDayStatus(dayName)"
+                  class="mr-2 h-4 w-4 text-[#c68f84] focus:ring-[#c68f84] border-gray-300 rounded"
+                />
+                <span class="text-sm text-gray-600">營業</span>
+              </label>
+            </div>
+
+            <div v-if="daySchedule.isOpen" class="space-y-4">
+              <!-- 可用時段選擇 -->
+              <div>
+                <p class="text-sm text-gray-600 mb-2">選擇可預約時段：</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <label 
+                    v-for="slot in availableTimeSlots" 
+                    :key="slot"
+                    class="flex items-center cursor-pointer"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="slot"
+                      v-model="daySchedule.timeSlots"
+                      class="mr-2 h-4 w-4 text-[#c68f84] focus:ring-[#c68f84] border-gray-300 rounded"
+                    />
+                    <span class="text-sm">{{ slot }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 已選時段預覽 -->
+              <div v-if="daySchedule.timeSlots.length > 0">
+                <p class="text-sm text-gray-600 mb-2">已選時段：</p>
+                <div class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="slot in daySchedule.timeSlots" 
+                    :key="slot"
+                    class="bg-[#c68f84] text-white text-sm px-3 py-1 rounded-full flex items-center"
+                  >
+                    {{ slot }}
+                    <button 
+                      @click="removeTimeSlot(dayName, slot)"
+                      class="ml-2 text-white hover:text-red-200"
+                    >
+                      ×
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="text-gray-400 text-sm py-4">
+              此日休息
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速設定 -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h4 class="text-md font-medium text-gray-700 mb-3">快速設定</h4>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <button 
+              @click="setWeekdaySchedule"
+              class="px-3 py-1 bg-[#c68f84] text-white rounded text-sm hover:bg-[#c67868]"
+            >
+              平日營業 (週一~週五)
+            </button>
+            <button 
+              @click="setWeekendSchedule"
+              class="px-3 py-1 bg-[#c68f84] text-white rounded text-sm hover:bg-[#c67868]"
+            >
+              週末營業 (週六~週日)
+            </button>
+            <button 
+              @click="setAllDaysSchedule"
+              class="px-3 py-1 bg-[#c68f84] text-white rounded text-sm hover:bg-[#c67868]"
+            >
+              全週營業
+            </button>
+            <button 
+              @click="clearAllSchedule"
+              class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+            >
+              清除全部
+            </button>
+          </div>
+          <p class="text-xs text-gray-500">快速設定會套用標準營業時段：10:00-12:00, 14:00-16:00, 16:00-18:00</p>
+        </div>
+
+        <div class="flex space-x-3 mt-6">
+          <button 
+            @click="saveSchedule"
+            class="flex-1 bg-[#c68f84] text-white py-3 rounded-lg hover:bg-[#c67868] font-medium"
+          >
+            儲存時段設定
+          </button>
+          <button 
+            @click="closeScheduleModal"
+            class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-medium"
+          >
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 預約彈窗模式 -->
+    <div v-if="showBookingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
         <BookingView 
-          :artist-id="artist.id" 
-          @close="showSidebar = false"
+          :artist-id="currentArtist.id" 
+          :weekly-schedule="weeklySchedule"
+          @close="showBookingModal = false"
         />
       </div>
     </div>
   </div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -206,55 +592,52 @@ const route = useRoute()
 const router = useRouter()
 
 const showMenu = ref(false)
-const searchKeyword = ref('')
+const editMode = ref(false)
+const showFallback = ref(false)
+const showAddWorkModal = ref(false)
+const showEditWorkModal = ref(false)
+const showBookingModal = ref(false)
+const showScheduleModal = ref(false)
+
+// 當前登入的美甲師ID (在實際應用中這會來自認證系統)
+const currentUserId = ref('1') // 假設當前登入用戶是ID為1的美甲師
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-// 檢查點擊是否在選單外部，並在外部點擊時關閉選單
 const closeMenu = (event) => {
-  // 確保點擊的是選單外部區域，否則不關閉選單
   if (!event.target.closest('.fixed') && showMenu.value) {
     showMenu.value = false
   }
 }
 
-// 控制是否顯示圖片備用內容
-const showFallback = ref(false);
-
-// 處理頭像圖片加載失敗
-const handleImageError = () => {
-  showFallback.value = true;
-};
-
-// 處理作品圖片加載失敗
-const handleWorkImageError = (event) => {
-  // 默認背景色
-  event.target.style.display = 'none';
-  event.target.parentElement.style.backgroundColor = '#f3f4f6'; 
-};
-
-// 格式化日期 YYYY/MM/DD
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-};
+// 前往自己的個人檔案
+const goToSelfProfile = () => {
+  // 判斷用戶類型
+  const userType = localStorage.getItem('userType') || 'artist'
+  const userId = localStorage.getItem('userId') || '1'
+  
+  if (userType === 'customer') {
+    router.push(`/profile/customer/${userId}`)
+  } else {
+    router.push(`/profile/${userId}`)
+  }
+}
 
 // 模擬資料
 import design1 from '../assets/temp/design1.jpg'
 import design2 from '../assets/temp/design2.jpg'
 import design3 from '../assets/temp/design3.jpg'
-
 import work1 from '../assets/temp/work1.jpg'
 import work2 from '../assets/temp/work2.jpg'
 import work3 from '../assets/temp/work3.jpg'
 
-const artists = [
+const artists = ref([
   {
     id: '1',
     studio: 'waka.nail',
-    city: '台北市',
+    city: '臺北市',
     district: '大安區',
     rating: 4.9, 
     priceLow: 1000, 
@@ -262,6 +645,15 @@ const artists = [
     bio: '專精於手繪藝術與流行款式，細心且耐心。',
     styles: ['貓眼', '漸層', '法式', '手繪', '暈染', '日系清新', '金屬光感'],
     image: work1,
+    weeklySchedule: {
+      monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      wednesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      saturday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00'] },
+      sunday: { isOpen: false, timeSlots: [] }
+    },
     works: [
       {
         id: 1,
@@ -307,6 +699,29 @@ const artists = [
     ]
   },
   {
+    id: '4',
+    studio: 'test.nail',
+    city: '台中市',
+    district: '西區',
+    rating: 4.5,
+    priceLow: 900,
+    priceHigh: 1600,
+    bio: '新加入的美甲師，尚未設定營業時段。',
+    styles: ['簡約', '清新'],
+    image: design1,
+    weeklySchedule: {
+      monday: { isOpen: false, timeSlots: [] },
+      tuesday: { isOpen: false, timeSlots: [] },
+      wednesday: { isOpen: false, timeSlots: [] },
+      thursday: { isOpen: false, timeSlots: [] },
+      friday: { isOpen: false, timeSlots: [] },
+      saturday: { isOpen: false, timeSlots: [] },
+      sunday: { isOpen: false, timeSlots: [] }
+    },
+    works: [],
+    reviews: []
+  },
+  {
     id: '2',
     studio: 'jolieee_nail',
     city: '新北市',
@@ -316,7 +731,16 @@ const artists = [
     priceHigh: 1500,
     bio: '主打簡約美甲與護甲療程，溫柔又高質感。',
     styles: ['護甲', '簡約風', '水鑽', '跳色', '大理石紋'],
-    image: 'https://source.unsplash.com/featured/?nailsalon',
+    image: design2,
+    weeklySchedule: {
+      monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '18:00-20:00'] },
+      tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '18:00-20:00'] },
+      wednesday: { isOpen: false, timeSlots: [] },
+      thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '18:00-20:00'] },
+      friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '18:00-20:00'] },
+      saturday: { isOpen: true, timeSlots: ['09:00-11:00', '11:00-13:00', '14:00-16:00'] },
+      sunday: { isOpen: true, timeSlots: ['14:00-16:00', '16:00-18:00'] }
+    },
     works: [
       {
         id: 1,
@@ -348,7 +772,16 @@ const artists = [
     priceHigh: 1500,
     bio: '主打簡約美甲與護甲療程，溫柔又高質感。',
     styles: ['金屬質感', '鏡面', '幾何', '極簡', '韓風'],
-    image: 'https://source.unsplash.com/featured/?nailsalon',
+    image: design3,
+    weeklySchedule: {
+      monday: { isOpen: false, timeSlots: [] },
+      tuesday: { isOpen: true, timeSlots: ['13:00-15:00', '15:00-17:00', '17:00-19:00'] },
+      wednesday: { isOpen: true, timeSlots: ['13:00-15:00', '15:00-17:00', '17:00-19:00'] },
+      thursday: { isOpen: true, timeSlots: ['13:00-15:00', '15:00-17:00', '17:00-19:00'] },
+      friday: { isOpen: true, timeSlots: ['13:00-15:00', '15:00-17:00', '17:00-19:00'] },
+      saturday: { isOpen: true, timeSlots: ['10:00-12:00', '13:00-15:00', '15:00-17:00'] },
+      sunday: { isOpen: true, timeSlots: ['10:00-12:00', '13:00-15:00'] }
+    },
     works: [
       {
         id: 1,
@@ -362,94 +795,466 @@ const artists = [
       { reviewer: 'Sandy', comment: '金屬光澤效果超出預期，美甲師技術精湛！', rating: 4.8, date: '2024-05-10' }
     ]
   }
+])
+
+const currentArtist = ref({})
+const editData = ref({})
+const originalData = ref({})
+
+// 新增風格相關
+const newStyle = ref('')
+
+// 作品表單相關
+const workFormData = ref({
+  description: '',
+  tags: [],
+  image: ''
+})
+const newWorkTag = ref('')
+const editingWork = ref({}) // 正在編輯的作品
+
+// 時段管理相關
+const availableTimeSlots = [
+  '10:00-12:00', '12:00-14:00', '14:00-16:00', 
+  '16:00-18:00', '18:00-20:00'
 ]
 
+// 預設週間時段設定
+const defaultWeeklySchedule = {
+  monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+  tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+  wednesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+  thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+  friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+  saturday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00'] },
+  sunday: { isOpen: false, timeSlots: [] }
+}
 
+const weeklySchedule = ref({ ...defaultWeeklySchedule })
+const tempSchedule = ref({}) // 編輯時的臨時資料
 
-const artist = ref({})
+// 縣市資料（從 register.vue 複製）
+const cities = [
+  { name: '新北市', districts: ['萬里區', '金山區', '板橋區', '汐止區', '深坑區', '石碇區', '瑞芳區', '平溪區', '雙溪區', '貢寮區', '新店區', '坪林區', '烏來區', '永和區', '中和區', '土城區', '三峽區', '樹林區', '鶯歌區', '三重區', '新莊區', '泰山區', '林口區', '蘆洲區', '五股區', '八里區', '淡水區', '三芝區', '石門區'] },
+  { name: '臺北市', districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'] },
+  { name: '桃園市', districts: ['中壢區', '平鎮區', '龍潭區', '楊梅區', '新屋區', '觀音區', '桃園區', '龜山區', '八德區', '大溪區', '復興區', '大園區', '蘆竹區'] },
+  { name: '臺中市', districts: ['中區', '東區', '南區', '西區', '北區', '北屯區', '西屯區', '南屯區', '太平區', '大里區', '霧峰區', '烏日區', '豐原區', '后里區', '石岡區', '東勢區', '和平區', '新社區', '潭子區', '大雅區', '神岡區', '大肚區', '沙鹿區', '龍井區', '梧棲區', '清水區', '大甲區', '外埔區', '大安區'] },
+  { name: '臺南市', districts: ['中西區', '東區', '南區', '北區', '安平區', '安南區', '永康區', '歸仁區', '新化區', '左鎮區', '玉井區', '楠西區', '南化區', '仁德區', '關廟區', '龍崎區', '官田區', '麻豆區', '佳里區', '西港區', '七股區', '將軍區', '學甲區', '北門區', '新營區', '後壁區', '白河區', '東山區', '六甲區', '下營區', '柳營區', '鹽水區', '善化區', '大內區', '山上區', '新市區', '安定區'] },
+  { name: '高雄市', districts: ['新興區', '前金區', '苓雅區', '鹽埕區', '鼓山區', '旗津區', '前鎮區', '三民區', '楠梓區', '小港區', '左營區', '仁武區', '大社區', '岡山區', '路竹區', '阿蓮區', '田寮區', '燕巢區', '橋頭區', '梓官區', '彌陀區', '永安區', '湖內區', '鳳山區', '大寮區', '林園區', '鳥松區', '大樹區', '旗山區', '美濃區', '六龜區', '內門區', '杉林區', '甲仙區', '桃源區', '那瑪夏區', '茂林區', '茄萣區'] },
+  { name: '基隆市', districts: ['仁愛區', '信義區', '中正區', '中山區', '安樂區', '暖暖區', '七堵區'] },
+  { name: '新竹市', districts: ['東區', '北區', '香山區'] },
+  { name: '嘉義市', districts: ['東區', '西區'] },
+  { name: '宜蘭縣', districts: ['宜蘭市', '頭城鎮', '礁溪鄉', '壯圍鄉', '員山鄉', '羅東鎮', '三星鄉', '大同鄉', '五結鄉', '冬山鄉', '蘇澳鎮', '南澳鄉'] },
+  { name: '新竹縣', districts: ['竹北市', '湖口鄉', '新豐鄉', '新埔鎮', '關西鎮', '芎林鄉', '寶山鄉', '竹東鎮', '五峰鄉', '橫山鄉', '尖石鄉', '北埔鄉', '峨眉鄉'] },
+  { name: '苗栗縣', districts: ['竹南鎮', '頭份市', '三灣鄉', '南庄鄉', '獅潭鄉', '後龍鎮', '通霄鎮', '苑裡鎮', '苗栗市', '造橋鄉', '頭屋鄉', '公館鄉', '大湖鄉', '泰安鄉', '銅鑼鄉', '三義鄉', '西湖鄉', '卓蘭鎮'] },
+  { name: '彰化縣', districts: ['彰化市', '芬園鄉', '花壇鄉', '秀水鄉', '鹿港鎮', '福興鄉', '線西鄉', '和美鎮', '伸港鄉', '員林市', '社頭鄉', '永靖鄉', '埔心鄉', '溪湖鎮', '大村鄉', '埔鹽鄉', '田中鎮', '北斗鎮', '田尾鄉', '埤頭鄉', '溪州鄉', '竹塘鄉', '二林鎮', '大城鄉', '芳苑鄉', '二水鄉'] },
+  { name: '南投縣', districts: ['南投市', '中寮鄉', '草屯鎮', '國姓鄉', '埔里鎮', '仁愛鄉', '名間鄉', '集集鎮', '水里鄉', '魚池鄉', '信義鄉', '竹山鎮', '鹿谷鄉'] },
+  { name: '雲林縣', districts: ['斗南鎮', '大埤鄉', '虎尾鎮', '土庫鎮', '褒忠鄉', '東勢鄉', '臺西鄉', '崙背鄉', '麥寮鄉', '斗六市', '林內鄉', '古坑鄉', '莿桐鄉', '西螺鎮', '二崙鄉', '北港鎮', '水林鄉', '口湖鄉', '四湖鄉', '元長鄉'] },
+  { name: '嘉義縣', districts: ['番路鄉', '梅山鄉', '竹崎鄉', '阿里山鄉', '中埔鄉', '大埔鄉', '水上鄉', '鹿草鄉', '太保市', '朴子市', '東石鄉', '六腳鄉', '新港鄉', '民雄鄉', '大林鎮', '溪口鄉', '義竹鄉', '布袋鎮'] },
+  { name: '屏東縣', districts: ['屏東市', '三地門鄉', '霧臺鄉', '瑪家鄉', '九如鄉', '里港鄉', '高樹鄉', '鹽埔鄉', '長治鄉', '麟洛鄉', '竹田鄉', '內埔鄉', '萬丹鄉', '潮州鎮', '泰武鄉', '來義鄉', '萬巒鄉', '崁頂鄉', '新埤鄉', '南州鄉', '林邊鄉', '東港鎮', '琉球鄉', '佳冬鄉', '新園鄉', '枋寮鄉', '枋山鄉', '春日鄉', '獅子鄉', '車城鄉', '牡丹鄉', '恆春鎮', '滿州鄉'] },
+  { name: '臺東縣', districts: ['臺東市', '綠島鄉', '蘭嶼鄉', '延平鄉', '卑南鄉', '鹿野鄉', '關山鎮', '海端鄉', '池上鄉', '東河鄉', '成功鎮', '長濱鄉', '太麻里鄉', '金峰鄉', '大武鄉', '達仁鄉'] },
+  { name: '花蓮縣', districts: ['花蓮市', '新城鄉', '秀林鄉', '吉安鄉', '壽豐鄉', '鳳林鎮', '光復鄉', '豐濱鄉', '瑞穗鄉', '萬榮鄉', '玉里鎮', '卓溪鄉', '富里鄉'] },
+  { name: '澎湖縣', districts: ['馬公市', '西嶼鄉', '望安鄉', '七美鄉', '白沙鄉', '湖西鄉'] },
+  { name: '金門縣', districts: ['金沙鎮', '金湖鎮', '金寧鄉', '金城鎮', '烈嶼鄉', '烏坵鄉'] },
+  { name: '連江縣', districts: ['南竿鄉', '北竿鄉', '莒光鄉', '東引鄉'] }
+]
 
-// 根據日期排序的作品
-const sortedWorks = computed(() => {
-  if (!artist.value || !artist.value.works) return [];
-  
-  return [...artist.value.works].sort((a, b) => {
-    return new Date(b.date) - new Date(a.date);
-  });
-});
+// 目前選擇的區域資料
+const districts = ref([])
 
 // 評論排序選項
-const reviewSortOption = ref('date-desc');
+const reviewSortOption = ref('date-desc')
 
-// 根據選擇的排序選項來排序評論
-const sortedReviews = computed(() => {
-  if (!artist.value || !artist.value.reviews) return [];
-  
-  return [...artist.value.reviews].sort((a, b) => {
-    switch (reviewSortOption.value) {
-      case 'date-desc':
-        return new Date(b.date) - new Date(a.date);
-      case 'date-asc':
-        return new Date(a.date) - new Date(b.date);
-      case 'rating-desc':
-        return b.rating - a.rating;
-      case 'rating-asc':
-        return a.rating - b.rating;
-      default:
-        return 0;
-    }
-  });
-});
-
-onMounted(() => {
-  const id = route.params.id
-  const found = artists.find(a => a.id === id)
-  if (found) {
-    artist.value = found
-  } else {
-    router.push('/home') // 如果找不到就回首頁
-  }
-  
-  // 頁面載入時自動滾動到頂部
-  window.scrollTo(0, 0)
+// 計算屬性 - 檢查是否為自己的檔案
+const isOwnProfile = computed(() => {
+  return route.params.id === currentUserId.value
 })
 
-// 控制彈窗和側邊欄顯示
-const showModal = ref(false)
-const showSidebar = ref(false)
+const sortedWorks = computed(() => {
+  if (!currentArtist.value || !currentArtist.value.works) return []
+  
+  return [...currentArtist.value.works].sort((a, b) => {
+    return new Date(b.date) - new Date(a.date)
+  })
+})
 
-// 打開預約彈窗 (可以根據需要選擇彈窗或側邊欄)
+const sortedReviews = computed(() => {
+  if (!currentArtist.value || !currentArtist.value.reviews) return []
+  
+  return [...currentArtist.value.reviews].sort((a, b) => {
+    switch (reviewSortOption.value) {
+      case 'date-desc':
+        return new Date(b.date) - new Date(a.date)
+      case 'date-asc':
+        return new Date(a.date) - new Date(b.date)
+      case 'rating-desc':
+        return b.rating - a.rating
+      case 'rating-asc':
+        return a.rating - b.rating
+      default:
+        return 0
+    }
+  })
+})
+
+// 方法
+const handleImageError = () => {
+  showFallback.value = true
+}
+
+const handleWorkImageError = (event) => {
+  event.target.style.display = 'none'
+  event.target.parentElement.style.backgroundColor = '#f3f4f6'
+}
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`
+}
+
+// 編輯模式相關方法
+const startEdit = () => {
+  editMode.value = true
+  // 深拷貝當前資料作為編輯資料
+  originalData.value = JSON.parse(JSON.stringify(currentArtist.value))
+  editData.value = JSON.parse(JSON.stringify(currentArtist.value))
+  
+  // 初始化區域選項
+  updateDistricts()
+}
+
+// 根據縣市選擇更新區域選項
+const updateDistricts = () => {
+  const city = cities.find(city => city.name === editData.value.city)
+  if (city) {
+    districts.value = city.districts
+  } else {
+    districts.value = []
+  }
+}
+
+const cancelEdit = () => {
+  editMode.value = false
+  // 恢復原始資料
+  currentArtist.value = JSON.parse(JSON.stringify(originalData.value))
+  editData.value = {}
+  newStyle.value = ''
+}
+
+const saveChanges = () => {
+  // 驗證必填欄位
+  if (!editData.value.studio?.trim()) {
+    alert('請輸入工作室名稱')
+    return
+  }
+  if (!editData.value.city?.trim() || !editData.value.district?.trim()) {
+    alert('請完整填寫地址資訊')
+    return
+  }
+  if (!editData.value.priceLow || !editData.value.priceHigh) {
+    alert('請設定價格區間')
+    return
+  }
+  if (editData.value.priceLow >= editData.value.priceHigh) {
+    alert('最高價格必須大於最低價格')
+    return
+  }
+
+  // 更新資料
+  currentArtist.value = JSON.parse(JSON.stringify(editData.value))
+  
+  // 在實際應用中，這裡會發送API請求到後端
+  console.log('儲存資料:', currentArtist.value)
+  
+  editMode.value = false
+  editData.value = {}
+  newStyle.value = ''
+  
+  alert('資料已成功更新！')
+}
+
+// 風格標籤管理
+const addStyle = () => {
+  if (newStyle.value.trim() && !editData.value.styles.includes(newStyle.value.trim())) {
+    editData.value.styles.push(newStyle.value.trim())
+    newStyle.value = ''
+  }
+}
+
+const removeStyle = (index) => {
+  editData.value.styles.splice(index, 1)
+}
+
+// 頭像上傳
+const imageInput = ref(null)
+
+const triggerImageUpload = () => {
+  imageInput.value?.click()
+}
+
+const handleImageUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      editData.value.image = e.target.result
+      showFallback.value = false
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 作品管理
+const removeWork = (workId) => {
+  if (confirm('確定要刪除這個作品嗎？')) {
+    const index = currentArtist.value.works.findIndex(work => work.id === workId)
+    if (index > -1) {
+      currentArtist.value.works.splice(index, 1)
+    }
+  }
+}
+
+const addWorkTag = () => {
+  if (newWorkTag.value.trim() && !workFormData.value.tags.includes(newWorkTag.value.trim())) {
+    workFormData.value.tags.push(newWorkTag.value.trim())
+    newWorkTag.value = ''
+  }
+}
+
+const removeWorkTag = (index) => {
+  workFormData.value.tags.splice(index, 1)
+}
+
+const workImageInput = ref(null)
+
+const handleWorkImageUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      workFormData.value.image = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 編輯作品
+const editWork = (work) => {
+  editingWork.value = { ...work }
+  workFormData.value = {
+    description: work.description,
+    tags: [...work.tags],
+    image: work.image
+  }
+  showEditWorkModal.value = true
+}
+
+// 更新作品
+const updateWork = () => {
+  if (!workFormData.value.description.trim()) {
+    alert('請輸入作品描述')
+    return
+  }
+
+  const workIndex = currentArtist.value.works.findIndex(work => work.id === editingWork.value.id)
+  if (workIndex > -1) {
+    // 更新作品資料
+    currentArtist.value.works[workIndex] = {
+      ...editingWork.value,
+      description: workFormData.value.description.trim(),
+      tags: [...workFormData.value.tags],
+      image: workFormData.value.image
+    }
+    
+    alert('作品已成功更新！')
+    cancelWorkForm()
+  }
+}
+
+const addWork = () => {
+  if (!workFormData.value.description.trim()) {
+    alert('請輸入作品描述')
+    return
+  }
+  if (!workFormData.value.image) {
+    alert('請選擇作品圖片')
+    return
+  }
+
+  const work = {
+    id: Date.now(), // 簡單的ID生成，實際應用中應該用更好的方法
+    description: workFormData.value.description.trim(),
+    date: new Date().toISOString().split('T')[0],
+    image: workFormData.value.image,
+    tags: [...workFormData.value.tags]
+  }
+
+  currentArtist.value.works.unshift(work) // 加到最前面
+  
+  alert('作品已成功新增！')
+  cancelWorkForm()
+}
+
+const cancelWorkForm = () => {
+  showAddWorkModal.value = false
+  showEditWorkModal.value = false
+  workFormData.value = {
+    description: '',
+    tags: [],
+    image: ''
+  }
+  editingWork.value = {}
+  newWorkTag.value = ''
+  if (workImageInput.value) {
+    workImageInput.value.value = ''
+  }
+}
+
+// 時段管理相關方法
+const getDayDisplayName = (dayName) => {
+  const dayNames = {
+    monday: '週一',
+    tuesday: '週二', 
+    wednesday: '週三',
+    thursday: '週四',
+    friday: '週五',
+    saturday: '週六',
+    sunday: '週日'
+  }
+  return dayNames[dayName] || dayName
+}
+
+const updateDayStatus = (dayName) => {
+  if (!tempSchedule.value[dayName].isOpen) {
+    tempSchedule.value[dayName].timeSlots = []
+  }
+}
+
+const removeTimeSlot = (dayName, slot) => {
+  const index = tempSchedule.value[dayName].timeSlots.indexOf(slot)
+  if (index > -1) {
+    tempSchedule.value[dayName].timeSlots.splice(index, 1)
+  }
+}
+
+const setWeekdaySchedule = () => {
+  const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+  const defaultSlots = ['10:00-12:00', '14:00-16:00', '16:00-18:00']
+  
+  weekdays.forEach(day => {
+    tempSchedule.value[day].isOpen = true
+    tempSchedule.value[day].timeSlots = [...defaultSlots]
+  })
+}
+
+const setWeekendSchedule = () => {
+  const weekends = ['saturday', 'sunday']
+  const defaultSlots = ['10:00-12:00', '14:00-16:00']
+  
+  weekends.forEach(day => {
+    tempSchedule.value[day].isOpen = true
+    tempSchedule.value[day].timeSlots = [...defaultSlots]
+  })
+}
+
+const setAllDaysSchedule = () => {
+  const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  const defaultSlots = ['10:00-12:00', '14:00-16:00', '16:00-18:00']
+  
+  allDays.forEach(day => {
+    tempSchedule.value[day].isOpen = true
+    tempSchedule.value[day].timeSlots = [...defaultSlots]
+  })
+}
+
+const clearAllSchedule = () => {
+  const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  
+  allDays.forEach(day => {
+    tempSchedule.value[day].isOpen = false
+    tempSchedule.value[day].timeSlots = []
+  })
+}
+
+const closeScheduleModal = () => {
+  showScheduleModal.value = false
+  tempSchedule.value = {}
+}
+
+const openScheduleModal = () => {
+  // 初始化臨時時段資料
+  tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
+  showScheduleModal.value = true
+}
+
+const saveSchedule = () => {
+  // 驗證至少有一天營業
+  const hasOpenDay = Object.values(tempSchedule.value).some(day => day.isOpen && day.timeSlots.length > 0)
+  
+  if (!hasOpenDay) {
+    alert('請至少設定一天的營業時段')
+    return
+  }
+  
+  // 儲存時段設定
+  weeklySchedule.value = JSON.parse(JSON.stringify(tempSchedule.value))
+  
+  // 在實際應用中，這裡會發送API請求到後端儲存時段設定
+  console.log('儲存時段設定:', weeklySchedule.value)
+  
+  alert('營業時段設定已儲存！')
+  closeScheduleModal()
+}
+
+// 預約功能
 const openBookingModal = () => {
-  console.log('Opening booking modal/sidebar') // 用於調試
-  
-  // 使用彈窗
-  showModal.value = true
-  
-  // 或者使用側邊欄 (取消下面的註釋並註釋掉上面)
-  // showSidebar.value = true
+  showBookingModal.value = true
 }
 
 // 導航到聊天頁面的函數
 const navigateToChat = () => {
   // 儲存當前美甲師信息到本地存儲或 Vuex/Pinia，以便在聊天頁面使用
-  if (artist.value && artist.value.id) {
-    console.log('Navigating to chat with:', artist.value.studio, artist.value.id)
+  if (currentArtist.value && currentArtist.value.id) {
+    console.log('Navigating to chat with:', currentArtist.value.studio, currentArtist.value.id)
     // 導航到聊天頁面，並將美甲師ID，名稱和頭像作為參數傳遞
     router.push({
       path: '/chat',
       query: { 
-        artistId: artist.value.id,
-        artistName: artist.value.studio,
-        artistImage: artist.value.image
+        artistId: currentArtist.value.id,
+        artistName: currentArtist.value.studio,
+        artistImage: currentArtist.value.image
       }
     })
   }
 }
+
+onMounted(() => {
+  const id = route.params.id
+  const found = artists.value.find(a => a.id === id)
+  
+  if (found) {
+    currentArtist.value = found
+    
+    // 載入美甲師的時段設定
+    if (found.weeklySchedule) {
+      weeklySchedule.value = found.weeklySchedule
+    }
+  } else {
+    router.push('/home')
+  }
+  
+  // 檢查是否是自己的檔案
+  if (id === currentUserId.value) {
+    // 可以編輯
+    console.log('這是自己的檔案，可以編輯')
+  }
+  
+  // 初始化時段設定彈窗的臨時資料
+  tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
+  
+  window.scrollTo(0, 0)
+})
 </script>
-
-
-
-
-
 
 <style scoped>
 .avatar-container {
@@ -479,5 +1284,15 @@ const navigateToChat = () => {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* 群組hover效果 */
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
+
+/* 輸入框focus效果 */
+input:focus, textarea:focus, select:focus {
+  outline: none;
 }
 </style>

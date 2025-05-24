@@ -1,3 +1,4 @@
+<!-- Chat.vue -->
 <template>
   <div class="flex h-screen">
     <!-- 左側聊天對象列表 -->
