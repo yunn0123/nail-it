@@ -1,0 +1,14 @@
+Dockerfile merge=ours
+*.yaml merge=ours
+*.sh merge=ours
+deploy.yml merge=ours
+DockerFile.railway merge=ours
+
+frontend/vite.config.js merge=union
+frontend/nginx.conf merge=ours
+frontend/package.json merge=union
+frontend/package-lock.json merge=union
+
+
+.env merge=ours
+.env.example merge=ours
