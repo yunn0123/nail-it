@@ -1,31 +1,21 @@
-<style scoped>
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.date-selector {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* 日期選擇樣式 */
-.date-selector .grid > div {
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 時間選擇樣式 */
-.time-selector button {
-  transition: all 0.2s ease;
-}
-
-</style><template>
+<!-- Booking.vue -->
+<template>
   <div class="p-4">
-    <!-- 只在未顯示成功提示時顯示預約表單 -->
-    <div v-if="!showSuccess">
+    <!-- 檢查美甲師是否已設定時段 -->
+    <div v-if="!hasAvailableSchedule" class="text-center py-12">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3 class="text-xl font-medium text-gray-700 mb-2">暫時無法預約</h3>
+      <p class="text-gray-600 mb-4">{{ artistName }} 尚未設定營業時段</p>
+      <p class="text-sm text-gray-600 mb-6">請稍後再試，或透過「聊聊」功能直接聯繫美甲師</p>
+      <button @click="$emit('close')" class="px-6 py-2 bg-[#c68f84] text-white rounded-lg hover:bg-[#c67868]">
+        關閉
+      </button>
+    </div>
+
+    <!-- 有設定時段才顯示預約表單 -->
+    <div v-else-if="!showSuccess">
       <h2 class="text-2xl text-gray-700 font-bold mb-6">預約 {{ artistName }}</h2>
 
       <form @submit.prevent="submitBooking" class="space-y-6">
@@ -88,7 +78,7 @@ button:disabled {
 
         <div>
           <label class="block text-gray-700 mb-2">選擇時間</label>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div v-if="availableTimeSlots.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               v-for="timeSlot in availableTimeSlots"
               :key="timeSlot.time"
@@ -104,6 +94,9 @@ button:disabled {
             >
               {{ timeSlot.time }}
             </button>
+          </div>
+          <div v-else class="text-gray-500 text-center py-4">
+            請先選擇日期以查看可用時段
           </div>
         </div>
 
@@ -149,11 +142,23 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const emit = defineEmits(['close'])
 
-// 接收 artist-id 
+// 接收 artist-id 和 weekly-schedule
 const props = defineProps({
   artistId: {
     type: String,
     required: true
+  },
+  weeklySchedule: {
+    type: Object,
+    default: () => ({
+      monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      wednesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
+      saturday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00'] },
+      sunday: { isOpen: false, timeSlots: [] }
+    })
   }
 })
 
@@ -178,40 +183,37 @@ const firstDayOfMonth = computed(() => {
   return firstDay
 })
 
-// 當前月份的天數
+// 當前月份的天數 - 根據美甲師時段設定
 const daysInCurrentMonth = computed(() => {
-  // 獲取當前月份的天數
   const daysInMonth = new Date(currentYear.value, currentMonth.value + 1, 0).getDate()
   const today = new Date()
   today.setHours(0, 0, 0, 0) 
   
   const days = []
-  
-  // 模擬不可預約的日期
-  const unavailableDates = [
-    // 每週日和特定日期
-    0, // 星期日
-    // 其他特定日期
-    5, 12, 13, 20, 27
-  ]
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   
   for (let i = 1; i <= daysInMonth; i++) {
     const date = new Date(currentYear.value, currentMonth.value, i)
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
     
-    // 檢查是否是不可預約日期
+    // 獲取星期幾
     const dayOfWeek = date.getDay()
-    const isUnavailable = unavailableDates.includes(dayOfWeek) || unavailableDates.includes(i)
+    const dayName = dayNames[dayOfWeek]
     
     // 檢查是否是過去的日期
     const isPastDate = date < today
+    
+    // 根據美甲師設定的時段判斷是否可預約
+    const daySchedule = props.weeklySchedule[dayName]
+    const isAvailable = daySchedule && daySchedule.isOpen && daySchedule.timeSlots.length > 0 && !isPastDate
     
     days.push({
       date: date,
       dateString: dateString,
       day: i,
-      available: !isUnavailable && !isPastDate,
-      isPastDate: isPastDate
+      available: isAvailable,
+      isPastDate: isPastDate,
+      dayName: dayName
     })
   }
   
@@ -243,48 +245,68 @@ const changeMonth = (delta) => {
   selectedTime.value = ''
 }
 
-// 獲取美甲師的可用時間段(假資料)
-const availableTimeSlots = ref([
-  { time: '10:00 - 12:00', available: true },
-  { time: '12:00 - 14:00', available: true },
-  { time: '14:00 - 16:00', available: true },
-  { time: '16:00 - 18:00', available: true },
-  { time: '18:00 - 20:00', available: true }
-])
+// 可用時間段
+const availableTimeSlots = ref([])
 
-// 設置時段可用性，模擬根據選擇的日期不同時段的可用性
+// 檢查美甲師是否有設定可用時段
+const hasAvailableSchedule = computed(() => {
+  if (!props.weeklySchedule) return false
+  
+  // 檢查是否至少有一天營業且有時段
+  return Object.values(props.weeklySchedule).some(day => 
+    day.isOpen && day.timeSlots && day.timeSlots.length > 0
+  )
+})
+
+// 根據選擇的日期更新可用時段
 const updateTimeSlotAvailability = (dateString) => {
-  // 根據具體日期調整時段的可用性
   const dateObj = new Date(dateString)
-  const dayOfWeek = dateObj.getDay() // 0是週日，6是週六
-  const day = dateObj.getDate()
+  const dayOfWeek = dateObj.getDay()
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const dayName = dayNames[dayOfWeek]
   
-  // 重置所有時段為可用
-  availableTimeSlots.value.forEach(slot => {
-    slot.available = true
-  })
+  // 根據美甲師設定的時段更新可用時間
+  const daySchedule = props.weeklySchedule[dayName]
   
-  // 根據星期幾設置不同的可用性
-  if (dayOfWeek === 1) { // 週一
-    availableTimeSlots.value[0].available = false // 10:00-12:00不可用
-  } else if (dayOfWeek === 3) { // 週三
-    availableTimeSlots.value[2].available = false // 14:00-16:00不可用
-    availableTimeSlots.value[3].available = false // 16:00-18:00不可用
-  } else if (dayOfWeek === 5) { // 週五
-    availableTimeSlots.value[4].available = false // 18:00-20:00不可用
-  } else if (dayOfWeek === 6) { // 週六
-    // 周六全部可預約
+  if (daySchedule && daySchedule.isOpen && daySchedule.timeSlots.length > 0) {
+    // 更新時間選項為美甲師設定的時段
+    availableTimeSlots.value = daySchedule.timeSlots.map(slot => ({
+      time: slot,
+      available: true
+    }))
+    
+    // 模擬一些時段已被預約
+    const occupiedSlots = getOccupiedSlots(dateString)
+    availableTimeSlots.value.forEach(slot => {
+      if (occupiedSlots.includes(slot.time)) {
+        slot.available = false
+      }
+    })
+  } else {
+    // 如果不營業，清空可用時段
+    availableTimeSlots.value = []
+  }
+}
+
+// 獲取已預約時段的函數（模擬）
+const getOccupiedSlots = (dateString) => {
+  // 這裡應該從後端 API 獲取已預約的時段
+  // 目前用模擬資料
+  const occupied = {
+    // 模擬某些日期的已預約時段
   }
   
-  // 模擬特定日期的特殊安排
-  if (day % 5 === 0) { // 每個月5、10、15、20、25、30號
-    availableTimeSlots.value[1].available = false // 12:00-14:00不可用
-  }
+  // 簡單模擬：隨機讓某些時段不可用
+  const date = new Date(dateString)
+  const day = date.getDate()
   
-  // 模擬一些隨機的已約滿時段
   if (day % 7 === 0) {
-    availableTimeSlots.value[2].available = false
+    return ['10:00-12:00'] // 模擬每月7, 14, 21, 28號的10:00-12:00已被預約
+  } else if (day % 5 === 0) {
+    return ['14:00-16:00'] // 模擬每月5, 10, 15, 20, 25, 30號的14:00-16:00已被預約
   }
+  
+  return occupied[dateString] || []
 }
 
 // 選擇日期
@@ -315,6 +337,8 @@ onMounted(() => {
     artistName.value = 'jolieee_nail'
   } else if (props.artistId === '3') {
     artistName.value = '61.nail'
+  } else if (props.artistId === '4') {
+    artistName.value = 'test.nail'
   } else {
     artistName.value = '未知美甲師'
   }
@@ -341,5 +365,22 @@ const finishBooking = () => {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.date-selector {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 日期選擇樣式 */
+.date-selector .grid > div {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 時間選擇樣式 */
+.time-selector button {
+  transition: all 0.2s ease;
 }
 </style>

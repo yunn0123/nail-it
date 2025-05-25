@@ -1,3 +1,4 @@
+<!-- Register.vue -->
 <template>
   <div class="min-h-screen flex items-center justify-center bg-[#efddda]">
     <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
@@ -19,7 +20,7 @@
       </div>
 
       <!-- 用戶註冊 -->
-      <form v-else-if="role === 'user'" @submit.prevent="handleRegister">
+      <form v-else-if="role === 'user'" @submit.prevent="handleRegister" @keydown.enter.prevent="handleFormEnter">
         <div class="mb-4">
           <label class="block text-gray-700 mb-1">使用者名稱*</label>
           <input v-model="username" type="text" class="w-full px-4 py-2 border rounded-xl" required/>
@@ -40,7 +41,6 @@
           <input v-model="confirmPassword" type="password" class="w-full px-4 py-2 border rounded-xl" required/>
         </div>
 
-
         <button type="submit" class="w-full bg-[#c68f84] text-white py-2 rounded-xl hover:bg-[#c67868]">
           註冊
         </button>
@@ -51,7 +51,7 @@
       </form>
 
       <!-- 美甲師註冊 -->
-      <form v-else @submit.prevent="handleRegister">
+      <form v-else @submit.prevent="handleRegister" @keydown.enter.prevent="handleFormEnter">
         <div class="mb-4">
           <label class="block text-gray-700 mb-1">工作室名稱*</label>
           <input v-model="studio" type="text" class="w-full px-4 py-2 border rounded-xl" required />
@@ -90,9 +90,42 @@
           </select>
         </div>
 
+        <!-- 擅長風格標籤 -->
         <div class="mb-4">
-          <label class="block text-gray-700 mb-1">專長/風格</label>
-          <input v-model="style" type="text" class="w-full px-4 py-2 border rounded-xl" />
+          <label class="block text-gray-700 mb-1">擅長風格</label>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <span 
+              v-for="(style, index) in styleList" 
+              :key="index" 
+              class="bg-[#c68f84] text-white text-sm py-1 px-3 rounded-full flex items-center"
+            >
+              {{ style }}
+              <button 
+                type="button"
+                @click="removeStyle(index)" 
+                class="ml-2 text-white hover:text-red-200"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+          <div class="flex space-x-2">
+            <input 
+              v-model="newStyle" 
+              @keydown.enter.prevent="addStyle"
+              type="text"
+              class="flex-1 px-4 py-2 border rounded-xl focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+              placeholder="新增風格標籤"
+            />
+            <button 
+              type="button"
+              @click="addStyle"
+              class="px-4 py-2 bg-[#c68f84] text-white rounded-xl hover:bg-[#c67868]"
+            >
+              新增
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">例如：貓眼、法式、日系清新等</p>
         </div>
 
         <div class="mb-4">
@@ -126,8 +159,11 @@ const confirmPassword = ref('')
 const studio = ref('')
 const selectedCity = ref('')
 const selectedDistrict = ref('')
-const style = ref('')
 const bio = ref('')
+
+// 風格標籤相關
+const styleList = ref([])
+const newStyle = ref('')
 
 // 縣市資料
 const cities = [
@@ -168,8 +204,28 @@ const updateDistricts = () => {
   }
 }
 
+// 風格標籤管理
+const addStyle = () => {
+  if (newStyle.value.trim() && !styleList.value.includes(newStyle.value.trim())) {
+    styleList.value.push(newStyle.value.trim())
+    newStyle.value = ''
+  }
+}
+
+const removeStyle = (index) => {
+  styleList.value.splice(index, 1)
+}
+
 const selectRole = (selectedRole) => {
   role.value = selectedRole
+}
+
+// 處理表單內的 Enter 按鍵事件（阻止提交）
+const handleFormEnter = (event) => {
+  // 如果按下 Enter 的不是風格標籤輸入框，就阻止預設行為（表單提交）
+  if (!event.target.classList.contains('style-input')) {
+    event.preventDefault()
+  }
 }
 
 const handleRegister = () => {
@@ -178,8 +234,30 @@ const handleRegister = () => {
     return
   }
 
-  const name = role.value === 'user' ? username.value : studio.value
-  alert(`註冊成功！歡迎， ${role.value === 'user' ? '用戶' : '美甲師'} ${name}。`)
+  if (role.value === 'user') {
+    alert(`註冊成功！歡迎，用戶 ${username.value}。`)
+  } else {
+    // 美甲師註冊資料
+    const artistData = {
+      studio: studio.value,
+      email: email.value,
+      city: selectedCity.value,
+      district: selectedDistrict.value,
+      styles: styleList.value,
+      bio: bio.value
+    }
+    
+    console.log('美甲師註冊資料:', artistData)
+    alert(`註冊成功！歡迎，美甲師 ${studio.value}。`)
+  }
+  
   router.push('/login')
 }
 </script>
+
+<style scoped>
+/* 輸入框focus效果 */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+</style>
