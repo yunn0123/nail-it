@@ -42,7 +42,7 @@
 
     <!-- 預約紀錄內容 -->
     <div class="p-6">
-      <h1 class="text-2xl font-semibold text-gray-800 mb-4 border-b border-[#c68f84] pb-2">
+      <h1 class="text-2xl font-semibold text-[#5f4c47]  mb-4 border-b border-[#c68f84] pb-2">
         預約紀錄
       </h1>
 
