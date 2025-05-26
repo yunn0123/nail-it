@@ -7,8 +7,11 @@
         <!-- 左：漢堡 -->
         <button @click.stop="toggleMenu" class="text-[#c68f84] text-4xl">&#9776;</button>
 
-        <!-- 右：頭像 -->
-        <div class="w-10 h-10 bg-[#c68f84] rounded-full"></div>
+        <!-- 右：頭像 點擊回到自己的 profile-->
+        <div 
+          @click="goToSelfProfile" 
+          class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors">
+        </div>
       </div>
 
       <!-- 中間：Logo（置中） -->
@@ -17,6 +20,7 @@
       </div>
     </div>
 
+    
 
     <!-- 左側選單 -->
     <div v-if="showMenu" class="fixed top-7 left-0 w-48 h-auto bg-white shadow-lg p-6 z-50" @click.stop>
@@ -94,6 +98,20 @@
 import { ref } from 'vue'
 import ImageSearch from '../components/ImageSearch.vue'
 import FilterSearch from '../components/FilterSearch.vue'
+
+// 前往自己的個人檔案
+const goToSelfProfile = () => {
+// 判斷用戶類型
+  const userType = localStorage.getItem('userType') || 'artist'
+  const userId = localStorage.getItem('userId') || '1'
+
+  if (userType === 'customer') {
+    router.push(`/profile/customer/${userId}`)
+  } else {
+    router.push(`/profile/${userId}`)
+}
+}
+
 const showMenu = ref(false)
 
 const toggleMenu = () => {

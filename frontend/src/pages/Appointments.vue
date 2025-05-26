@@ -71,21 +71,21 @@
               <p class="text-gray-500 text-sm">$ 1000 - 1500</p>
             </div>
           </div>
-          <div class="text-right">
-            <p class="text-xs text-gray-500">預約時間</p>
-            <p class="text-md font-semibold text-gray-600">{{ item }}</p>
+
+          <div class="flex items-center space-x-4">
+            <div class="text-right">
+              <p class="text-xs text-gray-500">預約時間</p>
+              <p class="text-md font-semibold text-gray-600">{{ item }}</p>
+            </div>
+
+            <!-- 替換打勾的部分，新增按鈕 -->
+            <button
+              @click="goToReview(item)"
+              class="bg-[#c68f84] text-white text-sm px-4 py-1 rounded-full hover:bg-[#a96c60] transition"
+            >
+              查看評分
+            </button>
           </div>
-          <svg
-            class="w-6 h-6 text-gray-400 ml-2"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M5 13l4 4L19 7" />
-          </svg>
         </div>
       </section>
     </div>
@@ -97,6 +97,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
+const goToReview = (reservationDate) => {
+  // 如果要傳參數過去，也可以改成 router.push({ path: '/reviews', query: { date: reservationDate } })
+  router.push('/reviews')
+}
 
 const showMenu = ref(false)
 
