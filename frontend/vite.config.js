@@ -26,5 +26,10 @@ export default defineConfig({
   server: {
     port: 3000, // 開發服務器端口
     host: true,  // 監聽所有網路介面
+  },
+  define: {
+    'process.env.BACKEND_API_URL': JSON.stringify(process.env.BACKEND_API_URL),
+    'process.env.VERSION_TAG': JSON.stringify(process.env.VERSION_TAG)
   }
+  
 })

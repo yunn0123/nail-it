@@ -19,8 +19,8 @@ ENV PORT=5000
 # 確保不會創建 VOLUME（Railway 不允許使用 VOLUME）
 RUN mkdir -p /app/uploads && chmod -R 777 /app/uploads
 
-# 暴露 5000 端口
-EXPOSE 5000
+# 暴露 3000 端口
+EXPOSE 3000
 
 # 啟動命令
 CMD ["node", "server.js"]

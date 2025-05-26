@@ -9,13 +9,17 @@ services:
     environment:
       - VERSION=latest
       - ENVIRONMENT=production
-
-  # backend:
-  #   build: ./backend
-  #   ports:
-  #     - "5001:5000"
-  #   restart: always
-  #   environment:
-  #     - PORT=5000
-  #     - VERSION=latest
-  #     - ENVIRONMENT=production
+      - BACKEND_API_URL=http://backend:3000  # 確保與 server.js 中的設定一致
+    depends_on:
+      - backend
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"  # 修改為 3000 端口，與 server.js 中設定一致
+    restart: always
+    environment:
+      - PORT=3000    # 確保與 server.js 中的設定一致
+      - VERSION=latest
+      - ENVIRONMENT=production
