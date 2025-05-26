@@ -8,13 +8,14 @@ WORKDIR /app
 COPY nail-resv/package*.json ./
 
 # 安裝依賴
+RUN npm uninstall p-limit || true
 RUN npm install
-
+RUN npm install dotenv multer openai p-limit@3.1.0 --save
 # 複製專案文件
 COPY nail-resv/ ./
 
 # 設置環境變數
-ENV PORT=5000
+ENV PORT=3000
 
 # 確保不會創建 VOLUME（Railway 不允許使用 VOLUME）
 RUN mkdir -p /app/uploads && chmod -R 777 /app/uploads

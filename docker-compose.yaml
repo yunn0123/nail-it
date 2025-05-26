@@ -23,3 +23,4 @@ services:
       - PORT=3000    # 確保與 server.js 中的設定一致
       - VERSION=latest
       - ENVIRONMENT=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
