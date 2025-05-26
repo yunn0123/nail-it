@@ -16,7 +16,12 @@
 
       <!-- 中間：Logo（置中） -->
       <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <img src="../assets/logo.png" alt="Logo" class="w-52 h-auto" />
+        <img 
+          src="../assets/logo.png" 
+          alt="Logo" 
+          class="w-52 h-auto cursor-pointer" 
+          @click="router.push('/home')" 
+        />
       </div>
     </div>
 

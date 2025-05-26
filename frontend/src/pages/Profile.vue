@@ -5,9 +5,14 @@
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
       <div class="flex items-center">
-        <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
-        <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
-      </div>
+          <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
+          <img 
+            src="../assets/logo.png" 
+            alt="Logo" 
+            class="w-60 h-auto cursor-pointer" 
+            @click="router.push('/home')" 
+          />
+        </div>
 
       <!-- 假搜尋欄，但其實是 router link -->
       <div 

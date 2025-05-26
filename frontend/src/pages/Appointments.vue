@@ -4,9 +4,14 @@
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
       <div class="flex items-center">
-        <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
-        <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
-      </div>
+          <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
+          <img 
+            src="../assets/logo.png" 
+            alt="Logo" 
+            class="w-60 h-auto cursor-pointer" 
+            @click="router.push('/home')" 
+          />
+        </div>
 
       <!-- 假搜尋欄，但其實是 router link -->
       <div 
@@ -16,8 +21,11 @@
         搜尋美甲師或作品...
       </div>
 
-      <!-- 右側（保留未來可以放頭像） -->
-      <div class="w-10 h-10 bg-[#c68f84] rounded-full"></div>
+      <!-- 右側：點擊回到自己的 profile -->
+      <div 
+          @click="goToSelfProfile" 
+          class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors"
+        ></div>
     </div>
     
     <!-- 左側選單 -->
@@ -108,6 +116,19 @@ const showMenu = ref(false)
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
+
+// 前往自己的個人檔案
+const goToSelfProfile = () => {
+  // 判斷用戶類型
+  const userType = localStorage.getItem('userType') || 'artist'
+  const userId = localStorage.getItem('userId') || '1'
+  
+  if (userType === 'customer') {
+    router.push(`/profile/customer/${userId}`)
+  } else {
+    router.push(`/profile/${userId}`)
+  }
+  }
 
 // 點其他地方要關掉選單
 const closeMenu = () => {
