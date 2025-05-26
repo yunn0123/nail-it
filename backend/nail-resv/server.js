@@ -23,9 +23,13 @@ app.use((req, res, next) => {
 // Routers
 const { router: availabilityRouter } = require('./routes/availability');
 const reservationRouter              = require('./routes/reservation');
+const searchRouter = require('./routes/search');
+const tagImagesRouter = require('./routes/tagImages');
 
 app.use('/api/technicians', availabilityRouter);
 app.use('/api/reservations', reservationRouter);
+app.use('/api', searchRouter);
+app.use('/api', tagImagesRouter);
 
 app.get('/', (req, res) => res.send('Nail-Resv API'));
 
