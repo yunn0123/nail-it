@@ -33,7 +33,7 @@
     </div>
 
     <div class="p-6 max-w-4xl w-full mx-auto">
-      <h2 class="text-2xl font-semibold text-[#5f4c47] mb-6">你的評分紀錄</h2>
+      <h2 class="text-2xl font-semibold text-[#5f4c47] mb-6">評分紀錄</h2>
 
       <div v-for="review in reviews" :key="review.id" class="bg-white rounded-xl shadow p-4 mb-4">
         <div class="flex justify-between items-start">
@@ -125,7 +125,7 @@ const toggleMenu = () => (showMenu.value = !showMenu.value)
 const closeMenu = () => (showMenu.value = false)
 
 const reviews = ref([
-  { id: 1, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-05-24 13:30', rating: 5, comment: '1232424' },
+  { id: 1, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-05-21 13:30', rating: 5, comment: '1232424' },
   { id: 2, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-02-19 15:00', rating: 5, comment: '完美體驗！' },
   { id: 3, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-01-10 13:30', rating: 4, comment: '不錯但等太久' }
 ])
@@ -139,10 +139,19 @@ const setRating = (id, value) => {
   }
 }
 
+// const submitReview = (id) => {
+//   editMode[id] = false
+//   // 模擬送出 API
+//   console.log('已送出', reviews.value.find(r => r.id === id))
+// }
+
 const submitReview = (id) => {
+  const review = reviews.value.find(r => r.id === id)
+  if (review) {
+    review.comment = review.tempComment
+    review.rating = review.tempRating
+  }
   editMode[id] = false
-  // 模擬送出 API
-  console.log('已送出', reviews.value.find(r => r.id === id))
 }
 
 const cancelEdit = (id) => {
