@@ -41,14 +41,14 @@
     </div>
 
     <div class="p-6 max-w-4xl w-full mx-auto">
-      <h2 class="text-2xl font-semibold text-[#5f4c47] mb-6">評分紀錄</h2>
+      <h2 class="text-2xl font-semibold text-gray-700 mb-6">評分紀錄</h2>
 
       <div v-for="review in reviews" :key="review.id" class="bg-white rounded-xl shadow p-4 mb-4">
         <div class="flex justify-between items-start">
           <div class="flex items-center gap-4">
             <img :src="review.avatar" class="w-14 h-14 rounded-full object-cover" />
             <div>
-              <p class="font-bold text-[#5f4c47]">{{ review.studio }}</p>
+              <p class="font-bold text-gray-700">{{ review.studio }}</p>
               <div class="flex items-center mt-1">
                 <svg
                   v-for="n in 5"
@@ -57,15 +57,15 @@
                   class="h-5 w-5 cursor-pointer"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
+                  stroke="#dcb876"
                   stroke-width="1.5"
                   @click="editMode[review.id] && setRating(review.id, n)"
                 >
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    stroke-width="2"
-                    :fill="n <= review.rating ? '#fbbf24' : 'none'"
+                    stroke-width="1.5"
+                    :fill="n <= review.rating ? '#dcb876' : 'none'"
                     d="M11.48 3.5a.562.562 0 011.04 0l2.125 5.11a.563.563 0 00.475.34l5.518.44c.5.04.7.66.32.99l-4.2 3.6a.563.563 0 00-.18.56l1.29 5.38a.562.562 0 01-.84.61l-4.72-2.88a.563.563 0 00-.59 0l-4.72 2.88a.562.562 0 01-.84-.61l1.29-5.38a.563.563 0 00-.18-.56l-4.2-3.6a.563.563 0 01.32-.99l5.52-.44a.563.563 0 00.47-.34l2.13-5.11z"
                   />
                 </svg>
@@ -74,7 +74,7 @@
           </div>
           <div class="text-right">
             <p class="text-sm text-gray-500">預約時間</p>
-            <p class="font-bold text-[#5f4c47]">{{ formatDate(review.date) }}</p>
+            <p class="font-bold text-gray-700">{{ formatDate(review.date) }}</p>
             <p class="text-xs text-gray-400 mt-1">
               {{ isWithinDeadline(review.date) ? (review.rating === 0 ? '可評論' : '已評論') : '已過評論期限' }}
             </p>
@@ -103,7 +103,7 @@
               >取消</button>
             </div>
           </div>
-          <div v-else class="text-sm text-[#5f4c47] mt-2">
+          <div v-else class="text-sm text-gray-700 mt-2">
             {{ review.comment || '尚未留下評論' }}
             <button
               v-if="isWithinDeadline(review.date)"
@@ -114,7 +114,7 @@
         </div>
 
         <!-- 評論已過期但仍顯示內容 -->
-        <div v-else class="text-sm text-[#5f4c47] mt-2">
+        <div v-else class="text-sm text-gray-700 mt-2">
           {{ review.comment || '（無評論內容）' }}
         </div>
       </div>

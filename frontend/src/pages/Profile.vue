@@ -27,7 +27,7 @@
         @click="goToSelfProfile" 
         class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors"
       ></div>
-    </div>
+      </div>
 
     <!-- 左側選單 -->
     <div v-if="showMenu" class="fixed top-7 left-0 w-48 h-auto bg-white shadow-lg p-6 z-50" @click.stop>
@@ -41,8 +41,126 @@
       </ul>
     </div>
 
+    <!-- 浮動大綱按鈕 -->
+    <div 
+      class="fixed bottom-6 right-6 z-50"
+      @click.stop
+    >
+      <!-- 大綱小浮窗 -->
+      <div 
+        v-if="showOutline"
+        class="absolute bottom-16 right-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 space-y-2 max-h-96 overflow-y-auto transform transition-all duration-200 origin-bottom-right"
+        @click.stop
+      >
+        <!-- 小浮窗標題 -->
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200 mb-3">
+          <h3 class="text-sm font-semibold text-[#c67868] flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+          大綱  
+          </h3>
+        </div>
+
+        <!-- 大綱內容 -->
+        <div class="space-y-1">
+          <!-- 基本資訊 -->
+          <div 
+            @click="scrollToSection('basic-info')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'basic-info' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            基本資訊
+          </div>
+
+          <!-- 預約管理 -->
+          <div v-if="isOwnProfile">
+            <div 
+              @click="scrollToSection('appointment-management')" 
+              :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                      activeSection === 'appointment-management' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              預約管理
+              <!--
+              <span class="ml-auto text-xs bg-[#c68f84] text-white px-1.5 py-0.5 rounded-full">
+                {{ Object.values(filteredAppointments).flat().length }}
+              </span>
+              -->
+            </div>
+          </div>
+
+          <!-- 時段管理 -->
+          <div 
+            v-if="isOwnProfile"
+            @click="scrollToSection('schedule-management')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'schedule-management' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            營業時段管理
+          </div>
+
+          <!-- 作品牆 -->
+          <div 
+            @click="scrollToSection('portfolio')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'portfolio' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            作品牆
+            <!--
+            <span class="ml-auto text-xs bg-[#c68f84] text-white px-1.5 py-0.5 rounded-full">
+              {{ sortedWorks.length }}
+            </span>
+            -->
+          </div>
+
+          <!-- 顧客評價 -->
+          <div 
+            @click="scrollToSection('reviews')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'reviews' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+            顧客評價
+            <!--
+            <span class="ml-auto text-xs bg-[#c68f84] text-white px-1.5 py-0.5 rounded-full">
+              {{ sortedReviews.length }}
+            </span>
+            -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 浮動圓形按鈕 -->
+      <button 
+        @click="toggleOutline" 
+        :class="['w-14 h-14 bg-white rounded-full shadow-lg hover:bg-[#f4e8e6] transition-all duration-200 flex items-center justify-center group', 
+                showOutline ? 'rotate-45' : 'hover:scale-110']"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#c68f84] transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+      </button>
+
+    </div>
+
+
+
     <div class="p-6 mx-5 mr-8">
-      <div class="flex flex-col md:flex-row md:items-center mb-8">
+      <div id="basic-info" class="flex flex-col md:flex-row md:items-center mb-8">
         
         <!-- 頭像 -->
         <div class="avatar-container w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6 overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
@@ -231,9 +349,290 @@
           </div>
         </div>
       </div>
+      
+      <!-- 預約管理 - 只有在自己的檔案才顯示 -->
+      <div v-if="isOwnProfile" id="appointment-management" class="mb-8">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center">
+            <h3 class="text-2xl text-gray-700 mr-2">預約管理</h3>
+            <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+          </div>
+          <!-- 篩選 -->
+          <div class="flex items-center">
+            <span class="text-sm text-gray-700 mr-2">狀態：</span>
+            <select v-model="appointmentFilter" class="py-1 px-2 rounded-md border text-sm bg-white">
+              <option value="all">全部</option>
+              <option value="pending">待確認</option>
+              <option value="confirmed">已確認</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 待確認預約 -->
+        <div v-if="filteredAppointments.pending.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            待確認的預約
+          </h4>
+
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.pending" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                <!-- 確認與取消按鈕 -->
+                <div class="flex space-x-2">
+                  <button 
+                    @click="confirmAppointment(appointment.id)"
+                    class="bg-[#c68f84] text-white px-3 py-1 rounded-lg hover:bg-[#c67868] text-sm"
+                  >
+                    確認
+                  </button>
+                  <button 
+                    @click="cancelAppointment(appointment.id)"
+                    class="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 text-sm"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已確認預約 -->
+        <div v-if="filteredAppointments.confirmed.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            已確認的預約
+          </h4>
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.confirmed" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                <!-- 完成與取消按鈕 -->
+                <div class="flex space-x-2">
+                  <button 
+                    @click="completeAppointment(appointment.id)"
+                    class="bg-[#c68f84] text-white px-3 py-1 rounded-lg hover:bg-[#c67868] text-sm"
+                  >
+                    完成
+                  </button>
+                  <button 
+                    @click="cancelAppointment(appointment.id)"
+                    class="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 text-sm"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已完成預約 -->
+        <div v-if="filteredAppointments.completed.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            已完成的預約
+          </h4>
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.completed" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow opacity-80"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已取消預約 -->
+        <div v-if="filteredAppointments.cancelled.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            已取消的預約
+          </h4>
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.cancelled" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow opacity-60"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 無預約時顯示 -->
+        <div v-if="Object.values(filteredAppointments).every(arr => arr.length === 0)" class="text-center py-8 bg-white rounded-xl shadow">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p class="text-gray-500 mb-2">目前沒有{{ appointmentFilter === 'all' ? '' : appointmentFilter === 'pending' ? '待確認' : appointmentFilter === 'confirmed' ? '已確認' : appointmentFilter === 'completed' ? '已完成' : '已取消' }}預約</p>
+        </div>
+      </div>    
+
+
+
 
       <!-- 時段管理 - 只有在自己的檔案才顯示 -->
-      <div v-if="isOwnProfile" class="mb-8">
+      <div v-if="isOwnProfile" id="schedule-management" class="mb-8">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
             <h3 class="text-2xl text-gray-700 mr-2">營業時段管理</h3>
@@ -271,7 +670,7 @@
       </div>
 
       <!-- 作品牆管理 -->
-      <div class="mb-8">
+      <div id="portfolio" class="mb-8">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
             <h3 class="text-2xl text-gray-700 mr-2">作品牆</h3>
@@ -326,7 +725,7 @@
       </div>
       
       <!-- 顧客評價 (只顯示，不可編輯) -->
-      <div>
+      <div id="reviews">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
             <h3 class="text-2xl text-gray-700 mr-2">顧客評價</h3>
@@ -589,7 +988,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue' 
 import { useRoute, useRouter } from 'vue-router'
 import BookingView from './Booking.vue' 
 
@@ -603,6 +1002,13 @@ const showAddWorkModal = ref(false)
 const showEditWorkModal = ref(false)
 const showBookingModal = ref(false)
 const showScheduleModal = ref(false)
+const showOutline = ref(false)
+const activeSection = ref('basic-info')
+
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 // 當前登入的美甲師ID (在實際應用中這會來自認證系統)
 const currentUserId = ref('1') // 假設當前登入用戶是ID為1的美甲師
@@ -612,8 +1018,13 @@ const toggleMenu = () => {
 }
 
 const closeMenu = (event) => {
+  // 關閉左側選單
   if (!event.target.closest('.fixed') && showMenu.value) {
     showMenu.value = false
+  }
+  // 關閉大綱浮窗
+  if (!event.target.closest('.fixed') && showOutline.value) {
+    showOutline.value = false
   }
 }
 
@@ -1115,6 +1526,141 @@ const cancelWorkForm = () => {
   }
 }
 
+// 在 script setup 部分添加以下代碼
+
+// 預約管理相關狀態
+const appointmentFilter = ref('all')
+
+
+// 模擬預約資料
+const appointments = ref([
+  {
+    id: 'apt1',
+    customerId: 'customer1',
+    customerName: 'Lily Chen',
+    customerImage: work2,
+    date: '2025-05-28',
+    time: '14:00-16:00',
+    status: 'pending',
+    notes: '希望做法式美甲，偏粉色系',
+    showFallback: false
+  },
+  {
+    id: 'apt2',
+    customerId: 'customer2',
+    customerName: 'Annie Wang',
+    customerImage: null,
+    date: '2025-05-30',
+    time: '10:00-12:00',
+    status: 'pending',
+    notes: '',
+    showFallback: true
+  },
+  {
+    id: 'apt3',
+    customerId: 'customer3',
+    customerName: 'Sophie Lin',
+    customerImage: work3,
+    date: '2025-06-02',
+    time: '16:00-18:00',
+    status: 'confirmed',
+    notes: '過敏體質，請使用低敏材料',
+    showFallback: false
+  },
+  {
+    id: 'apt4',
+    customerId: 'customer4',
+    customerName: 'Emma Huang',
+    customerImage: null,
+    date: '2025-05-25',
+    time: '14:00-16:00',
+    status: 'completed',
+    notes: '',
+    showFallback: true
+  },
+  {
+    id: 'apt5',
+    customerId: 'customer5',
+    customerName: 'Grace Wu',
+    customerImage: null,
+    date: '2025-05-20',
+    time: '10:00-12:00',
+    status: 'cancelled',
+    notes: '',
+    showFallback: true
+  }
+])
+
+// 根據過濾條件獲取預約
+const filteredAppointments = computed(() => {
+  // 按狀態分類
+  const result = {
+    pending: [],
+    confirmed: [],
+    completed: [],
+    cancelled: []
+  }
+  
+  // 先過濾，然後分類
+  const filtered = appointmentFilter.value === 'all' 
+    ? appointments.value 
+    : appointments.value.filter(apt => apt.status === appointmentFilter.value)
+  
+  // 分類到對應狀態
+  filtered.forEach(apt => {
+    if (result[apt.status]) {
+      result[apt.status].push(apt)
+    }
+  })
+  
+  return result
+})
+
+// 確認預約
+const confirmAppointment = (appointmentId) => {
+  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+  if (index > -1) {
+    appointments.value[index].status = 'confirmed'
+    alert('已確認預約！')
+  }
+}
+
+// 完成預約
+const completeAppointment = (appointmentId) => {
+  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+  if (index > -1) {
+    appointments.value[index].status = 'completed'
+    alert('已完成預約！')
+  }
+}
+
+// 取消預約
+const cancelAppointment = (appointmentId) => {
+  if (confirm('確定要取消此預約嗎？')) {
+    const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+    if (index > -1) {
+      appointments.value[index].status = 'cancelled'
+      alert('已取消預約！')
+    }
+  }
+}
+
+const chatWithCustomer = (appointment) => {
+  console.log('Starting chat with customer:', appointment.customerName, appointment.customerId)
+  
+  // 導航到聊天頁面，並將顧客信息作為參數傳遞
+  router.push({
+    path: '/chat',
+    query: { 
+      artistId: appointment.customerId,
+      artistName: appointment.customerName,
+      artistImage: appointment.customerImage,
+      fromBooking: 'true' // 添加標識表示這是從預約管理來的
+    }
+  })
+}
+
+
 // 時段管理相關方法
 const getDayDisplayName = (dayName) => {
   const dayNames = {
@@ -1233,6 +1779,44 @@ const navigateToChat = () => {
   }
 }
 
+// 切換大綱導航
+const toggleOutline = () => {
+  showOutline.value = !showOutline.value
+}
+
+// 滾動到指定區域
+const scrollToSection = (sectionId) => {
+  const element = document.getElementById(sectionId)
+  if (element) {
+    element.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    })
+    activeSection.value = sectionId
+    // 點擊後自動關閉浮窗
+    showOutline.value = false
+  }
+}
+
+// 監聽滾動事件來更新活動區域
+const handleScroll = () => {
+  const sections = ['basic-info', 'appointment-management', 'schedule-management', 'portfolio', 'reviews']
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+  
+  for (const sectionId of sections) {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      const offsetTop = element.offsetTop - 100
+      const offsetBottom = offsetTop + element.offsetHeight
+      
+      if (scrollTop >= offsetTop && scrollTop < offsetBottom) {
+        activeSection.value = sectionId
+        break
+      }
+    }
+  }
+}
+
 onMounted(() => {
   const id = route.params.id
   const found = artists.value.find(a => a.id === id)
@@ -1258,6 +1842,7 @@ onMounted(() => {
   tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
   
   window.scrollTo(0, 0)
+  window.addEventListener('scroll', handleScroll)
 })
 </script>
 

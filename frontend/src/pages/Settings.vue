@@ -43,7 +43,7 @@
         <!-- 真正的內容區塊 -->
         <div class="flex flex-col items-center justify-start px-6 pt-8">
             <!-- 標題 -->
-            <h2 class="text-3xl text-[#5f4c47] font-bold mb-8">隱私設定</h2>
+            <h2 class="text-3xl text-gray-700 font-semibold mb-8">隱私設定</h2>
 
             <!-- 表單區塊 -->
             <div class="bg-white shadow rounded-2xl flex flex-col md:flex-row p-6 max-w-4xl w-full">
@@ -61,7 +61,7 @@
 
                 <!-- 右側：基本資料表單 -->
                 <div class="flex-1 ml-0 md:ml-8">
-                    <h3 class="text-xl font-bold text-gray-700 mb-4">編輯資訊</h3>
+                    <h3 class="text-xl font-bold text-gray-600 mb-4">編輯資訊</h3>
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm text-gray-600">email</label>

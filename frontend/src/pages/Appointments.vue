@@ -1,3 +1,4 @@
+<!-- Appointments.vue -->
 <template>
   <div class="min-h-screen bg-[#efddda] flex flex-col" @click="closeMenu">
     <!-- Navbar -->
@@ -42,7 +43,7 @@
 
     <!-- 預約紀錄內容 -->
     <div class="p-6">
-      <h1 class="text-2xl font-semibold text-[#5f4c47]  mb-4 border-b border-[#c68f84] pb-2">
+      <h1 class="text-2xl font-semibold text-gray-700  mb-4 border-b border-[#c68f84] pb-2">
         預約紀錄
       </h1>
 
@@ -53,13 +54,13 @@
           <div class="flex items-center space-x-4">
             <div class="w-12 h-12 bg-gray-300 rounded-full"></div>
             <div>
-              <p class="text-gray-800 font-semibold">abc nails💅</p>
+              <p class="text-gray-700 font-semibold">abc nails💅</p>
               <p class="text-gray-500 text-sm">$ 1000 - 1500</p>
             </div>
           </div>
           <div class="text-right">
             <p class="text-xs text-gray-500">預約時間</p>
-            <p class="text-lg font-bold text-[#5f4c47]">2025-04-17 13:30</p>
+            <p class="text-lg font-bold text-gray-700">2025-04-17 13:30</p>
           </div>
         </div>
       </section>
