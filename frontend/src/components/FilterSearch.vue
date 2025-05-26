@@ -118,22 +118,46 @@
       <!-- 搜尋結果 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div 
-          v-for="(work, index) in filteredWorks" 
-          :key="index" 
-          class="bg-white p-4 rounded-xl shadow hover:shadow-lg"
+          v-for="design in filteredWorks" 
+          :key="design.id" 
+          class="bg-white p-4 rounded-xl shadow hover:shadow-lg cursor-pointer" 
+          @click="goToProfile(design.id)"
         >
-          <img :src="work.image" class="w-full h-40 object-cover rounded-md mb-2" />
-          <p class="font-semibold text-[#5f4c47]">{{ work.title }}</p>
+          <img :src="design.image" class="w-full h-48 object-cover rounded-md mb-3" />
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-[#c68f84]">{{ design.studio }}</h3>
+            <p class="text-[#dcb876] text-sm">★ {{ design.rating }}</p>
+          </div>
+          <p class="text-gray-500 text-sm mb-2">$ {{ design.priceLow }} - {{ design.priceHigh }}</p>
+          <div class="mb-2">
+            <div class="flex flex-wrap gap-2">
+              <span 
+                v-for="(tag, index) in design.tags" 
+                :key="index" 
+                class="bg-[#c68f84] text-white text-xs py-1 px-3 rounded-full"
+              >
+                {{ tag }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-
-
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount  } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// 跳轉到 profile 頁面
+const goToProfile = (designId) => {
+  // 使用 designId 作為參數來進入 profile 頁面
+  router.push(`/profile/${designId}`)
+}
+
 
 const reset = () => {
   selectedCity.value = ''            // 清空城市選擇
@@ -244,10 +268,10 @@ const toggleRating = (rating) => {
 }
 //===================評分===================
 
-const works = [
-  { title: '秋日溫柔風', image: 'https://source.unsplash.com/featured/?nail4' },
-  { title: '日系簡約', image: 'https://source.unsplash.com/featured/?nail5' }
-]
+// 假資料：你可能會喜歡
+import design1 from '../assets/temp/design1.jpg'
+import design2 from '../assets/temp/design2.jpg'
+import design3 from '../assets/temp/design3.jpg'
 
 const filteredWorks = ref([])
 
@@ -258,10 +282,35 @@ const buttonClass = (selected) => {
 }
 
 const search = () => {
-  filteredWorks.value = works.filter(work => {
-    // 模擬價格篩選邏輯，範例中沒資料 source 只是寫死圖片
-    const fakePrice = 2500 // 假設每個作品有價格屬性
-    return fakePrice >= priceMin.value && fakePrice <= priceMax.value
-  })
+  filteredWorks.value = [
+    { 
+      id: '1', 
+      studio: '@waka.nail', 
+      rating: 4.9, 
+      priceLow: 1000 , priceHigh: 1800,
+      tags: ['貓眼', '清新', '日系', '綠色系'], 
+      image: design1 },
+    { 
+      id: '2', 
+      studio: '@jolieee_nail', 
+      rating: 4.7, 
+      priceLow: 1000 , priceHigh: 1500, 
+      tags: ['貓眼', '清新', '藍色系'],
+      image: design2 },
+    { 
+      id: '3', 
+      studio: '@61.nail', 
+      rating: 4.6, 
+      priceLow: 1200 , priceHigh: 1500, 
+      tags: ['貓眼', '清新', '可愛','粉色系'],
+      image: design3 },
+    { 
+      id: '4', 
+      studio: '@test.nail', 
+      rating: 4.5, 
+      priceLow: 900 , priceHigh: 1600, 
+      tags: ['簡約', '清新'],
+      image: design1 },
+  ]
 }
 </script>
