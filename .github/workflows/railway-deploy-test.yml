@@ -20,7 +20,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: Build Frontend Docker Image
         run: |
-          docker build -t test-frontend:latest -f frontend/Dockerfile.railway ./frontend
+          docker build -t test-frontend:latest -- -f frontend/Dockerfile.railway ./frontend
 
   build-backend:
     name: Build Backend Docker Image
@@ -32,7 +32,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: Build Backend Docker Image
         run: |
-          docker build -t test-backend:latest -f backend/Dockerfile ./backend
+          docker build -t test-backend:latest -- -f backend/Dockerfile ./backend
 
   deploy-frontend:
     name: Deploy Frontend to Railway
@@ -46,7 +46,7 @@ jobs:
       - name: Deploy Frontend Service
         run: |
           export CI=true
-          railway up --service=${{ secrets.RAILWAY_FRONTEND_SERVICE_ID }} --detach -f railway.frontend.json
+          railway up --service=${{ secrets.RAILWAY_FRONTEND_SERVICE_ID }} --detach -- -f railway.frontend.json
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
@@ -62,6 +62,6 @@ jobs:
       - name: Deploy Backend Service
         run: |
           export CI=true
-          railway up --service=${{ secrets.RAILWAY_BACKEND_SERVICE_ID }} --detach -f railway.backend.json
+          railway up --service=${{ secrets.RAILWAY_BACKEND_SERVICE_ID }} --detach -- -f railway.backend.json
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
