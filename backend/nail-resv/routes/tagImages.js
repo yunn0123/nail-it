@@ -6,44 +6,9 @@ const path = require('path');
 const multer = require('multer');
 
 // p-limit 导入兼容处理
-// 修改為:
-let createLimit;
-try {
-  // 嘗試作為 CommonJS 模組載入
-  createLimit = require('p-limit');
-  if (typeof createLimit !== 'function' && createLimit.default) {
-    createLimit = createLimit.default;
-  }
-} catch (error) {
-  // 提供一個基本的限流函數作為後備
-  console.warn('無法載入 p-limit，使用自定義限流器');
-  createLimit = (concurrency) => {
-    const queue = [];
-    let running = 0;
-    
-    const next = () => {
-      if (queue.length === 0 || running >= concurrency) return;
-      running++;
-      const { fn, resolve, reject } = queue.shift();
-      
-      Promise.resolve(fn())
-        .then(result => {
-          running--;
-          resolve(result);
-          next();
-        })
-        .catch(err => {
-          running--;
-          reject(err);
-          next();
-        });
-    };
-    
-    return (fn) => new Promise((resolve, reject) => {
-      queue.push({ fn, resolve, reject });
-      next();
-    });
-  };
+let createLimit = require('p-limit');
+if (typeof createLimit !== 'function' && createLimit.default) {
+  createLimit = createLimit.default;
 }
 
 const { OpenAI } = require('openai');

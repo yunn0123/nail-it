@@ -10,45 +10,77 @@
       <!-- 縣市 -->
       <div class="mb-4">
         <p class="text-[#5f4c47] mb-2">縣市</p>
-        <div class="flex flex-wrap gap-3">
-          <button 
-            v-for="city in cities" 
-            :key="city.name" 
-            @click="selectCity(city.name)"
-            :class="buttonClass(selectedCity === city.name)"
-          >
+        <select
+          v-model="selectedCity"
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
+        >
+          <option value="">請選擇縣市</option>
+          <option v-for="city in cities" :key="city.name" :value="city.name">
             {{ city.name }}
-          </button>
-        </div>
+          </option>
+        </select>
       </div>
 
       <!-- 區域（根據選到的縣市顯示） -->
       <div v-if="selectedCityData" class="mb-4">
         <p class="text-[#5f4c47] mb-2">區域</p>
-        <div class="flex flex-wrap gap-3">
-          <button
-            v-for="district in selectedCityData.districts"
-            :key="district"
-            @click="toggleDistrict(district)"
-            :class="buttonClass(selectedDistricts.includes(district))"
+        <div class="relative" ref="dropdownRef">
+          <div 
+            @click="dropdownOpen = !dropdownOpen" 
+            class="border px-4 py-2 rounded cursor-pointer bg-white text-[#5f4c47]"
           >
-            {{ district }}
-          </button>
+            {{ selectedDistricts.length ? selectedDistricts.join(', ') : '請選擇區域' }}
+          </div>
+
+          <ul 
+            v-if="dropdownOpen" 
+            class="absolute bg-white border mt-1 max-h-60 overflow-y-auto rounded shadow z-10 w-full"
+          >
+            <li 
+              v-for="district in selectedCityData?.districts || []" 
+              :key="district" 
+              @click="toggleDistrict(district)" 
+              class="px-4 py-2 hover:bg-[#f3e4e1] cursor-pointer"
+            >
+              <input 
+                type="checkbox" 
+                :checked="selectedDistricts.includes(district)" 
+                class="mr-2"
+                @click.stop
+              />
+              {{ district }}
+            </li>
+          </ul>
         </div>
       </div>
 
       <!-- 價格 -->
       <div class="mb-4">
-        <p class="text-[#5f4c47] mb-2">價格</p>
-        <div class="flex flex-wrap gap-3">
-          <button 
-            v-for="price in prices" 
-            :key="price" 
-            @click="togglePrice(price)"
-            :class="buttonClass(selectedPrices.includes(price))"
-          >
-            {{ price }}
-          </button>
+        <p class="text-[#5f4c47] mb-2">
+          價格區間（NT$ {{ isNaN(priceMin) ? 0 : priceMin }} - {{ isNaN(priceMax) ? 0 : priceMax }}）
+        </p>
+        <div class="flex gap-4">
+          <input 
+            type="number" 
+            v-model.number="priceMin"
+            @input="onNumberInput($event, 'min')" 
+            placeholder="最低價格"
+            min="0"
+            max="99999"
+            step="100"
+            class="w-full border rounded px-4 py-2 text-[#5f4c47] focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
+          />
+
+          <input 
+            type="number" 
+            v-model.number="priceMax"
+            @input="onNumberInput($event, 'max')" 
+            placeholder="最高價格"
+            min="0"
+            max="99999"
+            step="100"
+            class="w-full border rounded px-4 py-2 text-[#5f4c47] focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
+          />
         </div>
       </div>
 
@@ -101,9 +133,18 @@
 
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount  } from 'vue'
 
+const reset = () => {
+  selectedCity.value = ''            // 清空城市選擇
+  selectedDistricts.value = []       // 清空行政區
+  selectedRatings.value = []         // 清空評價
+  filteredWorks.value = []           // 清空結果（或預設資料）
+  priceMin.value = 0
+  priceMax.value = 5000
+}
 
+//===================縣市&區域===================
 const cities = [
   { name: '新北市', districts: ['萬里區', '金山區', '板橋區', '汐止區', '深坑區', '石碇區', '瑞芳區', '平溪區', '雙溪區', '貢寮區', '新店區', '坪林區', '烏來區', '永和區', '中和區', '土城區', '三峽區', '樹林區', '鶯歌區', '三重區', '新莊區', '泰山區', '林口區', '蘆洲區', '五股區', '八里區', '淡水區', '三芝區', '石門區'] },
   { name: '臺北市', districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'] },
@@ -128,16 +169,6 @@ const cities = [
   { name: '金門縣', districts: ['金沙鎮', '金湖鎮', '金寧鄉', '金城鎮', '烈嶼鄉', '烏坵鄉'] },
   { name: '連江縣', districts: ['南竿鄉', '北竿鄉', '莒光鄉', '東引鄉'] }
 ]
-const prices = ['0-1000', '1000-2000', '2000-3000']
-const ratings = ['4.0★', '4.5★', '5.0★']
-
-const reset = () => {
-  selectedCity.value = ''            // 清空城市選擇
-  selectedDistricts.value = []       // 清空行政區
-  selectedPrices.value = []          // 清空價格
-  selectedRatings.value = []         // 清空評價
-  filteredWorks.value = []           // 清空結果（或預設資料）
-}
 
 const selectedCity = ref('')
 const selectedDistricts = ref([])
@@ -146,21 +177,72 @@ const selectedCityData = computed(() =>
   cities.find(city => city.name === selectedCity.value)
 )
 
-const selectCity = (name) => {
-  selectedCity.value = name
-  selectedDistricts.value = [] // 換城市時清空選區域
-}
+watch(selectedCity, () => {
+  selectedDistricts.value = []
+})
+
+const dropdownOpen = ref(false)
+const dropdownRef = ref(null)
 
 const toggleDistrict = (district) => {
-  const index = selectedDistricts.value.indexOf(district)
-  if (index > -1) {
-    selectedDistricts.value.splice(index, 1)
+  const idx = selectedDistricts.value.indexOf(district)
+  if (idx > -1) {
+    selectedDistricts.value.splice(idx, 1)
   } else {
     selectedDistricts.value.push(district)
   }
 }
-const selectedPrices = ref([])
+
+// 點外面收起下拉選單
+const handleClickOutside = (event) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+    dropdownOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+//===================縣市&區域===================
+
+//===================價格區間===================
+const priceMin = ref(0)
+const priceMax = ref(5000)
+
+const onNumberInput = (event, type) => {
+  const value = event.target.value
+  const numericValue = value.replace(/[^\d]/g, '') // 移除非數字
+
+  const cleanValue = Number(numericValue)
+  if (isNaN(cleanValue)) return
+
+  if (type === 'min') priceMin.value = cleanValue
+  if (type === 'max') priceMax.value = cleanValue
+}
+
+watch([priceMin, priceMax], ([min, max]) => {
+  if (min > max) {
+    // 自動交換
+    priceMin.value = max
+    priceMax.value = min
+  }
+})
+//===================價格區間===================
+
+//===================評分===================
+const ratings = ['4.0★', '4.5★', '5.0★']
 const selectedRatings = ref([])
+
+const toggleRating = (rating) => {
+  const index = selectedRatings.value.indexOf(rating)
+  if (index > -1) selectedRatings.value.splice(index, 1)
+  else selectedRatings.value.push(rating)
+}
+//===================評分===================
 
 const works = [
   { title: '秋日溫柔風', image: 'https://source.unsplash.com/featured/?nail4' },
@@ -175,19 +257,11 @@ const buttonClass = (selected) => {
     : 'px-4 py-1 bg-gray-100 text-[#5f4c47] rounded-full hover:bg-[#f3e4e1] transition'
 }
 
-const togglePrice = (price) => {
-  const index = selectedPrices.value.indexOf(price)
-  if (index > -1) selectedPrices.value.splice(index, 1)
-  else selectedPrices.value.push(price)
-}
-
-const toggleRating = (rating) => {
-  const index = selectedRatings.value.indexOf(rating)
-  if (index > -1) selectedRatings.value.splice(index, 1)
-  else selectedRatings.value.push(rating)
-}
-
 const search = () => {
-  filteredWorks.value = works // 先呈現假資料，直接展示全部
+  filteredWorks.value = works.filter(work => {
+    // 模擬價格篩選邏輯，範例中沒資料 source 只是寫死圖片
+    const fakePrice = 2500 // 假設每個作品有價格屬性
+    return fakePrice >= priceMin.value && fakePrice <= priceMax.value
+  })
 }
 </script>

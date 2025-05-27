@@ -122,7 +122,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
       <h3 class="text-xl font-bold mb-2">預約成功！</h3>
-      <p class="mb-4">您已成功預約 {{ artistName }} 的服務</p>
+      <p class="mb-4">您已成功申請預約 {{ artistName }} 的服務，請稍待美甲師確認</p>
       <p class="text-gray-700 mb-4">
         日期：{{ formatDisplayDate(selectedDate) }}<br>
         時間：{{ selectedTime }}<br>
