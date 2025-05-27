@@ -1,5 +1,11 @@
 # Nail-It
 
+> 🚀 **線上體驗網址（Railway Demo）**：
+> 
+> https://nail-it-frontend.railway.app/
+> 
+> ⚠️ 此網址為 Railway 免費方案部署，約一週後會自動停止運行，如需再次體驗請聯絡專案作者或重新部署。
+
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/你的GitHub用户名/nail-it/deploy.yml?label=部署)
 ![Docker Pulls](https://img.shields.io/docker/pulls/yunn0123/nail-it-frontend)
 ![Railway Deployment](https://img.shields.io/badge/railway-deployed-success)
