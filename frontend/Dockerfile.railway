@@ -12,32 +12,17 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-# ===== 第二階段：部署靜態檔案 =====
+# ===== 第二階段：部署前端（使用後端API） =====
 FROM nginx:alpine
 
-# 安裝 envsubst 工具，用於環境變量替換
-RUN apk add --no-cache bash gettext
+# 複製 nginx 配置文件
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
-# 複製建置完成的檔案到 nginx 的公開資料夾
+# 從建構階段複製構建產物
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-COPY ./frontend/nginx.conf /etc/nginx/templates/default.conf.template
-
-# 創建啟動腳本
-RUN echo '#!/bin/bash\n\
-export BACKEND_API_URL=${BACKEND_API_URL:-http://localhost:3000}\n\
-\n\
-# 如果模板存在才執行替換\n\
-if [ -f /etc/nginx/templates/default.conf.template ]; then\n\
-  envsubst "${BACKEND_API_URL}" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf\n\
-else\n\
-  echo "No nginx template found, using default config."\n\
-fi\n\
-\n\
-nginx -g "daemon off;"' > /docker-entrypoint.sh
-
-# 賦予啟動腳本執行權限
-RUN chmod +x /docker-entrypoint.sh
-
+# 暴露 80 端口
 EXPOSE 80
-CMD ["/docker-entrypoint.sh"]
+
+# 啟動 nginx
+CMD ["nginx", "-g", "daemon off;"]

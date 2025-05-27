@@ -10,7 +10,7 @@ COPY nail-resv/package*.json ./
 # 安裝依賴
 RUN npm uninstall p-limit || true
 RUN npm install
-RUN npm install dotenv multer openai p-limit@3.1.0 --save
+RUN npm install dotenv multer openai p-limit@3.1.0 @supabase/supabase-js --save
 # 複製專案文件
 COPY nail-resv/ ./
 

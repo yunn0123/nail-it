@@ -37,7 +37,7 @@ Nail-It 是一個美甲預約與設計分享平台，讓用戶可以瀏覽美甲
 1. 克隆倉庫:
 
 ```bash
-git clone https://github.com/你的GitHub用户名/nail-it.git
+git clone https://github.com/yunn0123/nail-it.git
 cd nail-it
 ```
 

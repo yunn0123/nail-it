@@ -28,8 +28,8 @@ export default defineConfig({
     host: true,  // 監聽所有網路介面
   },
   define: {
-    'process.env.BACKEND_API_URL': JSON.stringify(process.env.BACKEND_API_URL),
-    'process.env.VERSION_TAG': JSON.stringify(process.env.VERSION_TAG)
+    'process.env.BACKEND_API_URL': JSON.stringify(process.env.VITE_BACKEND_API_URL || process.env.BACKEND_API_URL),
+    'process.env.VERSION_TAG': JSON.stringify(process.env.VITE_VERSION_TAG || process.env.VERSION_TAG)
   }
   
 })
