@@ -14,6 +14,31 @@
       </div>
     </div>
 
+    <!-- 控制按鈕 -->
+    <div v-if="uploadedImage" class="flex gap-4 mt-4">
+      <button 
+        @click="resetUpload"
+        class="px-6 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-[#5f4c47] transition"
+      >
+        Reset
+      </button>
+      <button 
+        @click="searchSimilar"
+        class="px-6 py-2 rounded-full bg-[#c68f84] text-white hover:bg-[#a96c60] transition"
+      >
+        OK
+      </button>
+    </div>
+
+    <!-- Loading 狀態 -->
+    <div v-if="isLoading" class="flex items-center justify-center mt-6">
+      <svg class="animate-spin h-6 w-6 text-[#c68f84]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      <span class="ml-2 text-[#c68f84]">正在搜尋類似作品...</span>
+    </div>
+
     <!-- 搜尋結果區 -->
     <div v-if="uploadedImage && similarWorks.length">
       <h2 class="text-xl font-semibold text-gray-600 mb-4">找到類似的作品</h2>
@@ -53,6 +78,18 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+const uploadedFile = ref(null)        // 暫存原始 file
+const uploadedImage = ref(null)       // 圖片預覽
+const similarWorks = ref([])          // 類似作品結果
+const isLoading = ref(false)
+
+const resetUpload = () => {
+  uploadedFile.value = null
+  uploadedImage.value = null
+  similarWorks.value = []
+  isLoading.value = false
+}
+
 const router = useRouter()
 
 // 跳轉到 profile 頁面
@@ -70,13 +107,26 @@ import design3 from '../assets/temp/design3.jpg'
 //   return [...design].sort((a, b) => b.rating - a.rating)
 // })
 
-const uploadedImage = ref(null)
-const similarWorks = ref([])
 
 const handleUpload = (e) => {
   const file = e.target.files[0]
   if (file) {
+    uploadedFile.value = file
     uploadedImage.value = URL.createObjectURL(file)
+    similarWorks.value = []         // 清空結果
+  }
+}
+
+const searchSimilar  = () => {
+  
+  if (!uploadedFile.value) return
+
+  isLoading.value = true
+  
+  // 模擬後端分析圖片花2秒
+  setTimeout(() => {
+    isLoading.value = false  // 結束 loading
+  
     // 假資料
     similarWorks.value = [
       { 
@@ -108,7 +158,6 @@ const handleUpload = (e) => {
         tags: ['簡約', '清新'],
         image: design1 },
     ]
-
-  }
+  }, 2000)
 }
 </script>
