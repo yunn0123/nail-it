@@ -3,7 +3,7 @@
 This is a simple Node.js/Express backend for a nail-artist reservation system. It allows technicians to:
 
 * Define weekly availability by **weekday** with fixed time slots (e.g., Monday at 10:00, Wednesday at 14:00).
-* Customers can fetch available slots for a given date (tomorrow through the nearest 3-month window).
+* Customers can fetch available slots for a given date.
 * Book a slot (with an optional note), which removes it for that specific date.
 
 All data is stored Supabase with user identification.
@@ -43,12 +43,7 @@ Use these **Windows CMD–compatible** `curl` one-liners to interact.
 Define which weekdays and time slots the artist is available:
 
 ```cmd
-Invoke-WebRequest `
-  -Uri "http://localhost:4000/api/technicians/yunchen/availability" `
-  -Method POST `
-  -Headers @{ "Content-Type" = "application/json" } `
-  -Body '{"availability":{"Mon":["10:00"],"Wed":["12:00","14:00"],"Fri":["10:00","18:00"]}}' `
-  -UseBasicParsing
+curl -X POST http://localhost:4000/api/technicians/yunchen/availability   -H "Content-Type: application/json"   -d "{\"availability\":{\"Mon\":[\"10:00\"],\"Wed\":[\"12:00\",\"14:00\"],\"Fri\":[\"10:00\",\"18:00\"]}}"
 
 ```
 
@@ -58,10 +53,10 @@ Invoke-WebRequest `
 
 ### 2. Customer: Fetch Available Slots
 
-Get the technician’s free slots for a specific date. Only dates **tomorrow** through **3 months out** are accepted.
+Get the technician’s free slots for a specific date. Only dates after **tomorrow** are accepted.
 
 ```cmd
-curl "http://localhost:3000/api/technicians/yunchen/slots?date=2025-06-06"
+curl "http://localhost:4000/api/technicians/yunchen/slots?date=2025-06-06"
 ```
 
 * **Response**: JSON listing `availableSlots` for that date (or an error if outside the window or weekday not available).
@@ -71,11 +66,7 @@ curl "http://localhost:3000/api/technicians/yunchen/slots?date=2025-06-06"
 Reserve a slot and optionally leave a note for the technician:
 
 ```cmd
-Invoke-WebRequest -Uri "http://localhost:4000/api/reservations/book" `
-  -Method POST `
-  -Headers @{ "Content-Type" = "application/json" } `
-  -Body '{"username":"ying","studio":"yunchen","date":"2025-06-06","time":"10:00:00","note":"Hi I am a flower"}'
-
+curl -X POST http://localhost:4000/api/reservations/book   -H "Content-Type: application/json"   -d "{\"username\":\"ying\",\"studio\":\"yunchen\",\"date\":\"2025-06-06\",\"time\":\"12:00:00\",\"note\":\"Hi I am a flower\"}" 
 ```
 
 * **`customerId`**: ID for the customer.
