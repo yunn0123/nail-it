@@ -1678,7 +1678,7 @@ const analyzeImageAndSuggestTags = (imageFile) => {
   // 假設你未來會丟去後端拿標籤
   // 暫時模擬一下
   suggestedTags.value = ['可愛', '貓眼', '日系'] // ← 根據圖片自動建議
-
+}
 
 // 預約管理方法
 const confirmAppointment = (appointmentId) => {
