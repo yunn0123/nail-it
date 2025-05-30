@@ -6,7 +6,7 @@ This is a simple Node.js/Express backend for a nail-artist reservation system. I
 * Customers can fetch available slots for a given date (tomorrow through the nearest 3-month window).
 * Book a slot (with an optional note), which removes it for that specific date.
 
-All data is stored in-memory for MVP testing.
+All data is stored Supabase with user identification.
 
 ---
 
@@ -30,7 +30,7 @@ All data is stored in-memory for MVP testing.
    node server.js
    ```
 
-   The server will listen on `http://localhost:3000` by default.
+   The server will listen on `http://localhost:4000` by default.
 
 ---
 
@@ -43,12 +43,16 @@ Use these **Windows CMD–compatible** `curl` one-liners to interact.
 Define which weekdays and time slots the artist is available:
 
 ```cmd
-curl -X POST http://localhost:3000/api/technicians/tech001/availability \
- -H "Content-Type: application/json" \
- -d "{\"availability\":{\"Mon\":[\"10:00\"],\"Wed\":[\"12:00\",\"14:00\"],\"Fri\":[\"10:00\",\"18:00\"]}}"
+Invoke-WebRequest `
+  -Uri "http://localhost:4000/api/technicians/yunchen/availability" `
+  -Method POST `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body '{"availability":{"Mon":["10:00"],"Wed":["12:00","14:00"],"Fri":["10:00","18:00"]}}' `
+  -UseBasicParsing
+
 ```
 
-* **`tech001`**: the technician ID.
+* **`yunchen`**: just a testing artist name.
 * **`Mon`, `Wed`, `Fri`**: weekdays.
 * **Time slots**: any subset of `[10:00, 12:00, 14:00, 16:00, 18:00]`.
 
@@ -57,7 +61,7 @@ curl -X POST http://localhost:3000/api/technicians/tech001/availability \
 Get the technician’s free slots for a specific date. Only dates **tomorrow** through **3 months out** are accepted.
 
 ```cmd
-curl "http://localhost:3000/api/technicians/tech001/slots?date=2025-05-20"
+curl "http://localhost:3000/api/technicians/yunchen/slots?date=2025-06-06"
 ```
 
 * **Response**: JSON listing `availableSlots` for that date (or an error if outside the window or weekday not available).
@@ -67,9 +71,11 @@ curl "http://localhost:3000/api/technicians/tech001/slots?date=2025-05-20"
 Reserve a slot and optionally leave a note for the technician:
 
 ```cmd
-curl -X POST http://localhost:3000/api/reservations/book \
- -H "Content-Type: application/json" \
- -d "{\"customerId\":\"cust123\",\"artistId\":\"tech001\",\"date\":\"2025-05-20\",\"time\":\"12:00\",\"note\":\"Please use blue glitter\"}"
+Invoke-WebRequest -Uri "http://localhost:4000/api/reservations/book" `
+  -Method POST `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body '{"username":"ying","studio":"yunchen","date":"2025-06-06","time":"10:00:00","note":"Hi I am a flower"}'
+
 ```
 
 * **`customerId`**: ID for the customer.
@@ -82,7 +88,7 @@ curl -X POST http://localhost:3000/api/reservations/book \
 After booking, the slot is removed. Fetch again:
 
 ```cmd
-curl "http://localhost:3000/api/technicians/tech001/slots?date=2025-05-20"
+curl "http://localhost:4000/api/technicians/yunchen/slots?date=2025-06-06"
 ```
 
 You should see that the previously booked time is no longer listed.
