@@ -16,7 +16,7 @@
 
     <!-- 搜尋結果區 -->
     <div v-if="uploadedImage && similarWorks.length">
-      <h2 class="text-xl font-semibold text-gray-700 mb-4">找到類似的作品</h2>
+      <h2 class="text-xl font-semibold text-gray-600 mb-4">找到類似的作品</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div 
           v-for="work in similarWorks" 

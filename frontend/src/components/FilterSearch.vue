@@ -1,15 +1,15 @@
 <template>
-    <div class="min-h-screen bg-[#efddda] flex justify-center pt-12 px-4">
-      <div class="bg-white p-6 rounded-2xl shadow max-w-xl w-full">
+    <div class="flex flex-col items-center bg-white p-6 rounded-xl shadow hover:shadow-lg">
+      <div class="max-w-7xl mx-auto">
       <!-- 標題 + icon -->
-      <h2 class="text-2xl font-semibold text-[#5f4c47] mb-6 flex items-center">
+      <h2 class="text-2xl font-semibold text-gray-600 mb-6 flex items-center">
         <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
         依條件快速篩選
       </h2>
 
       <!-- 縣市 -->
       <div class="mb-4">
-        <p class="text-[#5f4c47] mb-2">縣市</p>
+        <p class="text-gray-600 mb-2">縣市</p>
         <select
           v-model="selectedCity"
           class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
@@ -23,11 +23,11 @@
 
       <!-- 區域（根據選到的縣市顯示） -->
       <div v-if="selectedCityData" class="mb-4">
-        <p class="text-[#5f4c47] mb-2">區域</p>
+        <p class="text-gray-600 mb-2">區域</p>
         <div class="relative" ref="dropdownRef">
           <div 
             @click="dropdownOpen = !dropdownOpen" 
-            class="border px-4 py-2 rounded cursor-pointer bg-white text-[#5f4c47]"
+            class="border px-4 py-2 rounded cursor-pointer bg-white text-gray-600"
           >
             {{ selectedDistricts.length ? selectedDistricts.join(', ') : '請選擇區域' }}
           </div>
@@ -56,7 +56,7 @@
 
       <!-- 價格 -->
       <div class="mb-4">
-        <p class="text-[#5f4c47] mb-2">
+        <p class="text-gray-600 mb-2">
           價格區間（NT$ {{ isNaN(priceMin) ? 0 : priceMin }} - {{ isNaN(priceMax) ? 0 : priceMax }}）
         </p>
         <div class="flex gap-4">
@@ -68,7 +68,7 @@
             min="0"
             max="99999"
             step="100"
-            class="w-full border rounded px-4 py-2 text-[#5f4c47] focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
+            class="w-full border rounded px-4 py-2 text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
           />
 
           <input 
@@ -79,31 +79,96 @@
             min="0"
             max="99999"
             step="100"
-            class="w-full border rounded px-4 py-2 text-[#5f4c47] focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
+            class="w-full border rounded px-4 py-2 text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#c68f84]"
           />
         </div>
       </div>
 
       <!-- 評價 -->
       <div class="mb-6">
-        <p class="text-[#5f4c47] mb-2">評分</p>
+        <p class="text-gray-600 mb-2">評分</p>
         <div class="flex flex-wrap gap-3">
           <button 
             v-for="rating in ratings" 
-            :key="rating" 
-            @click="toggleRating(rating)"
-            :class="buttonClass(selectedRatings.includes(rating))"
+            :key="rating.value" 
+            @click="selectedRating = rating.value"
+            :class="buttonClass(selectedRating === rating.value)"
           >
-            {{ rating }}
+            {{ rating.label }}
           </button>
         </div>
       </div>
+
+      <!-- 多分類選擇區塊 -->
+      <div class="mb-4 relative" ref="categoryDropdownRef">
+        <p class="text-gray-600 mb-2">風格標籤分類</p>
+        <div 
+          @click="categoryDropdownOpen = !categoryDropdownOpen" 
+          class="border px-4 py-2 rounded cursor-pointer bg-white text-gray-600"
+        >
+          {{ selectedCategories.length ? selectedCategories.map(c => categoryLabels[c]).join(', ') : '請選擇類別' }}
+        </div>
+
+        <div 
+          v-if="categoryDropdownOpen" 
+          class="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-60 overflow-y-auto"
+        >
+          <div 
+            v-for="(label, key) in categoryLabels" 
+            :key="key" 
+            class="px-4 py-2 hover:bg-[#f3e4e1] cursor-pointer"
+          >
+            <label class="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                :value="key" 
+                v-model="selectedCategories"
+                @click.stop
+              />
+              <span>{{ label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 展示已選分類底下的 tags -->
+      <div 
+        v-for="category in selectedCategories" 
+        :key="category" 
+        class="mb-6"
+      >
+        <p class="text-gray-600 mb-2 font-semibold">
+          {{ categoryLabels[category] }}（{{ category }}）
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="tag in tagCategories[category]"
+            :key="tag"
+            @click="toggleTag(category, tag)"
+            :class="tagButtonClass(selectedTags[category].includes(tag))"
+          >
+            {{ tag }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="allSelectedTags.length" class="mb-4 text-sm text-gray-600">
+        已選擇：
+        <span 
+          v-for="tag in allSelectedTags" 
+          :key="tag"
+          class="inline-block bg-[#f1e4e2] text-gray-600 rounded-full px-3 py-1 mr-2 mb-2"
+        >
+          {{ tag }}
+        </span>
+      </div>
+
 
       <!-- 按鈕 -->
       <div class="flex justify-center gap-4 mb-8">
         <button 
           @click="reset"
-          class="px-6 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-[#5f4c47] transition"
+          class="px-6 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 transition"
         >
           Reset
         </button>
@@ -126,9 +191,9 @@
           <img :src="design.image" class="w-full h-48 object-cover rounded-md mb-3" />
           <div class="flex items-center justify-between mb-1">
             <h3 class="text-[#c68f84]">{{ design.studio }}</h3>
-            <p class="text-[#dcb876] text-sm">★ {{ design.rating }}</p>
+            <p class="text-gray-600 text-sm">★ {{ design.rating }}</p>
           </div>
-          <p class="text-gray-500 text-sm mb-2">$ {{ design.priceLow }} - {{ design.priceHigh }}</p>
+          <p class="text-gray-600 text-sm mb-2">$ {{ design.priceLow }} - {{ design.priceHigh }}</p>
           <div class="mb-2">
             <div class="flex flex-wrap gap-2">
               <span 
@@ -147,8 +212,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount  } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+
+const allSelectedTags = computed(() => {
+  return Object.values(selectedTags).flat()
+})
 
 const router = useRouter()
 
@@ -162,10 +231,18 @@ const goToProfile = (designId) => {
 const reset = () => {
   selectedCity.value = ''            // 清空城市選擇
   selectedDistricts.value = []       // 清空行政區
-  selectedRatings.value = []         // 清空評價
+  selectedRating.value = null       // 清空評價
   filteredWorks.value = []           // 清空結果（或預設資料）
   priceMin.value = 0
   priceMax.value = 5000
+  Object.keys(selectedTags).forEach(category => {
+  selectedTags[category] = []
+  Object.keys(openCategories).forEach(category => {
+  openCategories[category] = false
+  selectedCategories.value = []
+  categoryDropdownOpen.value = false
+})
+})
 }
 
 //===================縣市&區域===================
@@ -258,15 +335,139 @@ watch([priceMin, priceMax], ([min, max]) => {
 //===================價格區間===================
 
 //===================評分===================
-const ratings = ['4.0★', '4.5★', '5.0★']
-const selectedRatings = ref([])
-
-const toggleRating = (rating) => {
-  const index = selectedRatings.value.indexOf(rating)
-  if (index > -1) selectedRatings.value.splice(index, 1)
-  else selectedRatings.value.push(rating)
-}
+const ratings = [
+  { label: '4.0★以上', value: 4.0 },
+  { label: '4.5★以上', value: 4.5 },
+  { label: '5.0★', value: 5.0 }
+]
+const selectedRating = ref(null)
 //===================評分===================
+
+//=================風格標籤=================
+const selectedCategories = ref([])
+const categoryDropdownOpen = ref(false)
+const categoryDropdownRef = ref(null)
+
+const handleClickOutsideDropdown = (e) => {
+  if (categoryDropdownRef.value && !categoryDropdownRef.value.contains(e.target)) {
+    categoryDropdownOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutsideDropdown))
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutsideDropdown))
+
+
+const tagButtonClass = (selected) => {
+  return selected 
+    ? 'px-3 py-1 bg-[#c68f84] text-white rounded-full transition'
+    : 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full hover:bg-[#f3e4e1] transition'
+}
+
+const openCategories = reactive({
+  Style: false,
+  Shape: false,
+  Color: false,
+  Texture: false,
+  Decorations: false,
+  Theme: false
+})
+
+const tagCategories = {
+  Style: [
+    "跳色",
+    "單色",
+    "手繪",
+    "法式",
+    "漸層",
+    "貓眼",
+    "鏡面",
+    "雕花",
+    "亮片"
+  ],
+  Shape: [
+    "圓形（Round）",
+    "尖形（Stiletto）",
+    "方圓形（Squoval）",
+    "方形（Square）",
+    "橢圓形（Oval）",
+  ],
+  Color: [
+    "裸粉色",
+    "粉色",
+    "白色",
+    "紅色",
+    "橙色",
+    "黃色",
+    "綠色",
+    "藍色",
+    "紫色",
+    "灰色",
+    "黑色",
+    "棕色",
+    "酒紅色",
+    "咖啡色",
+    "金屬銀",
+    "銀色",
+    "亮片"
+  ],
+  Texture: [
+    "光澤（Glossy）",
+    "霧面（Matte）",
+    "亮片（Glitter）",
+    "珠光（Pearlescent）",
+    "砂糖感（Sugar）",
+    "金屬箔（Foil）"
+  ],
+  Decorations: [
+    "水鑽（Rhinestone）",
+    "貼紙（Sticker）",
+    "畫圖章（Stamp）",
+    "貝殼（Shell）",
+    "金屬飾片（Metal pieces）",
+    "金屬箔（Foil）",
+    "雕花（3D art）",
+    "亮片（Glitter）"
+  ],
+  Theme: [
+    "優雅",
+    "簡約",
+    "可愛",
+    "繽紛",
+    "日常",
+    "日系",
+    "歐美風",
+    "春",
+    "夏",
+    "秋",
+    "冬",
+    "韓系"
+  ]
+}
+const selectedTags = reactive({
+  Style: [],
+  Shape: [],
+  Color: [],
+  Texture: [],
+  Decorations: [],
+  Theme: []
+})
+
+const categoryLabels = {
+  Style: '風格',
+  Shape: '指型',
+  Color: '顏色',
+  Texture: '質地',
+  Decorations: '裝飾',
+  Theme: '主題'
+}
+
+const toggleTag = (category, tag) => {
+  const index = selectedTags[category].indexOf(tag)
+  if (index > -1) selectedTags[category].splice(index, 1)
+  else selectedTags[category].push(tag)
+}
+//=============================================
 
 // 假資料：你可能會喜歡
 import design1 from '../assets/temp/design1.jpg'
@@ -278,7 +479,7 @@ const filteredWorks = ref([])
 const buttonClass = (selected) => {
   return selected 
     ? 'px-4 py-1 bg-[#c68f84] text-white rounded-full transition'
-    : 'px-4 py-1 bg-gray-100 text-[#5f4c47] rounded-full hover:bg-[#f3e4e1] transition'
+    : 'px-4 py-1 bg-gray-100 text-gray-600 rounded-full hover:bg-[#f3e4e1] transition'
 }
 
 const search = () => {
@@ -314,3 +515,7 @@ const search = () => {
   ]
 }
 </script>
+
+
+
+
