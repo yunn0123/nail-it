@@ -5,9 +5,14 @@
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
       <div class="flex items-center">
-        <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
-        <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
-      </div>
+          <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
+          <img 
+            src="../assets/logo.png" 
+            alt="Logo" 
+            class="w-60 h-auto cursor-pointer" 
+            @click="router.push('/home')" 
+          />
+        </div>
 
       <!-- 假搜尋欄，但其實是 router link -->
       <div 
@@ -22,7 +27,7 @@
         @click="goToSelfProfile" 
         class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors"
       ></div>
-    </div>
+      </div>
 
     <!-- 左側選單 -->
     <div v-if="showMenu" class="fixed top-7 left-0 w-48 h-auto bg-white shadow-lg p-6 z-50" @click.stop>
@@ -36,8 +41,129 @@
       </ul>
     </div>
 
+    <!-- 預覽模式通知條 - 固定在頂部 -->
+    <div v-if="isPreviewMode" class="fixed top-3 left-1 right-1 bg-white/80 shadow-md shadow-gray-200 border-l-4 border-[#c68f84] p-4 z-50">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <span class="text-[#c68f84] font-medium">預覽模式：您正在查看顧客視角的頁面樣貌</span>
+        </div>
+        <button 
+          @click="togglePreviewMode"
+          class="text-[#c68f84] hover:text-[#c68f84]/80 font-medium transition-colors"
+        >
+          關閉預覽
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 浮動大綱按鈕 - 僅在非預覽模式且為自己檔案時顯示 -->
+    <div 
+      v-if="isOwnProfile && !isPreviewMode"
+      class="fixed bottom-6 right-6 z-50"
+      @click.stop
+    >
+      <!-- 大綱小浮窗 -->
+      <div 
+        v-if="showOutline"
+        class="absolute bottom-16 right-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 space-y-2 max-h-96 overflow-y-auto transform transition-all duration-200 origin-bottom-right"
+        @click.stop
+      >
+        <!-- 小浮窗標題 -->
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200 mb-3">
+          <h3 class="text-sm font-semibold text-[#c67868] flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+          大綱  
+          </h3>
+        </div>
+
+        <!-- 大綱內容 -->
+        <div class="space-y-1">
+          <!-- 基本資訊 -->
+          <div 
+            @click="scrollToSection('basic-info')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'basic-info' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            基本資訊
+          </div>
+
+          <!-- 預約管理 -->
+          <div v-if="!isPreviewMode">
+            <div 
+              @click="scrollToSection('appointment-management')" 
+              :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                      activeSection === 'appointment-management' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              預約管理
+            </div>
+          </div>
+
+          <!-- 時段管理 -->
+          <div 
+            v-if="!isPreviewMode"
+            @click="scrollToSection('schedule-management')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'schedule-management' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            營業時段管理
+          </div>
+
+          <!-- 作品牆 -->
+          <div 
+            @click="scrollToSection('portfolio')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'portfolio' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            作品牆
+          </div>
+
+          <!-- 顧客評價 -->
+          <div 
+            @click="scrollToSection('reviews')" 
+            :class="['flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors text-sm', 
+                    activeSection === 'reviews' ? 'bg-[#f4e8e6] text-[#c67868] font-medium' : 'hover:bg-gray-50 text-gray-700']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-[#c68f84]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+            顧客評價
+          </div>
+        </div>
+      </div>
+
+      <!-- 浮動圓形按鈕 -->
+      <button 
+        @click="toggleOutline" 
+        :class="['w-14 h-14 bg-white rounded-full shadow-lg hover:bg-[#f4e8e6] transition-all duration-200 flex items-center justify-center group', 
+                showOutline ? 'rotate-45' : 'hover:scale-110']"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#c68f84] transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+      </button>
+    </div>
+
     <div class="p-6 mx-5 mr-8">
-      <div class="flex flex-col md:flex-row md:items-center mb-8">
+      <div id="basic-info" class="flex flex-col md:flex-row md:items-center mb-8">
         
         <!-- 頭像 -->
         <div class="avatar-container w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6 overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
@@ -55,8 +181,8 @@
               <path d="M20,85 C20,60 80,60 80,85" />
             </svg>
           </div>
-          <!-- 編輯模式下的頭像上傳按鈕 -->
-          <div v-if="editMode" class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer" @click="triggerImageUpload">
+          <!-- 編輯模式下的頭像上傳按鈕 - 只在編輯模式且非預覽模式顯示 -->
+          <div v-if="editMode && !isPreviewMode" class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer" @click="triggerImageUpload">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -67,7 +193,7 @@
         
         <div class="flex-1">
           <!-- 工作室名稱 -->
-          <div v-if="!editMode">
+          <div v-if="!editMode || isPreviewMode">
             <h2 class="text-3xl text-gray-700 font-bold">{{ currentArtist.studio }}</h2>
           </div>
           <div v-else class="mb-4">
@@ -88,7 +214,7 @@
           </p>
           
           <!-- 地址 -->
-          <div v-if="!editMode">
+          <div v-if="!editMode || isPreviewMode">
             <p class="text-gray-700 mt-2 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -116,7 +242,7 @@
           </div>
 
           <!-- 價格 -->
-          <div v-if="!editMode">
+          <div v-if="!editMode || isPreviewMode">
             <p class="text-gray-700 mt-2 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#c68f84] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -144,7 +270,7 @@
           </div>
 
           <!-- 簡介 -->
-          <div v-if="!editMode">
+          <div v-if="!editMode || isPreviewMode">
             <p class="text-gray-700 mt-2 flex items-start">
               {{ currentArtist.bio }}
             </p>
@@ -160,7 +286,7 @@
           </div>
 
           <!-- 擅長風格標籤 -->
-          <div v-if="!editMode">
+          <div v-if="!editMode || isPreviewMode">
             <p class="text-gray-500 text-sm mt-2">
               <span v-for="(style, index) in currentArtist.styles" :key="index" class="mr-2">
                 #{{ style }}
@@ -202,12 +328,22 @@
 
           <!-- 編輯按鈕群組 -->
           <div class="mt-4 flex space-x-3">
-            <!-- 只有在查看自己的檔案時才顯示編輯按鈕 -->
-            <div v-if="!editMode && isOwnProfile">
+            <!-- 只有在查看自己的檔案且非預覽模式時才顯示編輯按鈕 -->
+            <div v-if="!editMode && isOwnProfile && !isPreviewMode" class="flex space-x-3">
               <button @click="startEdit" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">編輯資料</button>
+              <button 
+                @click="togglePreviewMode"
+                class="bg-white border border-[#c68f84] text-[#c68f84] px-4 py-2 rounded-lg hover:shadow-lg transition-shadow flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                預覽顧客視角
+              </button>
             </div>
-            <!-- 如果不是自己的檔案，顯示預約和聊聊按鈕 -->
-            <div v-if="!editMode && !isOwnProfile" class="flex space-x-3">
+            <!-- 預覽模式下顯示顧客會看到的按鈕 -->
+            <div v-if="isPreviewMode" class="flex space-x-3">
               <button @click="openBookingModal" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">預約</button>
               <button @click="navigateToChat" class="bg-white border border-[#c68f84] text-[#c68f84] px-4 py-2 rounded-lg hover:border-[#c67868] hover:text-[#c67868] hover:font-semibold">
                 <span class="flex items-center">
@@ -218,17 +354,307 @@
                 </span>
               </button>
             </div>
+            <!-- 如果不是自己的檔案且非預覽模式，顯示預約和聊聊按鈕 -->
+            <div v-if="!editMode && !isOwnProfile && !isPreviewMode" class="flex space-x-3">
+              <button @click="openBookingModal" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">預約</button>
+              <button @click="navigateToChat" class="bg-white border border-[#c68f84] text-[#c68f84] px-4 py-2 rounded-lg hover:shadow-lg transition-shadow">
+                <span class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  聊聊
+                </span>
+              </button>
+            </div>
             <!-- 編輯模式下的按鈕 -->
-            <div v-if="editMode" class="flex space-x-3">
+            <div v-if="editMode && !isPreviewMode" class="flex space-x-3">
               <button @click="saveChanges" class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868]">儲存</button>
               <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">取消</button>
             </div>
           </div>
         </div>
       </div>
+      
+      <!-- 預約管理 - 只有在自己的檔案且非預覽模式才顯示 -->
+      <div v-if="isOwnProfile && !isPreviewMode" id="appointment-management" class="mb-8">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center">
+            <h3 class="text-2xl text-gray-700 mr-2">預約管理</h3>
+            <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+          </div>
+          <!-- 篩選 -->
+          <div class="flex items-center">
+            <span class="text-sm text-gray-700 mr-2">狀態：</span>
+            <select v-model="appointmentFilter" class="py-1 px-2 rounded-md border text-sm bg-white">
+              <option value="all">全部</option>
+              <option value="pending">待確認</option>
+              <option value="confirmed">已確認</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+        </div>
 
-      <!-- 時段管理 - 只有在自己的檔案才顯示 -->
-      <div v-if="isOwnProfile" class="mb-8">
+        <!-- 待確認預約 -->
+        <div v-if="filteredAppointments.pending.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            待確認的預約
+          </h4>
+
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.pending" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                <!-- 確認與取消按鈕 -->
+                <div class="flex space-x-2">
+                  <button 
+                    @click="confirmAppointment(appointment.id)"
+                    class="bg-[#c68f84] text-white px-3 py-1 rounded-lg hover:bg-[#c67868] text-sm"
+                  >
+                    確認
+                  </button>
+                  <button 
+                    @click="cancelAppointment(appointment.id)"
+                    class="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 text-sm"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已確認預約 -->
+        <div v-if="filteredAppointments.confirmed.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            已確認的預約
+          </h4>
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.confirmed" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                <!-- 完成與取消按鈕 -->
+                <div class="flex space-x-2">
+                  <button 
+                    @click="completeAppointment(appointment.id)"
+                    class="bg-[#c68f84] text-white px-3 py-1 rounded-lg hover:bg-[#c67868] text-sm"
+                  >
+                    完成
+                  </button>
+                  <button 
+                    @click="cancelAppointment(appointment.id)"
+                    class="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 text-sm"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已完成預約 -->
+        <div v-if="filteredAppointments.completed.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            已完成的預約
+          </h4>
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.completed" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow opacity-80"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已取消預約 -->
+        <div v-if="filteredAppointments.cancelled.length > 0" class="mb-4">
+          <h4 class="text-lg font-medium text-[#c67868] mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#c67868]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            已取消的預約
+          </h4>
+          <div class="space-y-3">
+            <div 
+              v-for="appointment in filteredAppointments.cancelled" 
+              :key="appointment.id" 
+              class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow opacity-60"
+            >
+              <div class="flex items-center space-x-4">
+                <!-- 顧客頭像 -->
+                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <img 
+                    :src="appointment.customerImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="appointment.showFallback = true"
+                    v-show="!appointment.showFallback"
+                  />
+                  <!-- 默認頭像 -->
+                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+                      <circle cx="50" cy="35" r="15" />
+                      <path d="M20,85 C20,60 80,60 80,85" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-3">
+                <!-- 聊聊按鈕 -->
+                <button 
+                  @click="chatWithCustomer(appointment)"
+                  class="bg-white border border-[#c68f84] text-[#c68f84] w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#f9e7e4] transition-colors"
+                  title="與顧客聊聊"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 無預約時顯示 -->
+        <div v-if="Object.values(filteredAppointments).every(arr => arr.length === 0)" class="text-center py-8 bg-white rounded-xl shadow">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p class="text-gray-500 mb-2">目前沒有{{ appointmentFilter === 'all' ? '' : appointmentFilter === 'pending' ? '待確認' : appointmentFilter === 'confirmed' ? '已確認' : appointmentFilter === 'completed' ? '已完成' : '已取消' }}預約</p>
+        </div>
+      </div>    
+
+      <!-- 時段管理 - 只有在自己的檔案且非預覽模式才顯示 -->
+      <div v-if="isOwnProfile && !isPreviewMode" id="schedule-management" class="mb-8">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
             <h3 class="text-2xl text-gray-700 mr-2">營業時段管理</h3>
@@ -266,15 +692,15 @@
       </div>
 
       <!-- 作品牆管理 -->
-      <div class="mb-8">
+      <div id="portfolio" class="mb-8">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
             <h3 class="text-2xl text-gray-700 mr-2">作品牆</h3>
             <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
           </div>
-          <!-- 新增作品按鈕 - 只有在自己的檔案才顯示 -->
+          <!-- 新增作品按鈕 - 只有在自己的檔案且非預覽模式才顯示 -->
           <button 
-            v-if="isOwnProfile" 
+            v-if="isOwnProfile && !isPreviewMode" 
             @click="showAddWorkModal = true"
             class="bg-[#c68f84] text-white px-4 py-2 rounded-lg hover:bg-[#c67868] text-sm"
           >
@@ -289,8 +715,8 @@
             :key="work.id" 
             class="bg-white rounded-xl shadow overflow-hidden flex flex-col relative group"
           >
-            <!-- 編輯和刪除按鈕 - 只有在自己的檔案才顯示 -->
-            <div v-if="isOwnProfile" class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <!-- 編輯和刪除按鈕 - 只有在自己的檔案且非預覽模式才顯示 -->
+            <div v-if="isOwnProfile && !isPreviewMode" class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
               <button 
                 @click="editWork(work)"
                 class="bg-[#c68f84] text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[#c67868]"
@@ -321,7 +747,7 @@
       </div>
       
       <!-- 顧客評價 (只顯示，不可編輯) -->
-      <div>
+      <div id="reviews">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
             <h3 class="text-2xl text-gray-700 mr-2">顧客評價</h3>
@@ -363,8 +789,8 @@
       </div>
     </div>
 
-    <!-- 新增/編輯作品彈窗 -->
-    <div v-if="showAddWorkModal || showEditWorkModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <!-- 新增/編輯作品彈窗 - 只在非預覽模式顯示 -->
+    <div v-if="(showAddWorkModal || showEditWorkModal) && !isPreviewMode" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-xl font-bold text-gray-700 mb-4">
           {{ showEditWorkModal ? '編輯作品' : '新增作品' }}
@@ -469,8 +895,8 @@
     </div>
 
 
-    <!-- 時段管理彈窗 -->
-    <div v-if="showScheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <!-- 時段管理彈窗 - 只在非預覽模式顯示 -->
+    <div v-if="showScheduleModal && !isPreviewMode" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
           <h3 class="text-2xl font-bold text-gray-700">設定營業時段</h3>
@@ -607,7 +1033,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue' 
 import { useRoute, useRouter } from 'vue-router'
 import BookingView from './Booking.vue' 
 
@@ -621,6 +1047,15 @@ const showAddWorkModal = ref(false)
 const showEditWorkModal = ref(false)
 const showBookingModal = ref(false)
 const showScheduleModal = ref(false)
+const showOutline = ref(false)
+const activeSection = ref('basic-info')
+
+// 新增預覽模式狀態
+const isPreviewMode = ref(false)
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 // 當前登入的美甲師ID (在實際應用中這會來自認證系統)
 const currentUserId = ref('1') // 假設當前登入用戶是ID為1的美甲師
@@ -630,9 +1065,28 @@ const toggleMenu = () => {
 }
 
 const closeMenu = (event) => {
+  // 關閉左側選單
   if (!event.target.closest('.fixed') && showMenu.value) {
     showMenu.value = false
   }
+  // 關閉大綱浮窗
+  if (!event.target.closest('.fixed') && showOutline.value) {
+    showOutline.value = false
+  }
+}
+
+// 切換預覽模式
+const togglePreviewMode = () => {
+  isPreviewMode.value = !isPreviewMode.value
+  // 如果進入預覽模式時正在編輯，則退出編輯模式
+  if (isPreviewMode.value && editMode.value) {
+    cancelEdit()
+  }
+  // 關閉所有彈窗
+  showAddWorkModal.value = false
+  showEditWorkModal.value = false
+  showScheduleModal.value = false
+  showOutline.value = false
 }
 
 // 前往自己的個人檔案
@@ -888,6 +1342,9 @@ const districts = ref([])
 // 評論排序選項
 const reviewSortOption = ref('date-desc')
 
+// 預約管理相關狀態
+const appointmentFilter = ref('all')
+
 // 計算屬性 - 檢查是否為自己的檔案
 const isOwnProfile = computed(() => {
   return route.params.id === currentUserId.value
@@ -920,6 +1377,87 @@ const sortedReviews = computed(() => {
   })
 })
 
+// 模擬預約資料
+const appointments = ref([
+  {
+    id: 'apt1',
+    customerId: 'customer1',
+    customerName: 'Lily Chen',
+    customerImage: work2,
+    date: '2025-05-28',
+    time: '14:00-16:00',
+    status: 'pending',
+    notes: '希望做法式美甲，偏粉色系',
+    showFallback: false
+  },
+  {
+    id: 'apt2',
+    customerId: 'customer2',
+    customerName: 'Annie Wang',
+    customerImage: null,
+    date: '2025-05-30',
+    time: '10:00-12:00',
+    status: 'pending',
+    notes: '',
+    showFallback: true
+  },
+  {
+    id: 'apt3',
+    customerId: 'customer3',
+    customerName: 'Sophie Lin',
+    customerImage: work3,
+    date: '2025-06-02',
+    time: '16:00-18:00',
+    status: 'confirmed',
+    notes: '過敏體質，請使用低敏材料',
+    showFallback: false
+  },
+  {
+    id: 'apt4',
+    customerId: 'customer4',
+    customerName: 'Emma Huang',
+    customerImage: null,
+    date: '2025-05-25',
+    time: '14:00-16:00',
+    status: 'completed',
+    notes: '',
+    showFallback: true
+  },
+  {
+    id: 'apt5',
+    customerId: 'customer5',
+    customerName: 'Grace Wu',
+    customerImage: null,
+    date: '2025-05-20',
+    time: '10:00-12:00',
+    status: 'cancelled',
+    notes: '',
+    showFallback: true
+  }
+])
+
+// 根據過濾條件獲取預約
+const filteredAppointments = computed(() => {
+  const result = {
+    pending: [],
+    confirmed: [],
+    completed: [],
+    cancelled: []
+  }
+  
+  const filtered = appointmentFilter.value === 'all' 
+    ? appointments.value 
+    : appointments.value.filter(apt => apt.status === appointmentFilter.value)
+  
+  filtered.forEach(apt => {
+    if (result[apt.status]) {
+      result[apt.status].push(apt)
+    }
+  })
+  
+  return result
+})
+
 // 方法
 const handleImageError = () => {
   showFallback.value = true
@@ -937,16 +1475,14 @@ const formatDate = (dateString) => {
 
 // 編輯模式相關方法
 const startEdit = () => {
+  if (isPreviewMode.value) return // 預覽模式下不允許編輯
+  
   editMode.value = true
-  // 深拷貝當前資料作為編輯資料
   originalData.value = JSON.parse(JSON.stringify(currentArtist.value))
   editData.value = JSON.parse(JSON.stringify(currentArtist.value))
-  
-  // 初始化區域選項
   updateDistricts()
 }
 
-// 根據縣市選擇更新區域選項
 const updateDistricts = () => {
   const city = cities.find(city => city.name === editData.value.city)
   if (city) {
@@ -958,14 +1494,12 @@ const updateDistricts = () => {
 
 const cancelEdit = () => {
   editMode.value = false
-  // 恢復原始資料
   currentArtist.value = JSON.parse(JSON.stringify(originalData.value))
   editData.value = {}
   newStyle.value = ''
 }
 
 const saveChanges = () => {
-  // 驗證必填欄位
   if (!editData.value.studio?.trim()) {
     alert('請輸入工作室名稱')
     return
@@ -983,10 +1517,8 @@ const saveChanges = () => {
     return
   }
 
-  // 更新資料
   currentArtist.value = JSON.parse(JSON.stringify(editData.value))
   
-  // 在實際應用中，這裡會發送API請求到後端
   console.log('儲存資料:', currentArtist.value)
   
   editMode.value = false
@@ -1062,7 +1594,6 @@ const handleWorkImageUpload = (event) => {
   }
 }
 
-// 編輯作品
 const editWork = (work) => {
   editingWork.value = { ...work }
   workFormData.value = {
@@ -1073,7 +1604,6 @@ const editWork = (work) => {
   showEditWorkModal.value = true
 }
 
-// 更新作品
 const updateWork = () => {
   if (!workFormData.value.description.trim()) {
     alert('請輸入作品描述')
@@ -1082,7 +1612,6 @@ const updateWork = () => {
 
   const workIndex = currentArtist.value.works.findIndex(work => work.id === editingWork.value.id)
   if (workIndex > -1) {
-    // 更新作品資料
     currentArtist.value.works[workIndex] = {
       ...editingWork.value,
       description: workFormData.value.description.trim(),
@@ -1106,14 +1635,14 @@ const addWork = () => {
   }
 
   const work = {
-    id: Date.now(), // 簡單的ID生成，實際應用中應該用更好的方法
+    id: Date.now(),
     description: workFormData.value.description.trim(),
     date: new Date().toISOString().split('T')[0],
     image: workFormData.value.image,
     tags: [...workFormData.value.tags]
   }
 
-  currentArtist.value.works.unshift(work) // 加到最前面
+  currentArtist.value.works.unshift(work)
   
   alert('作品已成功新增！')
   cancelWorkForm()
@@ -1149,6 +1678,47 @@ const analyzeImageAndSuggestTags = (imageFile) => {
   // 假設你未來會丟去後端拿標籤
   // 暫時模擬一下
   suggestedTags.value = ['可愛', '貓眼', '日系'] // ← 根據圖片自動建議
+
+
+// 預約管理方法
+const confirmAppointment = (appointmentId) => {
+  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+  if (index > -1) {
+    appointments.value[index].status = 'confirmed'
+    alert('已確認預約！')
+  }
+}
+
+const completeAppointment = (appointmentId) => {
+  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+  if (index > -1) {
+    appointments.value[index].status = 'completed'
+    alert('已完成預約！')
+  }
+}
+
+const cancelAppointment = (appointmentId) => {
+  if (confirm('確定要取消此預約嗎？')) {
+    const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+    if (index > -1) {
+      appointments.value[index].status = 'cancelled'
+      alert('已取消預約！')
+    }
+  }
+}
+
+const chatWithCustomer = (appointment) => {
+  console.log('Starting chat with customer:', appointment.customerName, appointment.customerId)
+  
+  router.push({
+    path: '/chat',
+    query: { 
+      artistId: appointment.customerId,
+      artistName: appointment.customerName,
+      artistImage: appointment.customerImage,
+      fromBooking: 'true'
+    }
+  })
 }
 
 // 時段管理相關方法
@@ -1223,13 +1793,11 @@ const closeScheduleModal = () => {
 }
 
 const openScheduleModal = () => {
-  // 初始化臨時時段資料
   tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
   showScheduleModal.value = true
 }
 
 const saveSchedule = () => {
-  // 驗證至少有一天營業
   const hasOpenDay = Object.values(tempSchedule.value).some(day => day.isOpen && day.timeSlots.length > 0)
   
   if (!hasOpenDay) {
@@ -1237,27 +1805,21 @@ const saveSchedule = () => {
     return
   }
   
-  // 儲存時段設定
   weeklySchedule.value = JSON.parse(JSON.stringify(tempSchedule.value))
   
-  // 在實際應用中，這裡會發送API請求到後端儲存時段設定
   console.log('儲存時段設定:', weeklySchedule.value)
   
   alert('營業時段設定已儲存！')
   closeScheduleModal()
 }
 
-// 預約功能
 const openBookingModal = () => {
   showBookingModal.value = true
 }
 
-// 導航到聊天頁面的函數
 const navigateToChat = () => {
-  // 儲存當前美甲師信息到本地存儲或 Vuex/Pinia，以便在聊天頁面使用
   if (currentArtist.value && currentArtist.value.id) {
     console.log('Navigating to chat with:', currentArtist.value.studio, currentArtist.value.id)
-    // 導航到聊天頁面，並將美甲師ID，名稱和頭像作為參數傳遞
     router.push({
       path: '/chat',
       query: { 
@@ -1269,6 +1831,40 @@ const navigateToChat = () => {
   }
 }
 
+const toggleOutline = () => {
+  showOutline.value = !showOutline.value
+}
+
+const scrollToSection = (sectionId) => {
+  const element = document.getElementById(sectionId)
+  if (element) {
+    element.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    })
+    activeSection.value = sectionId
+    showOutline.value = false
+  }
+}
+
+const handleScroll = () => {
+  const sections = ['basic-info', 'appointment-management', 'schedule-management', 'portfolio', 'reviews']
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+  
+  for (const sectionId of sections) {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      const offsetTop = element.offsetTop - 100
+      const offsetBottom = offsetTop + element.offsetHeight
+      
+      if (scrollTop >= offsetTop && scrollTop < offsetBottom) {
+        activeSection.value = sectionId
+        break
+      }
+    }
+  }
+}
+
 onMounted(() => {
   const id = route.params.id
   const found = artists.value.find(a => a.id === id)
@@ -1276,7 +1872,6 @@ onMounted(() => {
   if (found) {
     currentArtist.value = found
     
-    // 載入美甲師的時段設定
     if (found.weeklySchedule) {
       weeklySchedule.value = found.weeklySchedule
     }
@@ -1284,16 +1879,14 @@ onMounted(() => {
     router.push('/home')
   }
   
-  // 檢查是否是自己的檔案
   if (id === currentUserId.value) {
-    // 可以編輯
     console.log('這是自己的檔案，可以編輯')
   }
   
-  // 初始化時段設定彈窗的臨時資料
   tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
   
   window.scrollTo(0, 0)
+  window.addEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -1312,7 +1905,6 @@ onMounted(() => {
   background-color: #f9fafb; 
 }
 
-/* 使用line-clamp限制文本行數 */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1327,12 +1919,10 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 群組hover效果 */
 .group:hover .group-hover\:opacity-100 {
   opacity: 1;
 }
 
-/* 輸入框focus效果 */
 input:focus, textarea:focus, select:focus {
   outline: none;
 }

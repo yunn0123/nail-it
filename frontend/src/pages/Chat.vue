@@ -103,26 +103,35 @@ const router = useRouter()
 const chatContainer = ref(null)
 
 // 聊天對象列表(假資料)
+
+import work1 from '../assets/temp/work1.jpg'
+import design2 from '../assets/temp/design2.jpg'
+import design3 from '../assets/temp/design3.jpg'
+
 const contacts = ref([
   {
     id: '1',
     name: 'waka.nail',
-    image: null,
+    type: 'artist', // 添加類型標識
+    image: work1, // 直接使用導入的圖片
+    createdAt: new Date('2025-01-01'),
     messages: [
-      { from: 'me', text: '你好，請問有空檔嗎？', time: new Date(2024, 3, 20, 14, 30) }, // 上個月
+      { from: 'me', text: '你好，請問有空檔嗎？', time: new Date(2024, 3, 20, 14, 30) },
       { from: '她', text: '哈囉～可以喔！', time: new Date(2024, 3, 20, 14, 32) },
       { from: 'me', text: '那我要預約下週的服務', time: new Date(2024, 3, 20, 14, 35) },
       { from: '她', text: '可以哦！', time: new Date(2024, 3, 20, 14, 40) },
       { from: 'me', text: '謝謝，下週見！', time: new Date(2024, 3, 20, 14, 42) },
-      { from: 'me', text: '不好意思，我想確認一下預約的時間', time: new Date(2024, 4, 13, 10, 15) }, // 昨天
+      { from: 'me', text: '不好意思，我想確認一下預約的時間', time: new Date(2024, 4, 13, 10, 15) },
       { from: '她', text: '您好，您的預約是明天下午三點。', time: new Date(2024, 4, 13, 10, 20) },
-      { from: 'me', text: '好的，明天見！', time: new Date(2024, 4, 14, 9, 30) } // 今天
+      { from: 'me', text: '好的，明天見！', time: new Date(2024, 4, 14, 9, 30) }
     ]
   },
   {
     id: '2',
     name: 'jolieee_nail',
-    image: null,
+    type: 'artist', // 美甲師
+    image: design2, // 直接使用導入的圖片
+    createdAt: new Date('2025-05-02'),
     messages: [
       { from: '她', text: '有什麼需要幫忙的嗎？', time: new Date(2024, 4, 9, 10, 15) }
     ]
@@ -130,7 +139,9 @@ const contacts = ref([
   {
     id: '3',
     name: '61.nail',
-    image: null,
+    type: 'artist', // 美甲師
+    image: design3, // 直接使用導入的圖片
+    createdAt: new Date('2024-04-03'),
     messages: []
   }
 ])
@@ -139,8 +150,8 @@ const contacts = ref([
 const sortedContacts = computed(() => {
   return [...contacts.value].sort((a, b) => {
     // 獲取最近一條消息的時間
-    const aLastMessage = a.messages.length > 0 ? a.messages[a.messages.length - 1].time : new Date(0);
-    const bLastMessage = b.messages.length > 0 ? b.messages[b.messages.length - 1].time : new Date(0);
+    const aLastMessage = a.messages.length > 0 ? a.messages[a.messages.length - 1].time : a.createdAt;
+    const bLastMessage = b.messages.length > 0 ? b.messages[b.messages.length - 1].time : b.createdAt;
     
     // 按時間降序排列（最新的在前）
     return bLastMessage - aLastMessage;
@@ -273,10 +284,8 @@ const selectContact = (contact) => {
 
 const sendMessage = async () => {
   if (newMessage.value.trim() !== '') {
-    // 獲取當前時間
     const currentTime = new Date();
     
-    // 添加自己的消息
     selectedContact.value.messages.push({
       from: 'me',
       text: newMessage.value,
@@ -287,42 +296,37 @@ const sendMessage = async () => {
     await nextTick()
     scrollToBottom()
     
-    // 模擬回覆 (示範用)
-    setTimeout(() => {
-      // 添加對方的回覆
-      selectedContact.value.messages.push({
-        from: '她',
-        text: '收到您的訊息，我會盡快回覆！',
-        time: new Date() // 新的時間戳
-      })
-      
-      nextTick(() => {
-        scrollToBottom()
-      })
-    }, 1000)
+    // 只有美甲師才會自動回覆，顧客不會
+    if (selectedContact.value.type === 'artist') {
+      setTimeout(() => {
+        selectedContact.value.messages.push({
+          from: '她',
+          text: '收到您的訊息，我會盡快回覆！',
+          time: new Date()
+        })
+        
+        nextTick(() => {
+          scrollToBottom()
+        })
+      }, 1000)
+    }
   }
 }
 
-// 在頁面載入時檢查是否有從 Profile 頁面傳來的資訊
-onMounted(() => {
-  // id=1：真實頭像
-  import('../assets/temp/work1.jpg').then(module => {
-    contacts.value[0].image = module.default; // waka.nail
-  });
-  
-  // id=2 和 id=3 使用默認頭像（即保持 image 為 null）
 
+onMounted(() => {
+  // 移除原來的動態導入代碼，因為我們已經在上面直接設置了
+  
   // 檢查 URL 查詢參數
   const artistId = route.query.artistId
   const artistName = route.query.artistName
   const artistImage = route.query.artistImage
   
-  // 如果從 Profile 頁面獲取了美甲師資訊
   if (artistId && artistName) {
-    console.log('Received artist info:', artistId, artistName)
+    console.log('Received contact info:', artistId, artistName)
     
-    // 檢查聯絡人列表中是否已存在該美甲師
-    const existingContact = contacts.value.find(contact => contact.id === artistId)
+    // 檢查聯絡人列表中是否已存在該聯絡人
+    let existingContact = contacts.value.find(contact => contact.id === artistId)
     
     if (existingContact) {
       // 如果已存在，選擇該聯絡人
@@ -332,44 +336,52 @@ onMounted(() => {
       // 如果不存在，創建新的聯絡人並添加到列表
       console.log('Creating new contact for:', artistName)
       
-      // 只有當 artistId === '1' 時才使用真實頭像（示範用）
-      let contactImage = null;
-      if (artistId === '1' && artistImage) {
-        contactImage = artistImage;
+      // 判斷這是美甲師還是顧客
+      // 如果是從 Profile 預約管理來的，則是顧客
+      const isCustomer = route.query.fromBooking === 'true' || 
+                        !contacts.value.some(c => c.id === artistId && c.type === 'artist')
+      
+      let contactImage = null
+      if (artistImage && artistImage !== 'null') {
+        contactImage = artistImage
       }
       
       const newContact = {
         id: artistId,
         name: artistName,
+        type: isCustomer ? 'customer' : 'artist', // 設置類型
         image: contactImage,
         messages: []
       }
       
-      // 添加到聯絡人列表
-      contacts.value.push(newContact)
+      // 添加到聯絡人列表最前面
+      contacts.value.unshift(newContact)
       
       // 選擇這個新聯絡人
       selectContact(newContact)
       
-      // 自動顯示歡迎消息
-      setTimeout(() => {
-        newContact.messages.push({
-          from: '她',
-          text: `您好！我是${artistName}，很高興為您服務。請問有什麼可以幫助您的嗎？`,
-          time: new Date()
-        })
-        nextTick(() => {
-          scrollToBottom()
-        })
-      }, 500)
+      // 只有美甲師才自動發送歡迎訊息
+      if (newContact.type === 'artist') {
+        setTimeout(() => {
+          newContact.messages.push({
+            from: '她',
+            text: `您好！我是${artistName}，很高興為您服務。請問有什麼可以幫助您的嗎？`,
+            time: new Date()
+          })
+          nextTick(() => {
+            scrollToBottom()
+          })
+        }, 500)
+      }
     }
   } else {
-    // 如果沒有特定美甲師，預設選擇第一個聯絡人（如果有的話）
+    // 如果沒有特定聯絡人，預設選擇第一個聯絡人（如果有的話）
     if (contacts.value.length > 0) {
       selectContact(contacts.value[0])
     }
   }
 })
+
 
 // 監聽 selectedContact.messages 的變化
 watch(() => selectedContact.value.messages, () => {

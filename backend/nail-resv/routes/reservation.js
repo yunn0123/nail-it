@@ -2,85 +2,58 @@
 const express = require('express');
 const router  = express.Router();
 
-// In-memory reservations: { [artistId]: { [date]: Set<slot> } }
-const reservations = {};
-
-/**
- * Helper: return sorted free slots for artistId on dateStr
- * Enforces: date > today, date ≤ end of month+2, weekday availability
- */
-function getAvailableSlots(artistId, dateStr) {
-  // dynamic require to avoid circular dependency
-  const { techAvailability } = require('./availability');
-
-  // 1. Parse date
-  const date = new Date(dateStr + 'T00:00:00');
-  if (isNaN(date)) throw new Error('Invalid date format');
-
-  // 2. Compute window: tomorrow → end of (current month + 2)
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  // month+3, day 0 gives last day of month+2
-  const endWindow = new Date(today.getFullYear(), today.getMonth() + 3, 0);
-
-  if (date < tomorrow || date > endWindow) {
-    throw new Error(
-      `Date must be between ${tomorrow.toISOString().slice(0,10)} and ` +
-      `${endWindow.toISOString().slice(0,10)}`
-    );
-  }
-
-  // 3. Check weekday and slots
-  const dayNum = date.getDay();
-  const slotsSet = techAvailability[artistId]?.[dayNum];
-  if (!slotsSet) {
-    throw new Error('Technician not available on this weekday');
-  }
-
-  // 4. Filter out already booked slots for that date
-  const fullSlots = Array.from(slotsSet);
-  const taken     = Array.from(reservations[artistId]?.[dateStr] || []);
-  return fullSlots.filter(s => !taken.includes(s)).sort();
-}
-// expose for availability route
-router.getAvailableSlots = getAvailableSlots;
-
-/**
- * POST /api/reservations/book
- * Body: { customerId, artistId, date, time, note? }
- */
-router.post('/book', (req, res) => {
-  // dynamic require to avoid circular dependency
-  const { techAvailability } = require('./availability');
-
-  const { customerId, artistId, date, time, note } = req.body;
-  if (![customerId, artistId, date, time].every(Boolean)) {
-    return res.status(400).json({ error: 'Missing required fields.' });
-  }
-
-  // 1) validate & fetch free slots
-  let free;
+// POST /api/reservations/book
+// Body: { username, studio, date, time, note }
+router.post('/book', async (req, res, next) => {
   try {
-    free = getAvailableSlots(artistId, date);
-  } catch (e) {
-    return res.status(400).json({ error: e.message });
-  }
-  if (!free.includes(time)) {
-    return res.status(400).json({ error: 'Requested slot unavailable.' });
-  }
+    const { username, studio, date, time, note } = req.body;
+    if (![username, studio, date, time].every(Boolean)) {
+      return res.status(400).json({ error: 'Missing required fields.' });
+    }
 
-  // 2) record reservation
-  reservations[artistId] = reservations[artistId] || {};
-  reservations[artistId][date] = reservations[artistId][date] || new Set();
-  reservations[artistId][date].add(time);
+    const supabase = req.supabase;
+    // resolve ids
+    const { data: cust } = await supabase
+      .from('customers')
+      .select('user_id')
+      .eq('username', username)
+      .single();
+    if (!cust) throw new Error('Customer not found');
 
-  // 3) respond
-  return res.status(201).json({
-    message: 'Reservation confirmed',
-    reservation: { artistId, customerId, date, time, note: note || '' }
-  });
+    const { data: artist } = await supabase
+      .from('artists')
+      .select('user_id')
+      .eq('studio_name', studio)
+      .single();
+    if (!artist) throw new Error('Artist not found');
+
+    // check slot available: reuse GET slots
+    const resp = await fetch(
+      `http://localhost:${process.env.PORT || 3000}/api/technicians/${studio}/slots?date=${date}`
+    );
+    const { availableSlots, error } = await resp.json();
+    if (error) throw new Error(error);
+    if (!availableSlots.includes(time)) {
+      return res.status(400).json({ error: 'Requested slot unavailable.' });
+    }
+
+    // insert appointment
+    const { error: e2 } = await supabase
+      .from('appointments')
+      .insert([{
+        customer_id:  cust.user_id,
+        artist_id:    artist.user_id,
+        service_date: date,
+        service_time: time,
+        status:       'confirmed',
+        note:         note || ''
+      }]);
+    if (e2) throw e2;
+
+    res.status(201).json({ message: 'Reservation confirmed' });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

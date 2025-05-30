@@ -4,8 +4,13 @@
         <div class="flex items-center justify-between p-3 mx-4">
             <!-- 左側：Logo 和漢堡選單 -->
             <div class="flex items-center">
-                <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
-                <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
+            <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
+            <img 
+                src="../assets/logo.png" 
+                alt="Logo" 
+                class="w-60 h-auto cursor-pointer" 
+                @click="router.push('/home')" 
+            />
             </div>
 
             <!-- 假搜尋欄 -->
@@ -16,8 +21,11 @@
                 搜尋美甲師或作品...
             </div>
 
-            <!-- 右側頭像 -->
-            <div class="w-10 h-10 bg-[#c68f84] rounded-full"></div>
+            <!-- 右側：點擊回到自己的 profile -->
+            <div 
+                @click="goToSelfProfile" 
+                class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors"
+            ></div>
         </div>
 
         <!-- 左側選單 -->
@@ -35,7 +43,7 @@
         <!-- 真正的內容區塊 -->
         <div class="flex flex-col items-center justify-start px-6 pt-8">
             <!-- 標題 -->
-            <h2 class="text-3xl text-[#5f4c47] font-bold mb-8">隱私設定</h2>
+            <h2 class="text-3xl text-gray-700 font-semibold mb-8">隱私設定</h2>
 
             <!-- 表單區塊 -->
             <div class="bg-white shadow rounded-2xl flex flex-col md:flex-row p-6 max-w-4xl w-full">
@@ -53,7 +61,7 @@
 
                 <!-- 右側：基本資料表單 -->
                 <div class="flex-1 ml-0 md:ml-8">
-                    <h3 class="text-xl font-bold text-gray-700 mb-4">編輯資訊</h3>
+                    <h3 class="text-xl font-bold text-gray-600 mb-4">編輯資訊</h3>
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm text-gray-600">email</label>
@@ -156,4 +164,17 @@ const handleImageUpload = (e) => {
   }
   reader.readAsDataURL(file)
 }
+
+// 前往自己的個人檔案
+const goToSelfProfile = () => {
+  // 判斷用戶類型
+  const userType = localStorage.getItem('userType') || 'artist'
+  const userId = localStorage.getItem('userId') || '1'
+  
+  if (userType === 'customer') {
+    router.push(`/profile/customer/${userId}`)
+  } else {
+    router.push(`/profile/${userId}`)
+  }
+  }
 </script>

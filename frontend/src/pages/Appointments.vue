@@ -1,12 +1,18 @@
+<!-- Appointments.vue -->
 <template>
   <div class="min-h-screen bg-[#efddda] flex flex-col" @click="closeMenu">
     <!-- Navbar -->
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
       <div class="flex items-center">
-        <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
-        <img src="../assets/logo.png" alt="Logo" class="w-60 h-auto" />
-      </div>
+          <button @click.stop="toggleMenu" class="text-[#c68f84] text-5xl">&#9776;</button>
+          <img 
+            src="../assets/logo.png" 
+            alt="Logo" 
+            class="w-60 h-auto cursor-pointer" 
+            @click="router.push('/home')" 
+          />
+        </div>
 
       <!-- 假搜尋欄，但其實是 router link -->
       <div 
@@ -16,8 +22,11 @@
         搜尋美甲師或作品...
       </div>
 
-      <!-- 右側（保留未來可以放頭像） -->
-      <div class="w-10 h-10 bg-[#c68f84] rounded-full"></div>
+      <!-- 右側：點擊回到自己的 profile -->
+      <div 
+          @click="goToSelfProfile" 
+          class="w-10 h-10 bg-[#c68f84] rounded-full cursor-pointer hover:bg-[#c67868] transition-colors"
+        ></div>
     </div>
     
     <!-- 左側選單 -->
@@ -34,7 +43,7 @@
 
     <!-- 預約紀錄內容 -->
     <div class="p-6">
-      <h1 class="text-2xl font-semibold text-[#5f4c47]  mb-4 border-b border-[#c68f84] pb-2">
+      <h1 class="text-2xl font-semibold text-gray-700  mb-4 border-b border-[#c68f84] pb-2">
         預約紀錄
       </h1>
 
@@ -45,13 +54,13 @@
           <div class="flex items-center space-x-4">
             <div class="w-12 h-12 bg-gray-300 rounded-full"></div>
             <div>
-              <p class="text-gray-800 font-semibold">abc nails💅</p>
+              <p class="text-gray-700 font-semibold">abc nails💅</p>
               <p class="text-gray-500 text-sm">$ 1000 - 1500</p>
             </div>
           </div>
           <div class="text-right">
             <p class="text-xs text-gray-500">預約時間</p>
-            <p class="text-lg font-bold text-[#5f4c47]">2025-04-17 13:30</p>
+            <p class="text-lg font-bold text-gray-700">2025-04-17 13:30</p>
           </div>
         </div>
       </section>
@@ -108,6 +117,19 @@ const showMenu = ref(false)
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
+
+// 前往自己的個人檔案
+const goToSelfProfile = () => {
+  // 判斷用戶類型
+  const userType = localStorage.getItem('userType') || 'artist'
+  const userId = localStorage.getItem('userId') || '1'
+  
+  if (userType === 'customer') {
+    router.push(`/profile/customer/${userId}`)
+  } else {
+    router.push(`/profile/${userId}`)
+  }
+  }
 
 // 點其他地方要關掉選單
 const closeMenu = () => {
