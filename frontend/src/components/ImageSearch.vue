@@ -18,7 +18,7 @@
     <div v-if="uploadedImage" class="flex gap-4 mt-4">
       <button 
         @click="resetUpload"
-        class="px-6 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-[#5f4c47] transition"
+        class="px-6 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 transition"
       >
         Reset
       </button>
