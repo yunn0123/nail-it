@@ -795,12 +795,12 @@
         <h3 class="text-xl font-bold text-gray-700 mb-4">
           {{ showEditWorkModal ? '編輯作品' : '新增作品' }}
         </h3>
-        
+
+        <!-- 作品圖片 -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">作品圖片</label>
-          <!-- 顯示當前圖片（編輯模式） -->
           <div v-if="showEditWorkModal && editingWork.image" class="mb-2">
-            <img :src="editingWork.image" alt="當前作品圖片" class="w-20 h-20 object-cover rounded-lg">
+            <img :src="editingWork.image" alt="當前作品圖片" class="w-20 h-20 object-cover rounded-lg" />
             <p class="text-xs text-gray-500 mt-1">當前圖片（可上傳新圖片替換）</p>
           </div>
           <input 
@@ -812,6 +812,7 @@
           />
         </div>
 
+        <!-- 作品描述 -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">作品描述</label>
           <textarea 
@@ -822,8 +823,11 @@
           ></textarea>
         </div>
 
+        <!-- 標籤區塊 -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+
+          <!-- 已選擇標籤 -->
           <div class="flex flex-wrap gap-2 mb-2">
             <span 
               v-for="(tag, index) in workFormData.tags" 
@@ -839,7 +843,24 @@
               </button>
             </span>
           </div>
-          <div class="flex space-x-2">
+
+          <!-- AI 建議標籤 -->
+          <div v-if="suggestedTags.length" class="mb-2">
+            <p class="text-sm text-gray-500 mb-1">AI 建議標籤 (點選加入)：</p>
+            <div class="flex flex-wrap gap-2">
+              <button 
+                v-for="(tag, index) in suggestedTags" 
+                :key="tag"
+                @click="acceptSuggestedTag(tag, index)"
+                class="bg-[#f3e4e1] text-[#5f4c47] py-1 px-3 rounded-full text-sm hover:bg-[#e4d1ce] transition"
+              >
+                {{ tag }} 
+              </button>
+            </div>
+          </div>
+
+          <!-- 手動新增標籤 -->
+          <div class="flex space-x-2 mt-2">
             <input 
               v-model="newWorkTag" 
               @keyup.enter="addWorkTag"
@@ -855,6 +876,7 @@
           </div>
         </div>
 
+        <!-- 按鈕 -->
         <div class="flex space-x-3">
           <button 
             @click="showEditWorkModal ? updateWork() : addWork()"
@@ -871,6 +893,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- 時段管理彈窗 - 只在非預覽模式顯示 -->
     <div v-if="showScheduleModal && !isPreviewMode" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1565,6 +1588,7 @@ const handleWorkImageUpload = (event) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       workFormData.value.image = e.target.result
+      analyzeImageAndSuggestTags(file) // ← 加上這行觸發 AI 分析
     }
     reader.readAsDataURL(file)
   }
@@ -1624,6 +1648,8 @@ const addWork = () => {
   cancelWorkForm()
 }
 
+const suggestedTags = ref([])
+
 const cancelWorkForm = () => {
   showAddWorkModal.value = false
   showEditWorkModal.value = false
@@ -1634,10 +1660,25 @@ const cancelWorkForm = () => {
   }
   editingWork.value = {}
   newWorkTag.value = ''
+  suggestedTags.value = [] 
   if (workImageInput.value) {
     workImageInput.value.value = ''
   }
 }
+
+const acceptSuggestedTag = (tag, index) => {
+  if (!workFormData.value.tags.includes(tag)) {
+    workFormData.value.tags.push(tag)
+  }
+  suggestedTags.value.splice(index, 1)
+}
+
+
+const analyzeImageAndSuggestTags = (imageFile) => {
+  // 假設你未來會丟去後端拿標籤
+  // 暫時模擬一下
+  suggestedTags.value = ['可愛', '貓眼', '日系'] // ← 根據圖片自動建議
+
 
 // 預約管理方法
 const confirmAppointment = (appointmentId) => {
