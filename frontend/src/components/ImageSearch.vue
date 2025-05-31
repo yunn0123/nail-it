@@ -20,13 +20,13 @@
         @click="resetUpload"
         class="px-6 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 transition"
       >
-        Reset
+        重置
       </button>
       <button 
         @click="searchSimilar"
         class="px-6 py-2 rounded-full bg-[#c68f84] text-white hover:bg-[#a96c60] transition"
       >
-        OK
+        搜尋
       </button>
     </div>
 
@@ -41,7 +41,10 @@
 
     <!-- 搜尋結果區 -->
     <div v-if="uploadedImage && similarWorks.length">
-      <h2 class="text-xl font-semibold text-gray-600 mb-4">找到類似的作品</h2>
+      <div class="flex items-center mt-6 mb-7">
+    <h2 class="text-2xl text-gray-700 mt-4">找到類似的作品</h2>
+    <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+  </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div 
           v-for="work in similarWorks" 
