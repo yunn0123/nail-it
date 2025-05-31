@@ -147,20 +147,12 @@ const setRating = (id, value) => {
   }
 }
 
-// const submitReview = (id) => {
-//   editMode[id] = false
-//   // 模擬送出 API
-//   console.log('已送出', reviews.value.find(r => r.id === id))
-// }
-
 const submitReview = (id) => {
-  const review = reviews.value.find(r => r.id === id)
-  if (review) {
-    review.comment = review.tempComment
-    review.rating = review.tempRating
-  }
   editMode[id] = false
+  // 模擬送出 API
+  console.log('已送出', reviews.value.find(r => r.id === id))
 }
+
 
 // 前往自己的個人檔案
 const goToSelfProfile = () => {
