@@ -168,7 +168,7 @@
           v-if="categoryDropdownOpen" 
           ref="categoryDropdownMenu"
           :class="[
-            'absolute z-50 bg-white border border-gray-300 rounded shadow-lg w-full max-h-60 overflow-y-auto',
+            'absolute z-50 bg-white border border-gray-300 rounded shadow-lg w-full max-h-90 overflow-y-auto',
             dropdownDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'
           ]"
         >
