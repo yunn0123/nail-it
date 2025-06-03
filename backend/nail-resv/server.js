@@ -25,11 +25,18 @@ const { router: availabilityRouter } = require('./routes/availability');
 const reservationRouter              = require('./routes/reservation');
 const searchRouter = require('./routes/search');
 const tagImagesRouter = require('./routes/tagImages');
+const { router: registerRouter } = require('./routes/register');
+const loginRoute = require('./routes/login');
+
 
 app.use('/api/technicians', availabilityRouter);
 app.use('/api/reservations', reservationRouter);
 app.use('/api', searchRouter);
 app.use('/api', tagImagesRouter);
+app.use('/api/register', registerRouter);
+app.use('/api/login', loginRoute);
+
+
 
 app.get('/', (req, res) => res.send('Nail-Resv API'));
 
@@ -42,15 +49,4 @@ app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
 
-//Test!!!!
-app.get('/_health', async (req, res, next) => {
-  try {
-    const { data, error } = await req.supabase.from('artists').select('user_id').limit(1);
-    if (error) throw error;
-    res.json({ ok: true, sampleArtist: data[0] });
-  } catch (err) {
-    console.error('Health check failed:', err);
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
 

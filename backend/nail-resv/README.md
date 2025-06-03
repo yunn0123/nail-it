@@ -1,18 +1,19 @@
 # Nail Reservation Backend
 
-This is a simple Node.js/Express backend for a nail-artist reservation system. It allows technicians to:
+This is a simple Node.js/Express backend for a nail-artist reservation system. It allows:
 
-* Define weekly availability by **weekday** with fixed time slots (e.g., Monday at 10:00, Wednesday at 14:00).
-* Customers can fetch available slots for a given date.
-* Book a slot (with an optional note), which removes it for that specific date.
+* **Technicians** to define weekly availability by **weekday** with fixed time slots (e.g., Monday at 10:00, Wednesday at 14:00).
+* **Customers** to fetch available slots for a given date.
+* **Users** to register and log in (as either a customer or an artist).
+* **Customers** to book slots, which will be removed for that specific date.
 
-All data is stored Supabase with user identification.
+All data is stored in **Supabase**, including user authentication and profile details.
 
 ---
 
 ## Prerequisites
 
-* Node.js v14+ installed
+* Node.js v14+
 * Git (optional, to clone this repo)
 
 ---
@@ -24,6 +25,7 @@ All data is stored Supabase with user identification.
    ```bash
    npm install express
    ```
+
 2. **Start the server**
 
    ```bash
@@ -38,20 +40,41 @@ All data is stored Supabase with user identification.
 
 Use these **Windows CMD–compatible** `curl` one-liners to interact.
 
-### 1. Technician: Set Weekly Availability
+### 1. User Authentication
+
+#### Login
+
+```cmd
+curl -X POST http://localhost:4000/api/login -H "Content-Type: application/json" -d "{\"email\":\"customer@example.com\",\"password\":\"customerpass\"}"
+```
+
+#### Customer Registration
+
+```cmd
+curl -X POST http://localhost:4000/api/register -H "Content-Type: application/json" -d "{\"role\":\"customer\",\"email\":\"customer@example.com\",\"password\":\"customerpass\",\"username\":\"customer_one\"}"
+```
+
+#### Artist Registration
+
+```cmd
+curl -X POST http://localhost:4000/api/register -H "Content-Type: application/json" -d "{\"role\":\"artist\",\"email\":\"artist@example.com\",\"password\":\"artistpass\",\"studio_name\":\"Studio Flower\",\"city\":\"Taipei\",\"district\":\"Xinyi\",\"bio\":\"Specializes in minimalist designs.\",\"styles\":[\"#minimalist\",\"#gel\",\"#cute\"]}"
+```
+
+---
+
+### 2. Technician: Set Weekly Availability
 
 Define which weekdays and time slots the artist is available:
 
 ```cmd
 curl -X POST http://localhost:4000/api/technicians/yunchen/availability   -H "Content-Type: application/json"   -d "{\"availability\":{\"Mon\":[\"10:00\"],\"Wed\":[\"12:00\",\"14:00\"],\"Fri\":[\"10:00\",\"18:00\"]}}"
-
 ```
 
-* **`yunchen`**: just a testing artist name.
-* **`Mon`, `Wed`, `Fri`**: weekdays.
-* **Time slots**: any subset of `[10:00, 12:00, 14:00, 16:00, 18:00]`.
+* `yunchen`: just a testing artist name.
+* `Mon`, `Wed`, `Fri`: weekdays.
+* Time slots: any subset of `[10:00, 12:00, 14:00, 16:00, 18:00]`.
 
-### 2. Customer: Fetch Available Slots
+### 3. Customer: Fetch Available Slots
 
 Get the technician’s free slots for a specific date. Only dates after **tomorrow** are accepted.
 
@@ -61,20 +84,20 @@ curl "http://localhost:4000/api/technicians/yunchen/slots?date=2025-06-06"
 
 * **Response**: JSON listing `availableSlots` for that date (or an error if outside the window or weekday not available).
 
-### 3. Customer: Book a Reservation
+### 4. Customer: Book a Reservation
 
 Reserve a slot and optionally leave a note for the technician:
 
 ```cmd
-curl -X POST http://localhost:4000/api/reservations/book   -H "Content-Type: application/json"   -d "{\"username\":\"ying\",\"studio\":\"yunchen\",\"date\":\"2025-06-06\",\"time\":\"12:00:00\",\"note\":\"Hi I am a flower\"}" 
+curl -X POST http://localhost:4000/api/reservations/book   -H "Content-Type: application/json"   -d "{\"username\":\"ying\",\"studio\":\"yunchen\",\"date\":\"2025-06-06\",\"time\":\"12:00:00\",\"note\":\"Hi I am a flower\"}"
 ```
 
-* **`customerId`**: ID for the customer.
-* **`artistId`** must match the technician.
-* **Slot**: must appear in the fetched `availableSlots`.
-* **Note**: optional string.
+* `username`: customer ID.
+* `studio`: must match the technician's studio name.
+* `date` and `time`: must match available slots.
+* `note`: optional.
 
-### 4. Verify Slot Removal
+### 5. Verify Slot Removal
 
 After booking, the slot is removed. Fetch again:
 
@@ -86,4 +109,10 @@ You should see that the previously booked time is no longer listed.
 
 ---
 
+## Notes
 
+* Supabase handles authentication and user profile storage.
+* Use consistent usernames and studio names for reliable testing.
+* Handle time slots and date validations carefully in client code.
+
+---
