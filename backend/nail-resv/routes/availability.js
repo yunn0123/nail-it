@@ -171,7 +171,7 @@ router.get('/:artistId/slots', async (req, res) => {
     }
 
     // 獲取星期幾（轉成小寫英文）
-    const weekdayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const weekday = weekdayNames[dateObj.getDay()];
 
     // 獲取該星期的可用時段

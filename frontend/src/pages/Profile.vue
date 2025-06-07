@@ -1041,15 +1041,15 @@
     </div>
 
     <!-- 預約彈窗模式 -->
-    <div v-if="showBookingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-        <BookingView 
-          :artist-id="currentArtist.id" 
-          :weekly-schedule="weeklySchedule"
-          @close="showBookingModal = false"
-        />
-      </div>
-    </div>
+<div v-if="showBookingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+    <BookingView 
+      :artist-id="currentArtist.id" 
+      :has-schedule="hasAnySchedule"
+      @close="showBookingModal = false"
+    />
+  </div>
+</div>
   </div>
 </template>
 

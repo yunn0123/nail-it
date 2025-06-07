@@ -6,6 +6,7 @@ export const API_BASE_URL = `${API_BASE}/api`
 // 通用的 API 請求函數
 export const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
+  console.log('🔗 完整 API URL:', url)
   const config = {
     headers: {
       'Content-Type': 'application/json',
