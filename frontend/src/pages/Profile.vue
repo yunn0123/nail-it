@@ -676,6 +676,19 @@
           </button>
         </div>
 
+        <!-- 🔥 在這裡加入未設定時段提示 -->
+        <div v-if="!hasAnySchedule" class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-4">
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+              <h4 class="text-lg font-medium text-yellow-800">尚未設定營業時段</h4>
+              <p class="text-yellow-700 text-sm">您需要設定營業時段，顧客才能進行預約。</p>
+            </div>
+          </div>
+        </div>
+
         <!-- 目前時段顯示 -->
         <div class="bg-white rounded-xl p-6 shadow">
           <h4 class="text-lg font-medium text-gray-700 mb-4">目前營業時段</h4>
@@ -1309,12 +1322,12 @@ const availableTimeSlots = [
 
 // 預設週間時段設定
 const defaultWeeklySchedule = {
-  monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  wednesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  saturday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00'] },
+  monday: { isOpen: false, timeSlots: [] },
+  tuesday: { isOpen: false, timeSlots: [] },
+  wednesday: { isOpen: false, timeSlots: [] },
+  thursday: { isOpen: false, timeSlots: [] },
+  friday: { isOpen: false, timeSlots: [] },
+  saturday: { isOpen: false, timeSlots: [] },
   sunday: { isOpen: false, timeSlots: [] }
 }
 
@@ -1538,6 +1551,7 @@ const saveChanges = async () => {
     priceLow: editData.value.priceLow,
     priceHigh: editData.value.priceHigh
   }
+  console.log('準備發送的資料:', updateData) 
   
   // 發送更新請求
   const success = await updateArtistData(updateData)
@@ -1821,7 +1835,7 @@ const openScheduleModal = () => {
   showScheduleModal.value = true
 }
 
-const saveSchedule = () => {
+const saveSchedule = async () => {
   const hasOpenDay = Object.values(tempSchedule.value).some(day => day.isOpen && day.timeSlots.length > 0)
   
   if (!hasOpenDay) {
@@ -1829,12 +1843,53 @@ const saveSchedule = () => {
     return
   }
   
-  weeklySchedule.value = JSON.parse(JSON.stringify(tempSchedule.value))
-  
-  console.log('儲存時段設定:', weeklySchedule.value)
-  
-  alert('營業時段設定已儲存！')
-  closeScheduleModal()
+  try {
+    const availability = {}
+    
+    // 星期轉換對照表
+    const weekdayMap = {
+      'monday': 'Mon',
+      'tuesday': 'Tue', 
+      'wednesday': 'Wed',
+      'thursday': 'Thu',
+      'friday': 'Fri',
+      'saturday': 'Sat',
+      'sunday': 'Sun'
+    }
+    
+    // 轉換前端格式到 API 需要的格式
+    Object.keys(tempSchedule.value).forEach(day => {
+      const daySchedule = tempSchedule.value[day]
+      const dbWeekday = weekdayMap[day] // 轉換成 Mon, Tue 格式
+      
+      if (daySchedule.isOpen && daySchedule.timeSlots.length > 0) {
+        availability[dbWeekday] = daySchedule.timeSlots.map(slot => slot.split('-')[0])
+      } else {
+        availability[dbWeekday] = []
+      }
+    })
+    
+    console.log('準備儲存的時段資料:', availability)
+    
+    const result = await apiRequest(`/artists/${currentArtist.value.id}/availability`, {
+      method: 'POST',
+      body: JSON.stringify({ availability })
+    })
+    
+    if (result.success) {
+      // 更新本地資料
+      weeklySchedule.value = JSON.parse(JSON.stringify(tempSchedule.value))
+      console.log('營業時段儲存成功')
+      alert('營業時段設定已儲存！')
+      closeScheduleModal()
+    } else {
+      console.error('儲存營業時段失敗:', result.error)
+      alert(`儲存失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('儲存營業時段錯誤:', error)
+    alert('儲存時段時發生錯誤')
+  }
 }
 
 const openBookingModal = () => {
@@ -1948,24 +2003,101 @@ const updateArtistData = async (updateData) => {
     return false
   }
 }
+const getEndTime = (startTime) => {
+  const [hours, minutes] = startTime.split(':').map(Number)
+  const endHours = hours + 2 // 假設每個時段2小時
+  return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+}
+
+const hasAnySchedule = computed(() => {
+  const result = Object.values(weeklySchedule.value).some(day => day.isOpen && day.timeSlots.length > 0)
+  console.log('🤔 hasAnySchedule 計算:', {
+    weeklySchedule: weeklySchedule.value,
+    result: result
+  })
+  return result
+})
+
+const loadArtistSchedule = async (artistId) => {
+  try {
+    console.log('🔍 開始載入營業時段，artistId:', artistId)
+    const result = await apiRequest(`/artists/${artistId}/availability`)
+    
+    console.log('📡 API 完整回應:', result)
+    
+    // 🔥 修正：處理雙層 data 結構
+    const availability = result.data?.data?.availability || result.data?.availability
+    
+    console.log('📅 提取的 availability 資料:', availability)
+    
+    if (result.success && availability) {
+      weeklySchedule.value = {}
+      
+      // 反向轉換對照表
+      const weekdayReverseMap = {
+        'Mon': 'monday',
+        'Tue': 'tuesday',
+        'Wed': 'wednesday', 
+        'Thu': 'thursday',
+        'Fri': 'friday',
+        'Sat': 'saturday',
+        'Sun': 'sunday'
+      }
+      
+      // 初始化所有天為關閉狀態
+      const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      allDays.forEach(day => {
+        weeklySchedule.value[day] = { isOpen: false, timeSlots: [] }
+      })
+      
+      // 轉換 API 回傳格式到前端使用的格式
+      Object.keys(availability).forEach(dbDay => {
+        console.log(`🔄 處理星期: ${dbDay}`)
+        const frontendDay = weekdayReverseMap[dbDay]
+        
+        if (frontendDay) {
+          const timeSlots = availability[dbDay] || []
+          console.log(`   時段資料: ${timeSlots}`)
+          
+          weeklySchedule.value[frontendDay] = {
+            isOpen: timeSlots.length > 0,
+            timeSlots: timeSlots.map(time => `${time.replace(':00', '')}-${getEndTime(time.replace(':00', ''))}`)
+          }
+        }
+      })
+      
+      console.log('✅ 轉換後的完整 weeklySchedule:', weeklySchedule.value)
+    } else {
+      console.warn('⚠️ API 回傳格式不正確或無資料:', result)
+      weeklySchedule.value = { ...defaultWeeklySchedule }
+    }
+  } catch (error) {
+    console.error('💥 載入營業時段錯誤:', error)
+    weeklySchedule.value = { ...defaultWeeklySchedule }
+  }
+}
 
 onMounted(async () => {
   const id = route.params.id
   
-  // 使用真實 API 載入資料
+  // 載入美甲師資料
   await loadArtistData(id)
+  
+  // 載入營業時段
+  await loadArtistSchedule(id)
   
   // 如果是自己的檔案，設定可編輯狀態
   if (id === currentUserId.value) {
     console.log('這是自己的檔案，可以編輯')
   }
   
-  // 設定預設時段（這部分之後可以從 API 獲取）
+  // 初始化臨時時段資料
   tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
   
   window.scrollTo(0, 0)
   window.addEventListener('scroll', handleScroll)
 })
+
 </script>
 
 <style scoped>

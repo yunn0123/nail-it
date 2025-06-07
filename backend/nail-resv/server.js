@@ -51,7 +51,8 @@ app.use('/api', searchRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
 app.use('/api/customers', customersRouter);
-app.use('/api/artists', artistsRouter);
+app.use('/api/artists', artistsRouter);          // 先掛基本的 artists 路由
+app.use('/api/artists', availabilityRouter); 
 
 
 

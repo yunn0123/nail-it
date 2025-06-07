@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // 獲取美甲師資料
+// 獲取美甲師資料
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -10,10 +11,10 @@ router.get('/:id', async (req, res) => {
 
     console.log('Searching for artist with user_id:', id);
 
-    // 從 artists 表格獲取基本資料
+    // 從 artists 表格獲取基本資料，包含 price_min 和 price_max
     const { data: artistData, error: artistError } = await supabase
       .from('artists')
-      .select('user_id, studio_name, city, district, bio, styles')
+      .select('user_id, studio_name, city, district, bio, styles, price_min, price_max') // ← 加上價格欄位
       .eq('user_id', id)
       .single();
 
@@ -43,10 +44,9 @@ router.get('/:id', async (req, res) => {
       district: artistData.district,
       bio: artistData.bio,
       styles: artistData.styles || [],
-      // 預設值（可以之後從其他表格獲取）
-      rating: 4.9,
-      priceLow: 1000,
-      priceHigh: 1800,
+      priceLow: artistData.price_min || 0,     // ← 從資料庫讀取，預設 0
+      priceHigh: artistData.price_max || 0,    // ← 從資料庫讀取，預設 0
+      rating: 0,  // ← 設為 0 或之後從評價計算平均
       image: 'https://nail-it.supabase.co/storage/v1/object/public/avatars/default.png',
       created_at: authUser.user.created_at
     };
@@ -69,6 +69,9 @@ router.put('/:id', async (req, res) => {
     const { studio_name, city, district, bio, styles, priceLow, priceHigh } = req.body;
     const supabase = req.supabase;
 
+    console.log('收到的資料:', req.body) // ← 加這行
+    console.log('價格資料:', { priceLow, priceHigh }) // ← 加這行
+
     // 更新 artists 表格
     const { data, error } = await supabase
       .from('artists')
@@ -77,8 +80,9 @@ router.put('/:id', async (req, res) => {
         city: city,
         district: district,
         bio: bio,
-        styles: styles
-        // 注意：priceLow 和 priceHigh 可能需要另外的表格存儲
+        styles: styles,
+        price_min: priceLow,    // ← 加上價格更新
+        price_max: priceHigh    // ← 加上價格更新
       })
       .eq('user_id', id)
       .select();
