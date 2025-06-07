@@ -1,6 +1,14 @@
 <!-- Profile.vue -->
 <template>
-  <div class="min-h-screen flex flex-col bg-[#efddda]" @click="closeMenu">
+  <!-- 載入狀態 -->
+<div v-if="isLoading" class="min-h-screen flex items-center justify-center bg-[#efddda]">
+  <div class="text-center">
+    <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-[#c68f84] mx-auto"></div>
+    <p class="mt-4 text-gray-600">載入中...</p>
+  </div>
+</div>
+
+  <div v-else class="min-h-screen flex flex-col bg-[#efddda]" @click="closeMenu">
     <!-- Navbar -->
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
@@ -1036,6 +1044,7 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue' 
 import { useRoute, useRouter } from 'vue-router'
 import BookingView from './Booking.vue' 
+import { apiRequest } from '../config/api.js' // 新增這行
 
 const route = useRoute()
 const router = useRouter()
@@ -1050,6 +1059,8 @@ const showScheduleModal = ref(false)
 const showOutline = ref(false)
 const activeSection = ref('basic-info')
 
+const isLoading = ref(false)
+
 // 新增預覽模式狀態
 const isPreviewMode = ref(false)
 
@@ -1058,7 +1069,7 @@ onUnmounted(() => {
 })
 
 // 當前登入的美甲師ID (在實際應用中這會來自認證系統)
-const currentUserId = ref('1') // 假設當前登入用戶是ID為1的美甲師
+const currentUserId = ref(localStorage.getItem('userId') || '1')
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
@@ -1499,7 +1510,7 @@ const cancelEdit = () => {
   newStyle.value = ''
 }
 
-const saveChanges = () => {
+const saveChanges = async () => {
   if (!editData.value.studio?.trim()) {
     alert('請輸入工作室名稱')
     return
@@ -1517,15 +1528,28 @@ const saveChanges = () => {
     return
   }
 
-  currentArtist.value = JSON.parse(JSON.stringify(editData.value))
+  // 準備更新資料
+  const updateData = {
+    studio_name: editData.value.studio.trim(),
+    city: editData.value.city,
+    district: editData.value.district,
+    bio: editData.value.bio || '',
+    styles: editData.value.styles || [],
+    priceLow: editData.value.priceLow,
+    priceHigh: editData.value.priceHigh
+  }
   
-  console.log('儲存資料:', currentArtist.value)
+  // 發送更新請求
+  const success = await updateArtistData(updateData)
   
-  editMode.value = false
-  editData.value = {}
-  newStyle.value = ''
-  
-  alert('資料已成功更新！')
+  if (success) {
+    // 更新本地資料
+    currentArtist.value = JSON.parse(JSON.stringify(editData.value))
+    editMode.value = false
+    editData.value = {}
+    newStyle.value = ''
+    alert('資料已成功更新！')
+  }
 }
 
 // 風格標籤管理
@@ -1865,24 +1889,78 @@ const handleScroll = () => {
   }
 }
 
-onMounted(() => {
-  const id = route.params.id
-  const found = artists.value.find(a => a.id === id)
+// 載入美甲師資料
+const loadArtistData = async (artistId) => {
+  isLoading.value = true
   
-  if (found) {
-    currentArtist.value = found
+  try {
+    const result = await apiRequest(`/artists/${artistId}`)
     
-    if (found.weeklySchedule) {
-      weeklySchedule.value = found.weeklySchedule
+    if (result.success) {
+      const artistData = result.data.artist
+      currentArtist.value = {
+        id: artistData.id,
+        studio: artistData.studio,
+        city: artistData.city,
+        district: artistData.district,
+        rating: artistData.rating,
+        priceLow: artistData.priceLow,
+        priceHigh: artistData.priceHigh,
+        bio: artistData.bio,
+        styles: artistData.styles || [],
+        image: artistData.image,
+        created_at: artistData.created_at
+      }
+      console.log('美甲師資料載入成功:', currentArtist.value)
+    } else {
+      console.error('載入美甲師資料失敗:', result.error)
+      alert(`載入資料失敗：${result.error}`)
+      router.push('/home')
     }
-  } else {
+  } catch (error) {
+    console.error('載入美甲師資料錯誤:', error)
+    alert('載入資料時發生錯誤')
     router.push('/home')
+  } finally {
+    isLoading.value = false
   }
+}
+
+// 更新美甲師資料
+const updateArtistData = async (updateData) => {
+  try {
+    const result = await apiRequest(`/artists/${currentArtist.value.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    })
+    
+    if (result.success) {
+      console.log('美甲師資料更新成功')
+      return true
+    } else {
+      console.error('更新美甲師資料失敗:', result.error)
+      alert(`更新失敗：${result.error}`)
+      return false
+    }
+  } catch (error) {
+    console.error('更新美甲師資料錯誤:', error)
+    alert('更新資料時發生錯誤')
+    return false
+  }
+}
+
+onMounted(async () => {
+  const id = route.params.id
   
+  // 使用真實 API 載入資料
+  await loadArtistData(id)
+  
+  // 如果是自己的檔案，設定可編輯狀態
   if (id === currentUserId.value) {
     console.log('這是自己的檔案，可以編輯')
   }
   
+  // 設定預設時段（這部分之後可以從 API 獲取）
   tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
   
   window.scrollTo(0, 0)
