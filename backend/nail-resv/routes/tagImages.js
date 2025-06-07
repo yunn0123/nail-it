@@ -4,6 +4,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const { createClient } = require('@supabase/supabase-js');
 
 // p-limit 导入兼容处理
 let createLimit = require('p-limit');
@@ -15,6 +16,12 @@ const { OpenAI } = require('openai');
 
 const router = express.Router();
 const upload = multer({ dest: path.join(__dirname, '../uploads/') });
+
+// Supabase 客戶端
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 // ========== 参数区 ==========
 const MAX_CONCURRENCY = 4;
@@ -78,6 +85,73 @@ function normalizeTags(tags) {
   return out;
 }
 
+// 生成符合搜尋邏輯的檔案名稱
+function generateImageName(artistId, timestamp, index) {
+  const placeholderPlaceId = `place-${timestamp}`;
+  return `photo_placeid-${placeholderPlaceId}_idx-${index}_artist-${artistId}.jpg`;
+}
+
+// 上傳圖片到 Supabase Storage
+async function uploadImageToSupabase(filePath, filename) {
+  try {
+    const fileBuffer = fs.readFileSync(filePath);
+    
+    const { data, error } = await supabase.storage
+      .from('nailimg')
+      .upload(`allimgs/${filename}`, fileBuffer, {
+        contentType: 'image/jpeg',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase 上傳錯誤:', error);
+      return null;
+    }
+
+    // 獲取公開 URL
+    const { data: publicData } = supabase.storage
+      .from('nailimg')
+      .getPublicUrl(`allimgs/${filename}`);
+
+    return publicData.publicUrl;
+  } catch (error) {
+    console.error('上傳圖片到 Supabase 失敗:', error);
+    return null;
+  }
+}
+
+// 將資料存到 Supabase portfolio 表
+async function saveToPortfolio(artistId, imageUrl, tags, filename) {
+  try {
+    const { data, error } = await supabase
+      .from('portfolio')
+      .insert([{
+        artist_id: artistId,
+        image_url: imageUrl,
+        description: null,
+        tags: null,
+        created_at: new Date().toISOString(),
+        shape: tags.shape || [],
+        style: tags.style || [],
+        color: tags.color || [],
+        texture: tags.texture || [],
+        theme: tags.theme || [],
+        decorations: tags.decorations || []
+      }]);
+
+    if (error) {
+      console.error('儲存到 portfolio 表失敗:', error);
+      return false;
+    }
+
+    console.log(`✅ 成功儲存 ${filename} 到 portfolio 表`);
+    return true;
+  } catch (error) {
+    console.error('儲存到 portfolio 表發生錯誤:', error);
+    return false;
+  }
+}
+
 // 调用 GPT 并 retry
 async function callWithRetry(filePath, fileMime) {
   for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
@@ -122,6 +196,10 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
     return res.status(400).json({ error: '請上傳最多 10 張圖片（field: images）' });
   }
 
+  // 從請求中取得 artistId，如果沒有則使用預設值
+  const artistId = req.body.artistId || `artist_${Date.now()}`;
+  const timestamp = Date.now();
+
   // 1. 讀 all_results.json
   let existing = {};
   try {
@@ -136,20 +214,74 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
   // 2. 并发限制器
   const limit = createLimit(MAX_CONCURRENCY);
 
-  // 3. 並行呼叫 GPT
-  const tasks = req.files.map(file => limit(async () => {
-    const rawTags = await callWithRetry(file.path, file.mimetype);
-    fs.unlinkSync(file.path);
-    if (!rawTags) return { filename: file.originalname, tags: null };
-    const tags = normalizeTags(rawTags);
-    return { filename: file.originalname, tags };
+  // 3. 處理每個圖片：標註 + 上傳 + 儲存
+  const tasks = req.files.map((file, index) => limit(async () => {
+    try {
+      // 生成符合搜尋邏輯的檔案名稱
+      const filename = generateImageName(artistId, timestamp, index + 1);
+      
+      // OpenAI 標註
+      const rawTags = await callWithRetry(file.path, file.mimetype);
+      if (!rawTags) {
+        fs.unlinkSync(file.path);
+        return { 
+          originalName: file.originalname, 
+          filename: filename,
+          success: false, 
+          error: 'AI 標註失敗' 
+        };
+      }
+
+      const tags = normalizeTags(rawTags);
+      
+      // 上傳圖片到 Supabase Storage
+      const imageUrl = await uploadImageToSupabase(file.path, filename);
+      if (!imageUrl) {
+        fs.unlinkSync(file.path);
+        return { 
+          originalName: file.originalname, 
+          filename: filename,
+          success: false, 
+          error: 'Supabase 上傳失敗' 
+        };
+      }
+
+      // 儲存到 portfolio 表
+      const portfolioSaved = await saveToPortfolio(artistId, imageUrl, tags, filename);
+
+      // 清理臨時檔案
+      fs.unlinkSync(file.path);
+
+      return { 
+        originalName: file.originalname,
+        filename: filename,
+        imageUrl: imageUrl,
+        tags: tags,
+        success: true,
+        portfolioSaved: portfolioSaved
+      };
+
+    } catch (error) {
+      console.error(`處理圖片 ${file.originalname} 時發生錯誤:`, error);
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+      return { 
+        originalName: file.originalname, 
+        success: false, 
+        error: error.message 
+      };
+    }
   }));
+
   const results = await Promise.all(tasks);
 
-  // 4. 合併並寫回 all_results.json
-  results.forEach(({ filename, tags }) => {
+  // 4. 更新 all_results.json（只有成功的標註）
+  const successfulResults = results.filter(r => r.success && r.tags);
+  successfulResults.forEach(({ filename, tags }) => {
     if (tags) existing[filename] = tags;
   });
+
   try {
     fs.writeFileSync(ALL_RESULTS, JSON.stringify(existing, null, 2), 'utf-8');
   } catch (e) {
@@ -157,10 +289,26 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
     return res.status(500).json({ error: 'Server 寫檔錯誤', detail: e.message });
   }
 
-  // 5. 回傳結果
-  const updated = {};
-  results.forEach(r => { if (r.tags) updated[r.filename] = r.tags; });
-  res.json({ updated, totalCount: Object.keys(existing).length });
+  // 5. 統計結果
+  const successful = results.filter(r => r.success);
+  const failed = results.filter(r => !r.success);
+
+  // 6. 回傳結果
+  res.json({ 
+    message: `處理完成！成功: ${successful.length} 張，失敗: ${failed.length} 張`,
+    successful: successful.map(r => ({
+      originalName: r.originalName,
+      filename: r.filename,
+      imageUrl: r.imageUrl,
+      tags: r.tags,
+      portfolioSaved: r.portfolioSaved
+    })),
+    failed: failed.map(r => ({
+      originalName: r.originalName,
+      error: r.error
+    })),
+    totalInAllResults: Object.keys(existing).length
+  });
 });
 
 module.exports = router;

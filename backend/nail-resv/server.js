@@ -24,6 +24,7 @@ app.use((req, res, next) => {
 const { router: availabilityRouter } = require('./routes/availability');
 const reservationRouter              = require('./routes/reservation');
 const searchRouter = require('./routes/search');
+const searchSupabaseRouter = require('./routes/searchWithSupabase');
 const tagImagesRouter = require('./routes/tagImages');
 const { router: registerRouter } = require('./routes/register');
 const loginRoute = require('./routes/login');
@@ -32,6 +33,7 @@ const loginRoute = require('./routes/login');
 app.use('/api/technicians', availabilityRouter);
 app.use('/api/reservations', reservationRouter);
 app.use('/api', searchRouter);
+app.use('/api', searchSupabaseRouter);
 app.use('/api', tagImagesRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
