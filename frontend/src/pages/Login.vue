@@ -33,54 +33,25 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiRequest } from '../config/api.js' // 修正後的路徑
+
 
 const email = ref('')
 const password = ref('')
 const router = useRouter()
+const isLoading = ref(false) 
 
-// API 設定
-const API_BASE_URL = 'http://localhost:4000/api'
-const isLoading = ref(false)
 
-// API 請求函數
-const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  }
-
-  try {
-    const response = await fetch(url, config)
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP error! status: ${response.status}`)
-    }
-    
-    return { success: true, data }
-  } catch (error) {
-    console.error('API Request Error:', error)
-    return { success: false, error: error.message }
-  }
-}
-
-// 修改後的 handleLogin 函數
 const handleLogin = async () => {
-  // 基本驗證
   if (!email.value || !password.value) {
     alert('請輸入帳號密碼')
     return
   }
 
-  // 設定載入狀態
   isLoading.value = true
 
   try {
-    // 呼叫登入 API
+    // 使用從 config 引入的 apiRequest
     const result = await apiRequest('/login', {
       method: 'POST',
       body: JSON.stringify({
@@ -91,11 +62,19 @@ const handleLogin = async () => {
 
     if (result.success) {
       console.log('登入成功:', result.data)
-      alert('登入成功！')
       
-      // 可以在這裡儲存用戶資訊
-      // localStorage.setItem('userEmail', email.value)
-      // localStorage.setItem('isLoggedIn', 'true')
+      const user = result.data.user
+      
+      // 儲存登入資訊到 localStorage
+      localStorage.setItem('userId', user.id)
+      localStorage.setItem('userEmail', user.email)
+      localStorage.setItem('userType', user.role)
+      localStorage.setItem('userName', user.name)
+      localStorage.setItem('isLoggedIn', 'true')
+      
+      console.log('用戶資訊已儲存:', user)
+      
+      alert(`登入成功！歡迎回來，${user.name}`)
       
       // 清空表單
       email.value = ''

@@ -40,6 +40,8 @@ const searchRouter = require('./routes/search');
 //const tagImagesRouter = require('./routes/tagImages');
 const { router: registerRouter } = require('./routes/register');
 const loginRoute = require('./routes/login');
+const customersRouter = require('./routes/customers');
+const artistsRouter = require('./routes/artists');
 
 
 app.use('/api/technicians', availabilityRouter);
@@ -48,6 +50,8 @@ app.use('/api', searchRouter);
 //app.use('/api', tagImagesRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
+app.use('/api/customers', customersRouter);
+app.use('/api/artists', artistsRouter);
 
 
 

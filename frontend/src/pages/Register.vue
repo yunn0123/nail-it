@@ -148,8 +148,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiRequest } from '../config/api.js' // 新增這行
 
-const API_BASE_URL = 'http://localhost:4000/api'
 const isLoading = ref(false)
 
 const router = useRouter()
@@ -223,31 +223,6 @@ const selectRole = (selectedRole) => {
   role.value = selectedRole
 }
 
-// 加入 API 請求函數
-const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  }
-
-  try {
-    const response = await fetch(url, config)
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP error! status: ${response.status}`)
-    }
-    
-    return { success: true, data }
-  } catch (error) {
-    console.error('API Request Error:', error)
-    return { success: false, error: error.message }
-  }
-}
 
 // 處理表單內的 Enter 按鍵事件（阻止提交）
 const handleFormEnter = (event) => {

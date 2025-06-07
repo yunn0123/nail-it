@@ -22,12 +22,14 @@ router.post('/', async (req, res, next) => {
 
     console.log('Creating user:', email, 'with role:', role);
 
-    // 建立用戶
+    // 使用一般的 signUp，這樣會有 user context
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: undefined
+        data: {
+          role: role // 這樣 RLS 觸發器可以取得角色
+        }
       }
     });
 
@@ -43,22 +45,35 @@ router.post('/', async (req, res, next) => {
     const userId = authData.user.id;
     console.log('User created with ID:', userId);
 
-    // 手動建立 profile
-    console.log('Creating profile...');
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([{ 
-        id: userId, 
-        role: role,
-        created_at: new Date().toISOString()
-      }]);
+    // 等一下讓可能的觸發器完成
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      return res.status(500).json({ error: 'Failed to create user profile' });
+    // 檢查 profile 是否已經由觸發器建立
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!existingProfile) {
+      // 如果觸發器沒有建立 profile，我們手動建立
+      // 使用用戶的 session 來建立（這樣就有正確的 auth context）
+      const userSupabase = req.supabase.auth.session ? req.supabase : supabase;
+      
+      const { error: profileError } = await userSupabase
+        .from('profiles')
+        .insert([{ 
+          id: userId, 
+          role: role
+        }]);
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        return res.status(500).json({ error: 'Failed to create user profile' });
+      }
     }
 
-    console.log('Profile created successfully');
+    console.log('Profile created or exists');
 
     // 根據角色建立對應資料
     if (role === 'customer') {
@@ -71,7 +86,7 @@ router.post('/', async (req, res, next) => {
         .from('customers')
         .insert([{ 
           user_id: userId, 
-          user_name: username  // 修正：欄位名稱是 user_name
+          user_name: username 
         }]);
 
       if (customerError) {

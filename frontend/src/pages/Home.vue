@@ -91,6 +91,9 @@
   <script setup>
   import { ref, computed } from 'vue'
   import { useRouter } from 'vue-router'
+
+  // 在 Home.vue 的 <script setup> 裡隨便找個地方加入
+  console.log('測試環境變數:', import.meta.env.VITE_BACKEND_API_URL)
   
   const router = useRouter()
   
