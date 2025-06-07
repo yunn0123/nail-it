@@ -41,8 +41,8 @@
           <input v-model="confirmPassword" type="password" class="w-full px-4 py-2 border rounded-xl" required/>
         </div>
 
-        <button type="submit" class="w-full bg-[#c68f84] text-white py-2 rounded-xl hover:bg-[#c67868]">
-          註冊
+        <button type="submit" :disabled="isLoading" class="w-full bg-[#c68f84] text-white py-2 rounded-xl hover:bg-[#c67868] disabled:bg-gray-400">
+          {{ isLoading ? '註冊中...' : '註冊' }}
         </button>
 
         <p class="text-gray-600 text-center text-sm mt-4">
@@ -133,8 +133,8 @@
           <textarea v-model="bio" rows="3" class="w-full px-4 py-2 border rounded-xl"></textarea>
         </div>
 
-        <button type="submit" class="w-full bg-[#c68f84] text-white py-2 rounded-xl hover:bg-[#c67868]">
-          註冊
+        <button type="submit" :disabled="isLoading" class="w-full bg-[#c68f84] text-white py-2 rounded-xl hover:bg-[#c67868] disabled:bg-gray-400">
+          {{ isLoading ? '註冊中...' : '註冊' }}
         </button>
 
         <p class="text-gray-600 text-center text-sm mt-4">
@@ -148,6 +148,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+const API_BASE_URL = 'http://localhost:4000/api'
+const isLoading = ref(false)
 
 const router = useRouter()
 
@@ -220,6 +223,32 @@ const selectRole = (selectedRole) => {
   role.value = selectedRole
 }
 
+// 加入 API 請求函數
+const apiRequest = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  }
+
+  try {
+    const response = await fetch(url, config)
+    const data = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP error! status: ${response.status}`)
+    }
+    
+    return { success: true, data }
+  } catch (error) {
+    console.error('API Request Error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 // 處理表單內的 Enter 按鍵事件（阻止提交）
 const handleFormEnter = (event) => {
   // 如果按下 Enter 的不是風格標籤輸入框，就阻止預設行為（表單提交）
@@ -228,31 +257,72 @@ const handleFormEnter = (event) => {
   }
 }
 
-const handleRegister = () => {
+const handleRegister = async () => {
   if (password.value !== confirmPassword.value) {
     alert('密碼與確認密碼不一致！')
     return
   }
 
-  if (role.value === 'user') {
-    alert(`註冊成功！歡迎，用戶 ${username.value}。`)
-  } else {
-    // 美甲師註冊資料
-    const artistData = {
-      studio: studio.value,
-      email: email.value,
-      city: selectedCity.value,
-      district: selectedDistrict.value,
-      styles: styleList.value,
-      bio: bio.value
+  isLoading.value = true
+
+  try {
+    let result
+
+    if (role.value === 'user') {
+      // 顧客註冊
+      const userData = {
+        role: 'customer',
+        email: email.value,
+        password: password.value,
+        username: username.value
+      }
+
+      result = await apiRequest('/register', {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      })
+
+    } else {
+      // 美甲師註冊
+      const artistData = {
+        role: 'artist',
+        email: email.value,
+        password: password.value,
+        studio_name: studio.value,
+        city: selectedCity.value || null,
+        district: selectedDistrict.value || null,
+        bio: bio.value || null,
+        styles: styleList.value.length > 0 ? styleList.value : null
+      }
+
+      result = await apiRequest('/register', {
+        method: 'POST',
+        body: JSON.stringify(artistData)
+      })
     }
-    
-    console.log('美甲師註冊資料:', artistData)
-    alert(`註冊成功！歡迎，美甲師 ${studio.value}。`)
+
+    if (result.success) {
+      if (role.value === 'user') {
+        alert(`註冊成功！歡迎，用戶 ${username.value}。`)
+      } else {
+        alert(`註冊成功！歡迎，美甲師 ${studio.value}。`)
+      }
+      router.push('/login')
+    } else {
+      alert(`註冊失敗：${result.error}`)
+    }
+
+  } catch (error) {
+    alert('註冊過程中發生錯誤，請稍後再試。')
+  } finally {
+    isLoading.value = false
   }
-  
-  router.push('/login')
 }
+
+
+
+
+
 </script>
 
 <style scoped>

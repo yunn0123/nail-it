@@ -13,49 +13,113 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
+    // 檢查密碼長度
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password should be at least 6 characters' });
+    }
+
     const supabase = req.supabase;
 
-    // Create user in Supabase Auth
-    const { data: authUser, error: signUpError } = await supabase.auth.admin.createUser({
+    console.log('Creating user:', email, 'with role:', role);
+
+    // 建立用戶
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true
+      options: {
+        emailRedirectTo: undefined
+      }
     });
-    if (signUpError) throw signUpError;
-    const id = authUser.user.id;
 
-    // Insert into profiles table
-    const { error: profileErr } = await supabase
+    if (signUpError) {
+      console.error('Auth error:', signUpError);
+      return res.status(400).json({ error: signUpError.message });
+    }
+
+    if (!authData.user) {
+      return res.status(400).json({ error: 'User creation failed' });
+    }
+
+    const userId = authData.user.id;
+    console.log('User created with ID:', userId);
+
+    // 手動建立 profile
+    console.log('Creating profile...');
+    const { error: profileError } = await supabase
       .from('profiles')
-      .insert([{ id, role }]);
-    if (profileErr) throw profileErr;
+      .insert([{ 
+        id: userId, 
+        role: role,
+        created_at: new Date().toISOString()
+      }]);
 
-    // Insert into either customers or artists
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      return res.status(500).json({ error: 'Failed to create user profile' });
+    }
+
+    console.log('Profile created successfully');
+
+    // 根據角色建立對應資料
     if (role === 'customer') {
-      if (!username) return res.status(400).json({ error: 'Username required' });
-      const { error: customerErr } = await supabase
+      if (!username) {
+        return res.status(400).json({ error: 'Username required for customer' });
+      }
+
+      console.log('Creating customer record...');
+      const { error: customerError } = await supabase
         .from('customers')
-        .insert([{ user_id: id, username }]);
-      if (customerErr) throw customerErr;
+        .insert([{ 
+          user_id: userId, 
+          user_name: username  // 修正：欄位名稱是 user_name
+        }]);
+
+      if (customerError) {
+        console.error('Customer creation error:', customerError);
+        return res.status(500).json({ error: 'Failed to create customer record' });
+      }
+
+      console.log('Customer record created successfully');
+
     } else if (role === 'artist') {
-      if (!studio_name) return res.status(400).json({ error: 'Studio name required' });
+      if (!studio_name) {
+        return res.status(400).json({ error: 'Studio name required for artist' });
+      }
+
+      console.log('Creating artist record...');
       const artistData = {
-        user_id: id,
-        studio_name,
+        user_id: userId,
+        studio_name: studio_name,
         city: city || null,
         district: district || null,
         bio: bio || null,
-        styles: styles || null // should be JSON
+        styles: styles || null
       };
-      const { error: artistErr } = await supabase
+
+      const { error: artistError } = await supabase
         .from('artists')
         .insert([artistData]);
-      if (artistErr) throw artistErr;
+
+      if (artistError) {
+        console.error('Artist creation error:', artistError);
+        return res.status(500).json({ error: 'Failed to create artist record' });
+      }
+
+      console.log('Artist record created successfully');
     }
 
-    res.status(201).json({ message: 'Registration successful', id });
+    res.status(201).json({ 
+      message: 'Registration successful', 
+      id: userId,
+      user: {
+        email: authData.user.email,
+        role: role
+      }
+    });
+
   } catch (err) {
-    next(err);
+    console.error('Registration error:', err);
+    res.status(500).json({ error: err.message || 'Registration failed' });
   }
 });
 
