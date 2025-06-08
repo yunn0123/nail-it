@@ -1,6 +1,14 @@
 <!-- Profile.vue -->
 <template>
-  <div class="min-h-screen flex flex-col bg-[#efddda]" @click="closeMenu">
+  <!-- 載入狀態 -->
+<div v-if="isLoading" class="min-h-screen flex items-center justify-center bg-[#efddda]">
+  <div class="text-center">
+    <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-[#c68f84] mx-auto"></div>
+    <p class="mt-4 text-gray-600">載入中...</p>
+  </div>
+</div>
+
+  <div v-else class="min-h-screen flex flex-col bg-[#efddda]" @click="closeMenu">
     <!-- Navbar -->
     <div class="flex items-center justify-between bg-[#efddda] p-3 mx-4">
       <!-- 左側：Logo 和漢堡選單 -->
@@ -37,7 +45,7 @@
         <li><router-link to="/appointments" class="hover:text-[#c68f84]">預約紀錄</router-link></li>
         <li><router-link to="/reviews" class="hover:text-[#c68f84]">評分紀錄</router-link></li>
         <li><router-link to="/settings" class="hover:text-[#c68f84]">隱私設定</router-link></li>
-        <li><router-link to="/login" class="hover:text-[#c68f84]">登出</router-link></li>
+        <li><a @click="handleLogout" class="hover:text-[#c68f84] cursor-pointer">登出</a></li>
       </ul>
     </div>
 
@@ -430,8 +438,8 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
-                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+                  <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
                 </div>
               </div>
               
@@ -447,6 +455,7 @@
                   </svg>
                 </button>
                 <!-- 確認與取消按鈕 -->
+                <!-- 待確認預約的按鈕 -->
                 <div class="flex space-x-2">
                   <button 
                     @click="confirmAppointment(appointment.id)"
@@ -500,8 +509,8 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
-                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+                  <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
                 </div>
               </div>
               
@@ -517,10 +526,20 @@
                   </svg>
                 </button>
                 <!-- 完成與取消按鈕 -->
+                <!-- 已確認預約的按鈕 -->
                 <div class="flex space-x-2">
                   <button 
+                    v-if="isAppointmentPast(appointment)"
                     @click="completeAppointment(appointment.id)"
                     class="bg-[#c68f84] text-white px-3 py-1 rounded-lg hover:bg-[#c67868] text-sm"
+                  >
+                    完成
+                  </button>
+                  <button 
+                    v-else
+                    disabled
+                    class="bg-gray-300 text-gray-500 px-3 py-1 rounded-lg text-sm cursor-not-allowed"
+                    title="預約時間尚未結束"
                   >
                     完成
                   </button>
@@ -570,7 +589,7 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
                 </div>
               </div>
               
@@ -624,7 +643,7 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
                 </div>
               </div>
               
@@ -666,6 +685,19 @@
           >
             設定時段
           </button>
+        </div>
+
+        <!-- 🔥 在這裡加入未設定時段提示 -->
+        <div v-if="!hasAnySchedule" class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-4">
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+              <h4 class="text-lg font-medium text-yellow-800">尚未設定營業時段</h4>
+              <p class="text-yellow-700 text-sm">您需要設定營業時段，顧客才能進行預約。</p>
+            </div>
+          </div>
         </div>
 
         <!-- 目前時段顯示 -->
@@ -1020,15 +1052,15 @@
     </div>
 
     <!-- 預約彈窗模式 -->
-    <div v-if="showBookingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-        <BookingView 
-          :artist-id="currentArtist.id" 
-          :weekly-schedule="weeklySchedule"
-          @close="showBookingModal = false"
-        />
-      </div>
-    </div>
+<div v-if="showBookingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+    <BookingView 
+      :artist-id="currentArtist.id" 
+      :has-schedule="hasAnySchedule"
+      @close="showBookingModal = false"
+    />
+  </div>
+</div>
   </div>
 </template>
 
@@ -1036,6 +1068,10 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue' 
 import { useRoute, useRouter } from 'vue-router'
 import BookingView from './Booking.vue' 
+import { apiRequest } from '../config/api.js' 
+import { useLogout } from '../auth.js'
+
+const { handleLogout } = useLogout()
 
 const route = useRoute()
 const router = useRouter()
@@ -1050,6 +1086,8 @@ const showScheduleModal = ref(false)
 const showOutline = ref(false)
 const activeSection = ref('basic-info')
 
+const isLoading = ref(false)
+
 // 新增預覽模式狀態
 const isPreviewMode = ref(false)
 
@@ -1058,7 +1096,7 @@ onUnmounted(() => {
 })
 
 // 當前登入的美甲師ID (在實際應用中這會來自認證系統)
-const currentUserId = ref('1') // 假設當前登入用戶是ID為1的美甲師
+const currentUserId = ref(localStorage.getItem('userId') || '1')
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
@@ -1298,12 +1336,12 @@ const availableTimeSlots = [
 
 // 預設週間時段設定
 const defaultWeeklySchedule = {
-  monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  wednesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-  saturday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00'] },
+  monday: { isOpen: false, timeSlots: [] },
+  tuesday: { isOpen: false, timeSlots: [] },
+  wednesday: { isOpen: false, timeSlots: [] },
+  thursday: { isOpen: false, timeSlots: [] },
+  friday: { isOpen: false, timeSlots: [] },
+  saturday: { isOpen: false, timeSlots: [] },
   sunday: { isOpen: false, timeSlots: [] }
 }
 
@@ -1499,7 +1537,7 @@ const cancelEdit = () => {
   newStyle.value = ''
 }
 
-const saveChanges = () => {
+const saveChanges = async () => {
   if (!editData.value.studio?.trim()) {
     alert('請輸入工作室名稱')
     return
@@ -1517,15 +1555,29 @@ const saveChanges = () => {
     return
   }
 
-  currentArtist.value = JSON.parse(JSON.stringify(editData.value))
+  // 準備更新資料
+  const updateData = {
+    studio_name: editData.value.studio.trim(),
+    city: editData.value.city,
+    district: editData.value.district,
+    bio: editData.value.bio || '',
+    styles: editData.value.styles || [],
+    priceLow: editData.value.priceLow,
+    priceHigh: editData.value.priceHigh
+  }
+  console.log('準備發送的資料:', updateData) 
   
-  console.log('儲存資料:', currentArtist.value)
+  // 發送更新請求
+  const success = await updateArtistData(updateData)
   
-  editMode.value = false
-  editData.value = {}
-  newStyle.value = ''
-  
-  alert('資料已成功更新！')
+  if (success) {
+    // 更新本地資料
+    currentArtist.value = JSON.parse(JSON.stringify(editData.value))
+    editMode.value = false
+    editData.value = {}
+    newStyle.value = ''
+    alert('資料已成功更新！')
+  }
 }
 
 // 風格標籤管理
@@ -1681,29 +1733,79 @@ const analyzeImageAndSuggestTags = (imageFile) => {
 }
 
 // 預約管理方法
-const confirmAppointment = (appointmentId) => {
-  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
-  if (index > -1) {
-    appointments.value[index].status = 'confirmed'
-    alert('已確認預約！')
-  }
-}
-
-const completeAppointment = (appointmentId) => {
-  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
-  if (index > -1) {
-    appointments.value[index].status = 'completed'
-    alert('已完成預約！')
-  }
-}
-
-const cancelAppointment = (appointmentId) => {
-  if (confirm('確定要取消此預約嗎？')) {
-    const index = appointments.value.findIndex(apt => apt.id === appointmentId)
-    if (index > -1) {
-      appointments.value[index].status = 'cancelled'
-      alert('已取消預約！')
+// 確認預約
+const confirmAppointment = async (appointmentId) => {
+  if (!confirm('確定要確認此預約嗎？')) return
+  
+  try {
+    const result = await apiRequest(`/reservations/appointment/${appointmentId}/confirm`, {
+      method: 'PUT'
+    })
+    
+    if (result.success) {
+      // 更新本地狀態
+      const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+      if (index > -1) {
+        appointments.value[index].status = 'confirmed'
+      }
+      alert('已確認預約！')
+    } else {
+      alert(`確認失敗：${result.error}`)
     }
+  } catch (error) {
+    console.error('確認預約錯誤:', error)
+    alert('確認預約時發生錯誤')
+  }
+}
+
+// 完成預約
+const completeAppointment = async (appointmentId) => {
+  if (!confirm('確定要將此預約標記為完成嗎？')) return
+  
+  try {
+    const result = await apiRequest(`/reservations/appointment/${appointmentId}/complete`, {
+      method: 'PUT'
+    })
+    
+    if (result.success) {
+      // 更新本地狀態
+      const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+      if (index > -1) {
+        appointments.value[index].status = 'completed'
+      }
+      alert('已完成預約！')
+    } else {
+      alert(`完成失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('完成預約錯誤:', error)
+    alert('完成預約時發生錯誤')
+  }
+}
+
+// 取消預約
+const cancelAppointment = async (appointmentId) => {
+  if (!confirm('確定要取消此預約嗎？')) return
+  
+  try {
+    const result = await apiRequest(`/reservations/appointment/${appointmentId}/cancel`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason: '美甲師取消' })
+    })
+    
+    if (result.success) {
+      // 更新本地狀態
+      const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+      if (index > -1) {
+        appointments.value[index].status = 'cancelled'
+      }
+      alert('已取消預約！')
+    } else {
+      alert(`取消失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('取消預約錯誤:', error)
+    alert('取消預約時發生錯誤')
   }
 }
 
@@ -1797,7 +1899,7 @@ const openScheduleModal = () => {
   showScheduleModal.value = true
 }
 
-const saveSchedule = () => {
+const saveSchedule = async () => {
   const hasOpenDay = Object.values(tempSchedule.value).some(day => day.isOpen && day.timeSlots.length > 0)
   
   if (!hasOpenDay) {
@@ -1805,12 +1907,53 @@ const saveSchedule = () => {
     return
   }
   
-  weeklySchedule.value = JSON.parse(JSON.stringify(tempSchedule.value))
-  
-  console.log('儲存時段設定:', weeklySchedule.value)
-  
-  alert('營業時段設定已儲存！')
-  closeScheduleModal()
+  try {
+    const availability = {}
+    
+    // 星期轉換對照表
+    const weekdayMap = {
+      'monday': 'Mon',
+      'tuesday': 'Tue', 
+      'wednesday': 'Wed',
+      'thursday': 'Thu',
+      'friday': 'Fri',
+      'saturday': 'Sat',
+      'sunday': 'Sun'
+    }
+    
+    // 轉換前端格式到 API 需要的格式
+    Object.keys(tempSchedule.value).forEach(day => {
+      const daySchedule = tempSchedule.value[day]
+      const dbWeekday = weekdayMap[day] // 轉換成 Mon, Tue 格式
+      
+      if (daySchedule.isOpen && daySchedule.timeSlots.length > 0) {
+        availability[dbWeekday] = daySchedule.timeSlots.map(slot => slot.split('-')[0])
+      } else {
+        availability[dbWeekday] = []
+      }
+    })
+    
+    console.log('準備儲存的時段資料:', availability)
+    
+    const result = await apiRequest(`/artists/${currentArtist.value.id}/availability`, {
+      method: 'POST',
+      body: JSON.stringify({ availability })
+    })
+    
+    if (result.success) {
+      // 更新本地資料
+      weeklySchedule.value = JSON.parse(JSON.stringify(tempSchedule.value))
+      console.log('營業時段儲存成功')
+      alert('營業時段設定已儲存！')
+      closeScheduleModal()
+    } else {
+      console.error('儲存營業時段失敗:', result.error)
+      alert(`儲存失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('儲存營業時段錯誤:', error)
+    alert('儲存時段時發生錯誤')
+  }
 }
 
 const openBookingModal = () => {
@@ -1865,29 +2008,213 @@ const handleScroll = () => {
   }
 }
 
-onMounted(() => {
-  const id = route.params.id
-  const found = artists.value.find(a => a.id === id)
+// 載入美甲師資料
+const loadArtistData = async (artistId) => {
+  isLoading.value = true
   
-  if (found) {
-    currentArtist.value = found
+  try {
+    const result = await apiRequest(`/artists/${artistId}`)
     
-    if (found.weeklySchedule) {
-      weeklySchedule.value = found.weeklySchedule
+    if (result.success) {
+      const artistData = result.data.artist
+      currentArtist.value = {
+        id: artistData.id,
+        studio: artistData.studio,
+        city: artistData.city,
+        district: artistData.district,
+        rating: artistData.rating,
+        priceLow: artistData.priceLow,
+        priceHigh: artistData.priceHigh,
+        bio: artistData.bio,
+        styles: artistData.styles || [],
+        image: artistData.image,
+        created_at: artistData.created_at
+      }
+      console.log('美甲師資料載入成功:', currentArtist.value)
+    } else {
+      console.error('載入美甲師資料失敗:', result.error)
+      alert(`載入資料失敗：${result.error}`)
+      router.push('/home')
     }
-  } else {
+  } catch (error) {
+    console.error('載入美甲師資料錯誤:', error)
+    alert('載入資料時發生錯誤')
     router.push('/home')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 更新美甲師資料
+const updateArtistData = async (updateData) => {
+  try {
+    const result = await apiRequest(`/artists/${currentArtist.value.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    })
+    
+    if (result.success) {
+      console.log('美甲師資料更新成功')
+      return true
+    } else {
+      console.error('更新美甲師資料失敗:', result.error)
+      alert(`更新失敗：${result.error}`)
+      return false
+    }
+  } catch (error) {
+    console.error('更新美甲師資料錯誤:', error)
+    alert('更新資料時發生錯誤')
+    return false
+  }
+}
+const getEndTime = (startTime) => {
+  const [hours, minutes] = startTime.split(':').map(Number)
+  const endHours = hours + 2 // 假設每個時段2小時
+  return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+}
+
+const hasAnySchedule = computed(() => {
+  const result = Object.values(weeklySchedule.value).some(day => day.isOpen && day.timeSlots.length > 0)
+  console.log('🤔 hasAnySchedule 計算:', {
+    weeklySchedule: weeklySchedule.value,
+    result: result
+  })
+  return result
+})
+
+const loadArtistSchedule = async (artistId) => {
+  try {
+    console.log('🔍 開始載入營業時段，artistId:', artistId)
+    const result = await apiRequest(`/artists/${artistId}/availability`)
+    
+    console.log('📡 API 完整回應:', result)
+    
+    // 🔥 修正：處理雙層 data 結構
+    const availability = result.data?.data?.availability || result.data?.availability
+    
+    console.log('📅 提取的 availability 資料:', availability)
+    
+    if (result.success && availability) {
+      weeklySchedule.value = {}
+      
+      // 反向轉換對照表
+      const weekdayReverseMap = {
+        'Mon': 'monday',
+        'Tue': 'tuesday',
+        'Wed': 'wednesday', 
+        'Thu': 'thursday',
+        'Fri': 'friday',
+        'Sat': 'saturday',
+        'Sun': 'sunday'
+      }
+      
+      // 初始化所有天為關閉狀態
+      const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      allDays.forEach(day => {
+        weeklySchedule.value[day] = { isOpen: false, timeSlots: [] }
+      })
+      
+      // 轉換 API 回傳格式到前端使用的格式
+      Object.keys(availability).forEach(dbDay => {
+        console.log(`🔄 處理星期: ${dbDay}`)
+        const frontendDay = weekdayReverseMap[dbDay]
+        
+        if (frontendDay) {
+          const timeSlots = availability[dbDay] || []
+          console.log(`   時段資料: ${timeSlots}`)
+          
+          weeklySchedule.value[frontendDay] = {
+            isOpen: timeSlots.length > 0,
+            timeSlots: timeSlots.map(time => `${time.replace(':00', '')}-${getEndTime(time.replace(':00', ''))}`)
+          }
+        }
+      })
+      
+      console.log('✅ 轉換後的完整 weeklySchedule:', weeklySchedule.value)
+    } else {
+      console.warn('⚠️ API 回傳格式不正確或無資料:', result)
+      weeklySchedule.value = { ...defaultWeeklySchedule }
+    }
+  } catch (error) {
+    console.error('💥 載入營業時段錯誤:', error)
+    weeklySchedule.value = { ...defaultWeeklySchedule }
+  }
+}
+
+// 載入美甲師的預約資料
+const loadArtistAppointments = async (artistId) => {
+  try {
+    const result = await apiRequest(`/reservations/artist/${artistId}/manage`)
+    
+    if (result.success) {
+      // 更新預約資料
+      const appointmentData = result.data.appointments
+      appointments.value = [
+        ...appointmentData.pending,
+        ...appointmentData.confirmed,
+        ...appointmentData.completed,
+        ...appointmentData.cancelled
+      ]
+      console.log('預約資料載入成功:', appointmentData)
+    } else {
+      console.error('載入預約資料失敗:', result.error)
+    }
+  } catch (error) {
+    console.error('載入預約資料錯誤:', error)
+  }
+}
+
+// 檢查預約是否已經過時間
+const isAppointmentPast = (appointment) => {
+  const now = new Date()
+  const today = now.toISOString().split('T')[0] // 2025-06-08
+  const currentTime = now.toTimeString().split(' ')[0].substring(0, 5) // 14:30
+  
+  // 如果是今天之前的預約，可以完成
+  if (appointment.date < today) return true
+  
+  // 如果是今天，檢查時間是否已過
+  if (appointment.date === today) {
+    const appointmentEndTime = appointment.time.split('-')[1] || appointment.time.substring(0, 5)
+    return appointmentEndTime < currentTime
   }
   
+  // 未來的預約不能完成
+  return false
+}
+
+// 格式化時間，移除秒數
+const formatTime = (timeString) => {
+  if (!timeString) return ''
+  // 如果是 "14:00:00" 格式，取前5位
+  if (timeString.includes(':')) {
+    return timeString.substring(0, 5)
+  }
+  return timeString
+}
+
+onMounted(async () => {
+  const id = route.params.id
+  
+  // 載入美甲師資料
+  await loadArtistData(id)
+  
+  // 載入營業時段
+  await loadArtistSchedule(id)
+  
+  // 如果是自己的檔案，設定可編輯狀態
   if (id === currentUserId.value) {
-    console.log('這是自己的檔案，可以編輯')
+    await loadArtistAppointments(id)  // ← 加入這行
+    console.log('這是自己的檔案，已載入預約資料')
   }
   
+  // 初始化臨時時段資料
   tempSchedule.value = JSON.parse(JSON.stringify(weeklySchedule.value))
   
   window.scrollTo(0, 0)
   window.addEventListener('scroll', handleScroll)
 })
+
 </script>
 
 <style scoped>

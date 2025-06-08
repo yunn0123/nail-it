@@ -37,7 +37,7 @@
           <li><router-link to="/appointments" class="hover:text-[#c68f84]">預約紀錄</router-link></li>
           <li><router-link to="/reviews" class="hover:text-[#c68f84]">評分紀錄</router-link></li>
           <li><router-link to="/settings" class="hover:text-[#c68f84]">隱私設定</router-link></li>
-          <li><router-link to="/login" class="hover:text-[#c68f84]">登出</router-link></li>
+          <li><a @click="handleLogout" class="hover:text-[#c68f84] cursor-pointer">登出</a></li>
         </ul>
       </div>
   
@@ -91,6 +91,13 @@
   <script setup>
   import { ref, computed } from 'vue'
   import { useRouter } from 'vue-router'
+
+  import { useLogout } from '../auth.js'
+
+  const { handleLogout } = useLogout()
+
+  // 在 Home.vue 的 <script setup> 裡隨便找個地方加入
+  console.log('測試環境變數:', import.meta.env.VITE_BACKEND_API_URL)
   
   const router = useRouter()
   

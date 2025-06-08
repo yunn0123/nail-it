@@ -4,7 +4,7 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 // init Supabase
 const supabase = createClient(
@@ -14,6 +14,19 @@ const supabase = createClient(
 
 app.use(express.json());
 
+// CORS 設定
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 // inject supabase client into req
 app.use((req, res, next) => {
   req.supabase = supabase;
@@ -22,21 +35,27 @@ app.use((req, res, next) => {
 
 // Routers
 const { router: availabilityRouter } = require('./routes/availability');
-const reservationRouter              = require('./routes/reservation');
+const { router: reservationRouter } = require('./routes/reservation');
 const searchRouter = require('./routes/search');
 const searchSupabaseRouter = require('./routes/searchWithSupabase');
 const tagImagesRouter = require('./routes/tagImages');
 const { router: registerRouter } = require('./routes/register');
 const loginRoute = require('./routes/login');
+const logoutRoute = require('./routes/logout'); 
+const customersRouter = require('./routes/customers');
+const artistsRouter = require('./routes/artists');
 
-
-app.use('/api/technicians', availabilityRouter);
 app.use('/api/reservations', reservationRouter);
+app.use('/api/technicians', availabilityRouter);
 app.use('/api', searchRouter);
 app.use('/api', searchSupabaseRouter);
 app.use('/api', tagImagesRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
+app.use('/api/logout', logoutRoute);  
+app.use('/api/customers', customersRouter);
+app.use('/api/artists', artistsRouter);          // 先掛基本的 artists 路由
+app.use('/api/artists', availabilityRouter); 
 
 
 
