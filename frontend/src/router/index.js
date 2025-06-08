@@ -10,6 +10,7 @@ import Register from '../pages/Register.vue'
 import Appointments from '../pages/Appointments.vue'
 import Reviews from '../pages/Reviews.vue'
 import Settings from '../pages/Settings.vue'
+import DebugEnv from '../pages/DebugEnv.vue' // 新增環境變數偵錯頁面
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -28,6 +29,9 @@ const routes = [
   { path: '/appointments', component: Appointments },
   { path: '/reviews', component: Reviews },
   { path: '/settings', component: Settings },
+  
+  // 偵錯頁面 (僅在開發或測試時使用)
+  { path: '/debug-env', component: DebugEnv },
 ]
 
 export const router = createRouter({

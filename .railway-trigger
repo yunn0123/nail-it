@@ -1,0 +1,13 @@
+# Railway 部署觸發檔案
+# 修改此檔案的任何內容都會觸發 Railway 重新部署
+
+DEPLOY_TIMESTAMP=2025-06-08_17:15:00
+DEPLOY_REASON=統一Dockerfile配置，修正環境變數傳遞問題
+BUILD_NUMBER=001
+
+# 使用方法：
+# 1. 修改上面的任一數值
+# 2. git add . && git commit -m "trigger deploy"
+# 3. git push
+#
+# 這會觸發 GitHub Actions 重新構建和部署到 Railway

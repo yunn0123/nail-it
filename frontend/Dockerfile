@@ -1,4 +1,5 @@
 # Railway部署專用Dockerfile，用於連接分離的後端服務
+# 更新時間：2025-06-08 17:10:00
 # ===== 第一階段：建置應用 =====
 FROM node:18-alpine AS builder
 
@@ -16,7 +17,9 @@ COPY . .
 
 # 構建時接收建置參數並設定環境變數
 ARG BACKEND_API_URL
+ARG BUILD_VERSION=latest
 ENV VITE_BACKEND_API_URL=$BACKEND_API_URL
+ENV VITE_BUILD_VERSION=$BUILD_VERSION
 
 # 構建應用
 RUN npm run build
