@@ -9,12 +9,5 @@
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/",
     "healthcheckTimeout": 300
-  },
-  "environments": {
-    "production": {
-      "variables": {
-        "BACKEND_API_URL": "$BACKEND_API_URL"
-      }
-    }
   }
 }

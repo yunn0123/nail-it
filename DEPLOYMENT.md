@@ -1,4 +1,4 @@
-# Nail-It 部署說明文檔
+<!-- # Nail-It 部署說明文檔
 
 本文檔說明 Nail-It 美甲預約系統的部署流程，包括 Railway 雲端部署和本地 Docker 部署方式。
 
@@ -65,6 +65,7 @@ CMD ["node", "server.js"]
 | `RAILWAY_TOKEN` | Railway 平台的 API Token |
 | `RAILWAY_FRONTEND_SERVICE_ID` | 前端服務 ID |
 | `RAILWAY_BACKEND_SERVICE_ID` | 後端服務 ID |
+| `RAILWAY_BACKEND_API_URL` | 後端服務的完整網址 (如: https://your-backend.railway.app) |
 
 ### Railway 環境變數
 
@@ -171,4 +172,4 @@ docker run -d -p 3000:3000 --name backend \
 - Git 分支和提交
 - PR 號（如適用）
 
-這有助於追蹤和審計所有部署活動。
+這有助於追蹤和審計所有部署活動。 -->
