@@ -13,7 +13,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // CORS 設定
 app.use((req, res, next) => {
@@ -45,6 +46,7 @@ const loginRoute = require('./routes/login');
 const logoutRoute = require('./routes/logout'); 
 const customersRouter = require('./routes/customers');
 const artistsRouter = require('./routes/artists');
+const worksRouter = require('./routes/works');
 
 app.use('/api/reservations', reservationRouter);
 app.use('/api/technicians', availabilityRouter);
@@ -57,6 +59,8 @@ app.use('/api/logout', logoutRoute);
 app.use('/api/customers', customersRouter);
 app.use('/api/artists', artistsRouter);          // 先掛基本的 artists 路由
 app.use('/api/artists', availabilityRouter); 
+app.use('/api/works', worksRouter); 
+
 
 // 提供 API 文檔靜態文件
 app.use('/docs', express.static(path.join(__dirname, './')));

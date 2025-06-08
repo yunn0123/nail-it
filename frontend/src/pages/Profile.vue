@@ -745,6 +745,8 @@
       </div>
 
       <!-- 作品牆管理 -->
+       <!-- 臨時 debug，加在作品牆區塊前面 -->
+
       <div id="portfolio" class="mb-8">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center">
@@ -880,14 +882,14 @@
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">標籤</label>
 
-          <!-- 已選擇標籤 -->
+          <!-- 已選擇標籤 - 只顯示中文部分 -->
           <div class="flex flex-wrap gap-2 mb-2">
             <span 
               v-for="(tag, index) in workFormData.tags" 
               :key="index" 
               class="bg-[#c68f84] text-white text-sm py-1 px-3 rounded-full flex items-center"
             >
-              {{ tag }}
+              {{ tag.replace(/\s*[\(（][^)）]*[\)）]\s*/g, '').trim() }}
               <button 
                 @click="removeWorkTag(index)" 
                 class="ml-2 text-white hover:text-red-200"
@@ -898,6 +900,14 @@
           </div>
 
           <!-- AI 建議標籤 -->
+           <!-- 🔥 新增：loading 顯示 -->
+          <div v-if="isAnalyzing" class="mb-2 flex items-center text-[#c68f84]">
+            <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
+              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"></path>
+            </svg>
+            <span class="text-sm">AI 正在分析圖片...</span>
+          </div>
           <div v-if="suggestedTags.length" class="mb-2">
             <p class="text-sm text-gray-500 mb-1">AI 建議標籤 (點選加入)：</p>
             <div class="flex flex-wrap gap-2">
@@ -1108,6 +1118,8 @@ const showOutline = ref(false)
 const activeSection = ref('basic-info')
 
 const isLoading = ref(false)
+const isAnalyzing = ref(false)
+const suggestedTagsMapping = ref({})
 
 // 新增預覽模式狀態
 const isPreviewMode = ref(false)
@@ -1535,6 +1547,17 @@ const formatDate = (dateString) => {
   return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`
 }
 
+const formatTag = (tag) => {
+  // 如果 tag 包含中文和英文，只提取中文部分
+  const match = tag.match(/^([^（(]+)/)
+  return match ? match[1] : tag
+}
+
+const formatTags = (tags) => {
+  if (!Array.isArray(tags)) return []
+  return tags.map(tag => formatTag(tag))
+}
+
 // 編輯模式相關方法
 const startEdit = () => {
   if (isPreviewMode.value) return // 預覽模式下不允許編輯
@@ -1643,11 +1666,20 @@ const handleImageUpload = (event) => {
 }
 
 // 作品管理
-const removeWork = (workId) => {
+// 更新 removeWork 函數
+const removeWork = async (workId) => {
   if (confirm('確定要刪除這個作品嗎？')) {
-    const index = currentArtist.value.works.findIndex(work => work.id === workId)
-    if (index > -1) {
-      currentArtist.value.works.splice(index, 1)
+    const success = await removeWorkFromDatabase(workId)
+    
+    if (success) {
+      // 從本地陣列中移除
+      const index = currentArtist.value.works.findIndex(work => work.id === workId)
+      if (index > -1) {
+        currentArtist.value.works.splice(index, 1)
+      }
+      alert('作品已刪除')
+    } else {
+      alert('刪除作品失敗，請稍後再試')
     }
   }
 }
@@ -1671,7 +1703,7 @@ const handleWorkImageUpload = (event) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       workFormData.value.image = e.target.result
-      analyzeImageAndSuggestTags(file) // ← 加上這行觸發 AI 分析
+      analyzeImageAndSuggestTags(file) // ← 確認這行存在
     }
     reader.readAsDataURL(file)
   }
@@ -1687,49 +1719,104 @@ const editWork = (work) => {
   showEditWorkModal.value = true
 }
 
-const updateWork = () => {
+// 更新 updateWork 函數
+const updateWork = async () => {
   if (!workFormData.value.description.trim()) {
     alert('請輸入作品描述')
     return
   }
 
-  const workIndex = currentArtist.value.works.findIndex(work => work.id === editingWork.value.id)
-  if (workIndex > -1) {
-    currentArtist.value.works[workIndex] = {
-      ...editingWork.value,
-      description: workFormData.value.description.trim(),
-      tags: [...workFormData.value.tags],
-      image: workFormData.value.image
+  const workData = {
+    description: workFormData.value.description.trim(),
+    tags: [...workFormData.value.tags]
+  }
+  
+  const updatedWork = await updateWorkInDatabase(editingWork.value.id, workData)
+  
+  if (updatedWork) {
+    // 更新本地陣列
+    const workIndex = currentArtist.value.works.findIndex(work => work.id === editingWork.value.id)
+    if (workIndex > -1) {
+      currentArtist.value.works[workIndex] = updatedWork
     }
     
     alert('作品已成功更新！')
     cancelWorkForm()
+  } else {
+    alert('更新作品失敗，請稍後再試')
   }
 }
 
-const addWork = () => {
-  if (!workFormData.value.description.trim()) {
-    alert('請輸入作品描述')
-    return
+// 更新作品到資料庫
+const updateWorkInDatabase = async (workId, workData) => {
+  try {
+    const result = await apiRequest(`/works/${workId}`, {
+      method: 'PUT',
+      body: JSON.stringify(workData)
+    })
+    
+    if (result.success && result.data) {
+      console.log('作品在資料庫中更新成功')
+      return result.data.work  // 🔥 修正
+    } else {
+      console.error('在資料庫中更新作品失敗:', result.error)
+      return null
+    }
+  } catch (error) {
+    console.error('在資料庫中更新作品錯誤:', error)
+    return null
   }
+}
+
+// 更新 addWork 函數
+const addWork = async () => {
+  
   if (!workFormData.value.image) {
     alert('請選擇作品圖片')
     return
   }
 
-  const work = {
-    id: Date.now(),
+  const workData = {
+    imageData: workFormData.value.image,  // ← 確認這是 base64 格式
     description: workFormData.value.description.trim(),
-    date: new Date().toISOString().split('T')[0],
-    image: workFormData.value.image,
     tags: [...workFormData.value.tags]
   }
-
-  currentArtist.value.works.unshift(work)
   
-  alert('作品已成功新增！')
-  cancelWorkForm()
+  console.log('🔍 準備發送的資料:', workData) // 加入這行 debug
+  
+  
+  const savedWork = await addWorkToDatabase(workData)
+  
+  if (savedWork) {
+    // 新增到本地陣列（使用資料庫回傳的格式）
+    currentArtist.value.works.unshift(savedWork)
+    alert('作品已成功新增！')
+    cancelWorkForm()
+  } else {
+    alert('新增作品失敗，請稍後再試')
+  }
 }
+
+// 刪除作品從資料庫
+const removeWorkFromDatabase = async (workId) => {
+  try {
+    const result = await apiRequest(`/works/${workId}`, {
+      method: 'DELETE'
+    })
+    
+    if (result.success) {
+      console.log('作品從資料庫刪除成功')
+      return true
+    } else {
+      console.error('從資料庫刪除作品失敗:', result.error)
+      return false
+    }
+  } catch (error) {
+    console.error('從資料庫刪除作品錯誤:', error)
+    return false
+  }
+}
+
 
 const suggestedTags = ref([])
 
@@ -1749,19 +1836,93 @@ const cancelWorkForm = () => {
   }
 }
 
-const acceptSuggestedTag = (tag, index) => {
-  if (!workFormData.value.tags.includes(tag)) {
-    workFormData.value.tags.push(tag)
+const acceptSuggestedTag = (displayTag, index) => {
+  // 取得完整標籤（含英文）
+  const fullTag = suggestedTagsMapping.value[displayTag] || displayTag
+  
+  // 檢查是否已經存在相同的顯示名稱
+  const isDuplicate = workFormData.value.tags.some(existingTag => {
+    const existingDisplay = existingTag.replace(/\s*[\(（][^)）]*[\)）]\s*/g, '').trim()
+    return existingDisplay === displayTag
+  })
+  
+  if (!isDuplicate) {
+    workFormData.value.tags.push(fullTag) // 存入完整標籤到表單
   }
+  
   suggestedTags.value.splice(index, 1)
 }
 
 
-const analyzeImageAndSuggestTags = (imageFile) => {
-  // 假設你未來會丟去後端拿標籤
-  // 暫時模擬一下
-  suggestedTags.value = ['可愛', '貓眼', '日系'] // ← 根據圖片自動建議
+const analyzeImageAndSuggestTags = async (imageFile) => {
+  try {
+    console.log('🔍 前端開始分析圖片...', imageFile.name)
+    suggestedTags.value = []
+    isAnalyzing.value = true // 開始分析
+    
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const base64Image = e.target.result
+      console.log('📷 圖片已轉換為 base64')
+      
+      try {
+        console.log('📡 發送請求到 /tag-base64')
+        const result = await apiRequest('/tag-base64', {
+          method: 'POST',
+          body: JSON.stringify({
+            image: base64Image
+          })
+        })
+        
+        console.log('📥 收到 API 回應:', result)
+        
+        if (result.data && result.data.success && result.data.tags) {
+          // 🔥 建立標籤對照表：顯示名稱 -> 完整標籤
+          const tagMapping = {}
+          result.data.tags.forEach(fullTag => {
+            const displayTag = fullTag.replace(/\s*[\(（][^)）]*[\)）]\s*/g, '').trim()
+            tagMapping[displayTag] = fullTag // "光澤" -> "光澤（Glossy）"
+          })
+          
+          // 過濾掉已經選擇的標籤（比較顯示名稱）
+          const cleanTags = Object.keys(tagMapping)
+            .filter(displayTag => {
+              // 檢查是否已經有相同的顯示名稱
+              return !workFormData.value.tags.some(existingTag => {
+                const existingDisplay = existingTag.replace(/\s*[\(（][^)）]*[\)）]\s*/g, '').trim()
+                return existingDisplay === displayTag
+              })
+            })
+          
+          suggestedTags.value = cleanTags // 只顯示純中文
+          suggestedTagsMapping.value = tagMapping // 保存對照關係
+          
+          console.log('🔍 原始標籤:', result.data.tags)
+          console.log('✅ 顯示標籤:', cleanTags)
+          console.log('📋 對照表:', tagMapping)
+        } else {
+          console.warn('⚠️ API 回應格式不正確:', result)
+          suggestedTags.value = ['日系', '清新', '精緻']
+          suggestedTagsMapping.value = {}
+        }
+      } catch (error) {
+        console.error('💥 API 請求錯誤:', error)
+        suggestedTags.value = ['日系', '清新', '精緻']
+        suggestedTagsMapping.value = {}
+      } finally {
+        isAnalyzing.value = false // 分析完成
+      }
+    }
+    
+    reader.readAsDataURL(imageFile)
+  } catch (error) {
+    console.error('🚫 圖片處理錯誤:', error)
+    suggestedTags.value = []
+    suggestedTagsMapping.value = {}
+    isAnalyzing.value = false // 錯誤時也要關閉
+  }
 }
+
 
 // 預約管理方法
 // 確認預約
@@ -2055,7 +2216,8 @@ const loadArtistData = async (artistId) => {
         bio: artistData.bio,
         styles: artistData.styles || [],
         image: artistData.image,
-        lineUrl: artistData.lineUrl || '', // ← 加入這行
+        lineUrl: artistData.lineUrl || '',
+        works: [], // ← 確保有這個初始值
         created_at: artistData.created_at
       }
       console.log('美甲師資料載入成功:', currentArtist.value)
@@ -2071,6 +2233,7 @@ const loadArtistData = async (artistId) => {
   } finally {
     isLoading.value = false
   }
+  console.log('🔍 loadArtistData 完成後的 currentArtist:', currentArtist.value)
 }
 
 
@@ -2212,6 +2375,55 @@ const isAppointmentPast = (appointment) => {
   return false
 }
 
+// 載入美甲師作品
+const loadArtistWorks = async (artistId) => {
+  try {
+    console.log('載入美甲師作品，artistId:', artistId)
+    const result = await apiRequest(`/works/artist/${artistId}`)
+    
+    if (result.success && result.data) {
+      // 🔥 在這裡格式化標籤
+      const works = result.data.works.map(work => ({
+        ...work,
+        tags: formatTags(work.tags) // 格式化標籤，只顯示中文
+      }))
+      
+      currentArtist.value.works = works
+      console.log('作品載入成功:', works.length, '件作品')
+    } else {
+      console.error('載入作品失敗:', result.error)
+      currentArtist.value.works = []
+    }
+  } catch (error) {
+    console.error('載入作品錯誤:', error)
+    currentArtist.value.works = []
+  }
+}
+
+// 新增作品到資料庫
+// 新增作品到資料庫
+const addWorkToDatabase = async (workData) => {
+  try {
+    console.log('🔍 發送到後端的資料:', workData) // 加入這行 debug
+    
+    const result = await apiRequest(`/works/artist/${currentArtist.value.id}`, {
+      method: 'POST',
+      body: JSON.stringify(workData)
+    })
+    
+    if (result.success && result.data) {
+      console.log('作品新增到資料庫成功')
+      return result.data.work
+    } else {
+      console.error('新增作品到資料庫失敗:', result.error)
+      return null
+    }
+  } catch (error) {
+    console.error('新增作品到資料庫錯誤:', error)
+    return null
+  }
+}
+
 // 格式化時間，移除秒數
 const formatTime = (timeString) => {
   if (!timeString) return ''
@@ -2231,9 +2443,12 @@ onMounted(async () => {
   // 載入營業時段
   await loadArtistSchedule(id)
   
-  // 如果是自己的檔案，設定可編輯狀態
+  // 載入作品牆（針對所有美甲師，不只是自己）
+  await loadArtistWorks(id)
+  
+  // 如果是自己的檔案，載入預約資料
   if (id === currentUserId.value) {
-    await loadArtistAppointments(id)  // ← 加入這行
+    await loadArtistAppointments(id)
     console.log('這是自己的檔案，已載入預約資料')
   }
   
