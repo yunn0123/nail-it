@@ -17,11 +17,11 @@ app.use(express.json());
 // CORS 設定
 app.use((req, res, next) => {
   const allowedOrigins = [
+    // Railway 部署網址 (需要根據實際情況調整)
+    /^https:\/\/.*\.railway\.app$/,  // 所有 Railway 的子域名
     'http://localhost:5173',  // Vite 開發服務器
     'http://localhost',       // Docker 前端容器 (port 80)
     'http://localhost:80',    // Docker 前端容器 (明確端口)
-    // Railway 部署網址 (需要根據實際情況調整)
-    /^https:\/\/.*\.railway\.app$/  // 所有 Railway 的子域名
   ];
   
   const origin = req.headers.origin;
