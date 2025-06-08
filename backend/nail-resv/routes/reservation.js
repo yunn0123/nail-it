@@ -2,7 +2,6 @@
 const express = require('express');
 const router = express.Router();
 
-console.log('🔥🔥🔥 RESERVATION.JS 已載入！🔥🔥🔥');
 
 // 在所有路由之前加上這個測試路由
 router.get('/test-route', (req, res) => {
@@ -200,8 +199,10 @@ router.get('/artist/:artistId', async (req, res) => {
 // GET /api/reservations/customer/:customerId
 // 獲取顧客的所有預約
 router.get('/customer/:customerId', async (req, res) => {
+  
  try {
    const { customerId } = req.params;
+   console.log('🔍 顧客預約 API 被呼叫，customerId:', customerId);
    const { status } = req.query; // 可選的篩選條件
    
    const supabase = req.supabase;
@@ -219,17 +220,17 @@ router.get('/customer/:customerId', async (req, res) => {
 
    // 建立查詢
    let query = supabase
-     .from('appointments')
-     .select(`
-       id,
-       service_date,
-       service_time,
-       status,
-       note,
-       created_at,
-       artists!inner(user_id, studio_name)
-     `)
-     .eq('customer_id', customerId)
+      .from('appointments')
+      .select(`
+        id,
+        service_date,
+        service_time,
+        status,
+        note,
+        created_at,
+        artists!inner(user_id, studio_name, avatar_url)
+      `)
+     .eq('customer_id', req.params.customerId)
      .order('service_date', { ascending: false })
      .order('service_time', { ascending: true });
 
@@ -239,6 +240,10 @@ router.get('/customer/:customerId', async (req, res) => {
    }
 
    const { data: appointments, error: appointmentsError } = await query;
+   console.log('📅 顧客查到的預約數量:', appointments?.length);
+    console.log('📅 顧客預約錯誤:', appointmentsError);
+    console.log('📅 顧客第一筆預約:', appointments?.[0]);
+    console.log('🎨 美甲師資料:', appointments?.[0]?.artists);
 
    if (appointmentsError) {
      console.error('Get customer appointments error:', appointmentsError);
@@ -247,15 +252,16 @@ router.get('/customer/:customerId', async (req, res) => {
 
    // 整理回傳格式
    const formattedAppointments = appointments.map(apt => ({
-     id: apt.id,
-     artistId: apt.artists.user_id,
-     artistName: apt.artists.studio_name,
-     date: apt.service_date,
-     time: apt.service_time,
-     status: apt.status,
-     note: apt.note,
-     createdAt: apt.created_at
-   }));
+    id: apt.id,
+    artistId: apt.artists.user_id,
+    artistName: apt.artists.studio_name,
+    artistImage: apt.artists.avatar_url,
+    date: apt.service_date,
+    time: apt.service_time,
+    status: apt.status,
+    note: apt.note,
+    createdAt: apt.created_at
+  }));
 
    res.json({
      success: true,
@@ -528,20 +534,13 @@ router.put('/appointment/:appointmentId/complete', async (req, res) => {
 router.put('/appointment/:appointmentId/cancel', async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { reason } = req.body;
     const supabase = req.supabase;
     
-    const updateData = {
-      status: 'cancelled'
-    };
-
-    if (reason) {
-      updateData.cancellation_reason = reason;
-    }
-
     const { error } = await supabase
       .from('appointments')
-      .update(updateData)
+      .update({ 
+        status: 'cancelled'
+      })
       .eq('id', appointmentId)
       .in('status', ['pending', 'confirmed']);
 
