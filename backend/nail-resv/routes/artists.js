@@ -14,7 +14,7 @@ router.get('/:id', async (req, res) => {
     // 從 artists 表格獲取基本資料，包含 price_min 和 price_max
     const { data: artistData, error: artistError } = await supabase
       .from('artists')
-      .select('user_id, studio_name, city, district, bio, styles, price_min, price_max') // ← 加上價格欄位
+      .select('user_id, studio_name, city, district, bio, styles, price_min, price_max, avatar_url') // ← 加上 avatar_url
       .eq('user_id', id)
       .single();
 
@@ -44,11 +44,10 @@ router.get('/:id', async (req, res) => {
       district: artistData.district,
       bio: artistData.bio,
       styles: artistData.styles || [],
-      priceLow: artistData.price_min || 0,     // ← 從資料庫讀取，預設 0
-      priceHigh: artistData.price_max || 0,    // ← 從資料庫讀取，預設 0
-      rating: 0,  // ← 設為 0 或之後從評價計算平均
-      image: 'https://nail-it.supabase.co/storage/v1/object/public/avatars/default.png',
-      created_at: authUser.user.created_at
+      priceLow: artistData.price_min || 0,
+      priceHigh: artistData.price_max || 0,
+      rating: 0,
+      image: artistData.avatar_url || 'https://uvzjbmxxrkrnmckrifqs.supabase.co/storage/v1/object/public/avatars/avatar.jpg',
     };
 
     res.json({

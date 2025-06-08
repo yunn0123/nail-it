@@ -120,43 +120,65 @@
       </div>
 
       <!-- 近期預約 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center">
-            <h3 class="text-2xl text-gray-700 mr-2">近期預約</h3>
-            <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
-          </div>
+<div class="mb-8">
+  <div class="flex items-center justify-between mb-5">
+    <div class="flex items-center">
+      <h3 class="text-2xl text-gray-700 mr-2">即將到來的預約</h3>
+      <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+    </div>
+  </div>
+  
+  <!-- 近期預約列表 -->
+  <div v-if="upcomingAppointments.length > 0" class="space-y-3">
+    <div 
+      v-for="appointment in upcomingAppointments" 
+      :key="appointment.id" 
+      class="bg-white rounded-xl p-4 shadow flex items-center justify-between"
+    >
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300">
+          <img 
+            v-if="appointment.artistImage"
+            :src="appointment.artistImage" 
+            alt="" 
+            class="w-full h-full object-cover" 
+            @error="$event.target.style.display = 'none'"
+          />
         </div>
-        
-        <!-- 近期預約列表 -->
-        <div class="space-y-4">
-          <div v-for="(appointment, index) in upcomingAppointments" :key="index" class="bg-white rounded-xl p-4 shadow flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                <img :src="appointment.artistImage" alt="Artist" class="w-full h-full object-cover" @error="$event.target.style.display='none'" />
-              </div>
-              <div>
-                <p class="text-gray-700 font-medium">{{ appointment.artistName }}</p>
-                <p class="text-gray-500 text-sm">$ {{ appointment.price }}</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="text-xs text-gray-500">預約時間</p>
-              <p class="text-lg font-bold text-[#5f4c47]">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
-            </div>
-          </div>
-          
-          <div v-if="upcomingAppointments.length === 0" class="text-center py-8 bg-white rounded-xl shadow">
-            <p class="text-gray-500">目前沒有近期預約</p>
-            <button 
-              @click="router.push('/search')" 
-              class="mt-4 px-6 py-2 bg-[#c68f84] text-white rounded-lg hover:bg-[#c67868]"
-            >
-              探索美甲師
-            </button>
-          </div>
+        <div>
+          <p class="text-gray-700 font-semibold">{{ appointment.artistName }}</p>
+          <p class="text-gray-500 text-sm">{{ formatAppointmentDate(appointment.date) }} {{ formatAppointmentTime(appointment.time) }}</p>
+          <!-- 狀態顯示 -->
+          <p v-if="appointment.status === 'pending'" class="text-[#c68f84] text-xs mt-1">
+            請待美甲師確認，如需取消請聯絡美甲師
+          </p>
+          <p v-else-if="appointment.status === 'confirmed'" class="text-[#c68f84] text-xs mt-1">
+            美甲師已確認，如需取消請聯絡美甲師
+          </p>
         </div>
       </div>
+      <div class="flex items-center space-x-3">
+        <!-- 聊聊按鈕 -->
+        <button 
+          @click="chatWithArtist(appointment)"
+          class="bg-white border border-[#c68f84] text-[#c68f84] px-3 py-1 rounded-lg hover:bg-[#f9e7e4] text-sm"
+        >
+          聊聊
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div v-else class="text-center py-8 bg-white rounded-xl shadow">
+    <p class="text-gray-500 mb-4">目前沒有近期預約</p>
+    <button 
+      @click="router.push('/search')" 
+      class="bg-[#c68f84] text-white px-6 py-2 rounded-lg hover:bg-[#c67868]"
+    >
+      尋找美甲師
+    </button>
+  </div>
+</div>
     </div>
   </div>
 </template>
@@ -237,13 +259,28 @@ const loadCustomerData = async () => {
 // 載入預約資料
 const loadAppointments = async () => {
   try {
-    const result = await apiRequest(`/customers/${currentUserId.value}/appointments`)
+    const result = await apiRequest(`/reservations/customer/${currentUserId.value}`)
     
-    if (result.success) {
-      upcomingAppointments.value = result.data.appointments
+    if (result.data && result.data.success) {
+      const allAppointments = result.data.appointments
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      // 篩選：未來的預約 + 未完成狀態
+      upcomingAppointments.value = allAppointments
+        .filter(apt => {
+          // 只要待確認和已確認的
+          if (!['pending', 'confirmed'].includes(apt.status)) return false
+          
+          // 只要今天或未來的預約
+          const appointmentDate = new Date(apt.date)
+          return appointmentDate >= today
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date))  // 按日期排序
+        .slice(0, 3)  // 最多顯示3筆最近的
+        
       console.log('預約資料載入成功:', upcomingAppointments.value)
     } else {
-      console.log('預約資料載入失敗，使用空陣列')
       upcomingAppointments.value = []
     }
   } catch (error) {
@@ -364,6 +401,31 @@ const saveChanges = async () => {
     editData.value = {}
     alert('資料已成功更新！')
   }
+}
+
+// 格式化日期和時間（和 Appointments.vue 一樣）
+const formatAppointmentDate = (dateString) => {
+  const date = new Date(dateString)
+  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`
+}
+
+const formatAppointmentTime = (timeString) => {
+  if (!timeString) return ''
+  if (timeString.includes(':')) {
+    return timeString.substring(0, 5)
+  }
+  return timeString
+}
+
+// 與美甲師聊聊
+const chatWithArtist = (appointment) => {
+  router.push({
+    path: '/chat',
+    query: { 
+      artistId: appointment.artistId,
+      artistName: appointment.artistName
+    }
+  })
 }
 
 // 頁面載入時獲取資料
