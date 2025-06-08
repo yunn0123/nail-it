@@ -120,34 +120,33 @@ async function uploadImageToSupabase(filePath, filename) {
   }
 }
 
-// 將資料存到 Supabase portfolio 表
-async function saveToPortfolio(artistId, imageUrl, tags, filename) {
+// 將資料存到 Supabase nail_images 表
+async function saveToNailImages(artistId, imageUrl, tags, filename) {
   try {
     const { data, error } = await supabase
-      .from('portfolio')
+      .from('nail_images')
       .insert([{
         artist_id: artistId,
+        filename: filename,
         image_url: imageUrl,
-        description: null,
-        tags: null,
-        created_at: new Date().toISOString(),
-        shape: tags.shape || [],
         style: tags.style || [],
+        shape: tags.shape || [],
         color: tags.color || [],
         texture: tags.texture || [],
+        decorations: tags.decorations || [],
         theme: tags.theme || [],
-        decorations: tags.decorations || []
+        created_at: new Date().toISOString()
       }]);
 
     if (error) {
-      console.error('儲存到 portfolio 表失敗:', error);
+      console.error('儲存到 nail_images 表失敗:', error);
       return false;
     }
 
-    console.log(`✅ 成功儲存 ${filename} 到 portfolio 表`);
+    console.log(`✅ 成功儲存 ${filename} 到 nail_images 表`);
     return true;
   } catch (error) {
-    console.error('儲存到 portfolio 表發生錯誤:', error);
+    console.error('儲存到 nail_images 表發生錯誤:', error);
     return false;
   }
 }
@@ -246,8 +245,8 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
         };
       }
 
-      // 儲存到 portfolio 表
-      const portfolioSaved = await saveToPortfolio(artistId, imageUrl, tags, filename);
+      // 儲存到 nail_images 表
+      const nailImagesSaved = await saveToNailImages(artistId, imageUrl, tags, filename);
 
       // 清理臨時檔案
       fs.unlinkSync(file.path);
@@ -258,7 +257,7 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
         imageUrl: imageUrl,
         tags: tags,
         success: true,
-        portfolioSaved: portfolioSaved
+        nailImagesSaved: nailImagesSaved
       };
 
     } catch (error) {
@@ -301,7 +300,7 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
       filename: r.filename,
       imageUrl: r.imageUrl,
       tags: r.tags,
-      portfolioSaved: r.portfolioSaved
+      nailImagesSaved: r.nailImagesSaved
     })),
     failed: failed.map(r => ({
       originalName: r.originalName,
