@@ -4,7 +4,7 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 // init Supabase
 const supabase = createClient(
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
 
 // Routers
 const { router: availabilityRouter } = require('./routes/availability');
-const reservationRouter              = require('./routes/reservation');
+const { router: reservationRouter } = require('./routes/reservation');
 const searchRouter = require('./routes/search');
 //const tagImagesRouter = require('./routes/tagImages');
 const { router: registerRouter } = require('./routes/register');
@@ -44,9 +44,8 @@ const logoutRoute = require('./routes/logout');
 const customersRouter = require('./routes/customers');
 const artistsRouter = require('./routes/artists');
 
-
-app.use('/api/technicians', availabilityRouter);
 app.use('/api/reservations', reservationRouter);
+app.use('/api/technicians', availabilityRouter);
 app.use('/api', searchRouter);
 //app.use('/api', tagImagesRouter);
 app.use('/api/register', registerRouter);

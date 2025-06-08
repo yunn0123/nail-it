@@ -438,8 +438,8 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
-                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+                  <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
                 </div>
               </div>
               
@@ -455,6 +455,7 @@
                   </svg>
                 </button>
                 <!-- 確認與取消按鈕 -->
+                <!-- 待確認預約的按鈕 -->
                 <div class="flex space-x-2">
                   <button 
                     @click="confirmAppointment(appointment.id)"
@@ -508,8 +509,8 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
-                  <p v-if="appointment.notes" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.notes }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+                  <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
                 </div>
               </div>
               
@@ -525,10 +526,20 @@
                   </svg>
                 </button>
                 <!-- 完成與取消按鈕 -->
+                <!-- 已確認預約的按鈕 -->
                 <div class="flex space-x-2">
                   <button 
+                    v-if="isAppointmentPast(appointment)"
                     @click="completeAppointment(appointment.id)"
                     class="bg-[#c68f84] text-white px-3 py-1 rounded-lg hover:bg-[#c67868] text-sm"
+                  >
+                    完成
+                  </button>
+                  <button 
+                    v-else
+                    disabled
+                    class="bg-gray-300 text-gray-500 px-3 py-1 rounded-lg text-sm cursor-not-allowed"
+                    title="預約時間尚未結束"
                   >
                     完成
                   </button>
@@ -578,7 +589,7 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
                 </div>
               </div>
               
@@ -632,7 +643,7 @@
                 </div>
                 <div>
                   <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ appointment.time }}</p>
+                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
                 </div>
               </div>
               
@@ -1722,29 +1733,79 @@ const analyzeImageAndSuggestTags = (imageFile) => {
 }
 
 // 預約管理方法
-const confirmAppointment = (appointmentId) => {
-  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
-  if (index > -1) {
-    appointments.value[index].status = 'confirmed'
-    alert('已確認預約！')
-  }
-}
-
-const completeAppointment = (appointmentId) => {
-  const index = appointments.value.findIndex(apt => apt.id === appointmentId)
-  if (index > -1) {
-    appointments.value[index].status = 'completed'
-    alert('已完成預約！')
-  }
-}
-
-const cancelAppointment = (appointmentId) => {
-  if (confirm('確定要取消此預約嗎？')) {
-    const index = appointments.value.findIndex(apt => apt.id === appointmentId)
-    if (index > -1) {
-      appointments.value[index].status = 'cancelled'
-      alert('已取消預約！')
+// 確認預約
+const confirmAppointment = async (appointmentId) => {
+  if (!confirm('確定要確認此預約嗎？')) return
+  
+  try {
+    const result = await apiRequest(`/reservations/appointment/${appointmentId}/confirm`, {
+      method: 'PUT'
+    })
+    
+    if (result.success) {
+      // 更新本地狀態
+      const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+      if (index > -1) {
+        appointments.value[index].status = 'confirmed'
+      }
+      alert('已確認預約！')
+    } else {
+      alert(`確認失敗：${result.error}`)
     }
+  } catch (error) {
+    console.error('確認預約錯誤:', error)
+    alert('確認預約時發生錯誤')
+  }
+}
+
+// 完成預約
+const completeAppointment = async (appointmentId) => {
+  if (!confirm('確定要將此預約標記為完成嗎？')) return
+  
+  try {
+    const result = await apiRequest(`/reservations/appointment/${appointmentId}/complete`, {
+      method: 'PUT'
+    })
+    
+    if (result.success) {
+      // 更新本地狀態
+      const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+      if (index > -1) {
+        appointments.value[index].status = 'completed'
+      }
+      alert('已完成預約！')
+    } else {
+      alert(`完成失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('完成預約錯誤:', error)
+    alert('完成預約時發生錯誤')
+  }
+}
+
+// 取消預約
+const cancelAppointment = async (appointmentId) => {
+  if (!confirm('確定要取消此預約嗎？')) return
+  
+  try {
+    const result = await apiRequest(`/reservations/appointment/${appointmentId}/cancel`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason: '美甲師取消' })
+    })
+    
+    if (result.success) {
+      // 更新本地狀態
+      const index = appointments.value.findIndex(apt => apt.id === appointmentId)
+      if (index > -1) {
+        appointments.value[index].status = 'cancelled'
+      }
+      alert('已取消預約！')
+    } else {
+      alert(`取消失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('取消預約錯誤:', error)
+    alert('取消預約時發生錯誤')
   }
 }
 
@@ -2080,6 +2141,58 @@ const loadArtistSchedule = async (artistId) => {
   }
 }
 
+// 載入美甲師的預約資料
+const loadArtistAppointments = async (artistId) => {
+  try {
+    const result = await apiRequest(`/reservations/artist/${artistId}/manage`)
+    
+    if (result.success) {
+      // 更新預約資料
+      const appointmentData = result.data.appointments
+      appointments.value = [
+        ...appointmentData.pending,
+        ...appointmentData.confirmed,
+        ...appointmentData.completed,
+        ...appointmentData.cancelled
+      ]
+      console.log('預約資料載入成功:', appointmentData)
+    } else {
+      console.error('載入預約資料失敗:', result.error)
+    }
+  } catch (error) {
+    console.error('載入預約資料錯誤:', error)
+  }
+}
+
+// 檢查預約是否已經過時間
+const isAppointmentPast = (appointment) => {
+  const now = new Date()
+  const today = now.toISOString().split('T')[0] // 2025-06-08
+  const currentTime = now.toTimeString().split(' ')[0].substring(0, 5) // 14:30
+  
+  // 如果是今天之前的預約，可以完成
+  if (appointment.date < today) return true
+  
+  // 如果是今天，檢查時間是否已過
+  if (appointment.date === today) {
+    const appointmentEndTime = appointment.time.split('-')[1] || appointment.time.substring(0, 5)
+    return appointmentEndTime < currentTime
+  }
+  
+  // 未來的預約不能完成
+  return false
+}
+
+// 格式化時間，移除秒數
+const formatTime = (timeString) => {
+  if (!timeString) return ''
+  // 如果是 "14:00:00" 格式，取前5位
+  if (timeString.includes(':')) {
+    return timeString.substring(0, 5)
+  }
+  return timeString
+}
+
 onMounted(async () => {
   const id = route.params.id
   
@@ -2091,7 +2204,8 @@ onMounted(async () => {
   
   // 如果是自己的檔案，設定可編輯狀態
   if (id === currentUserId.value) {
-    console.log('這是自己的檔案，可以編輯')
+    await loadArtistAppointments(id)  // ← 加入這行
+    console.log('這是自己的檔案，已載入預約資料')
   }
   
   // 初始化臨時時段資料

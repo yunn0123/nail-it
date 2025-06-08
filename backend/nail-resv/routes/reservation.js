@@ -2,6 +2,14 @@
 const express = require('express');
 const router = express.Router();
 
+console.log('🔥🔥🔥 RESERVATION.JS 已載入！🔥🔥🔥');
+
+// 在所有路由之前加上這個測試路由
+router.get('/test-route', (req, res) => {
+  console.log('✅ 測試路由被呼叫了！');
+  res.json({ message: 'Reservation router 正常工作！', timestamp: new Date() });
+});
+
 // POST /api/reservations/book
 // 顧客預約美甲服務
 // Body: { customerId, artistId, date, time, note }
@@ -156,6 +164,7 @@ router.get('/artist/:artistId', async (req, res) => {
    }
 
    const { data: appointments, error: appointmentsError } = await query;
+   
 
    if (appointmentsError) {
      console.error('Get artist appointments error:', appointmentsError);
@@ -349,4 +358,207 @@ router.put('/:appointmentId/status', async (req, res) => {
  }
 });
 
-module.exports = router;
+// GET /api/reservations/artist/:artistId/manage
+// 美甲師獲取自己的所有預約（用於預約管理）
+router.get('/artist/:artistId/manage', async (req, res) => {
+  console.log('🔍 API 被呼叫，artistId:', req.params.artistId);
+  try {
+    const { artistId } = req.params;
+    const { status } = req.query;
+    
+    const supabase = req.supabase;
+    
+    // 驗證美甲師存在
+    const { data: artist, error: artistError } = await supabase
+      .from('artists')
+      .select('user_id, studio_name')
+      .eq('user_id', artistId)
+      .single();
+      
+    if (artistError || !artist) {
+      return res.status(404).json({ error: 'Artist not found' });
+    }
+
+    // 查預約
+    let query = supabase
+      .from('appointments')
+      .select(`
+        id,
+        service_date,
+        service_time,
+        status,
+        note,
+        created_at,
+        customer_id
+      `)
+      .eq('artist_id', artistId)
+      .order('service_date', { ascending: true })
+      .order('service_time', { ascending: true });
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data: appointments, error: appointmentsError } = await query;
+
+    if (appointmentsError) {
+      console.error('Get artist appointments error:', appointmentsError);
+      return res.status(500).json({ error: 'Failed to fetch appointments' });
+    }
+
+    // 查詢客戶資料
+    let customers = [];
+    if (appointments && appointments.length > 0) {
+      const customerIds = appointments.map(apt => apt.customer_id);
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('user_id, user_name')
+        .in('user_id', customerIds);
+      
+      customers = customerData || [];
+    }
+
+    // 按狀態分組
+    const grouped = {
+      pending: [],
+      confirmed: [],
+      completed: [],
+      cancelled: []
+    };
+
+    appointments.forEach(apt => {
+      const customer = customers.find(c => c.user_id === apt.customer_id);
+      
+      const formattedApt = {
+        id: apt.id,
+        customerId: apt.customer_id,
+        customerName: customer?.user_name || '未知顧客',
+        customerImage: null,
+        date: apt.service_date,
+        time: apt.service_time,
+        status: apt.status,
+        note: apt.note,
+        createdAt: apt.created_at,
+        showFallback: true
+      };
+
+      if (grouped[apt.status]) {
+        grouped[apt.status].push(formattedApt);
+      }
+    });
+
+    res.json({
+      success: true,
+      artistId,
+      artistName: artist.studio_name,
+      appointments: grouped,
+      total: appointments.length
+    });
+    
+  } catch (error) {
+    console.error('Get artist manage appointments error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/reservations/appointment/:appointmentId/confirm
+// 美甲師確認預約
+router.put('/appointment/:appointmentId/confirm', async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const supabase = req.supabase;
+    
+    const { error } = await supabase
+      .from('appointments')
+      .update({ 
+        status: 'confirmed'
+      })
+      .eq('id', appointmentId)
+      .eq('status', 'pending');
+
+    if (error) {
+      console.error('Confirm appointment error:', error);
+      return res.status(500).json({ error: 'Failed to confirm appointment' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment confirmed successfully'
+    });
+    
+  } catch (error) {
+    console.error('Confirm appointment error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/reservations/appointment/:appointmentId/complete
+// 美甲師完成預約
+router.put('/appointment/:appointmentId/complete', async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const supabase = req.supabase;
+    
+    const { error } = await supabase
+      .from('appointments')
+      .update({ 
+        status: 'completed'
+      })
+      .eq('id', appointmentId)
+      .eq('status', 'confirmed');
+
+    if (error) {
+      console.error('Complete appointment error:', error);
+      return res.status(500).json({ error: 'Failed to complete appointment' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment completed successfully'
+    });
+    
+  } catch (error) {
+    console.error('Complete appointment error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/reservations/appointment/:appointmentId/cancel
+// 美甲師取消預約
+router.put('/appointment/:appointmentId/cancel', async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { reason } = req.body;
+    const supabase = req.supabase;
+    
+    const updateData = {
+      status: 'cancelled'
+    };
+
+    if (reason) {
+      updateData.cancellation_reason = reason;
+    }
+
+    const { error } = await supabase
+      .from('appointments')
+      .update(updateData)
+      .eq('id', appointmentId)
+      .in('status', ['pending', 'confirmed']);
+
+    if (error) {
+      console.error('Cancel appointment error:', error);
+      return res.status(500).json({ error: 'Failed to cancel appointment' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment cancelled successfully'
+    });
+    
+  } catch (error) {
+    console.error('Cancel appointment error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = { router };
