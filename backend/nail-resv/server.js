@@ -16,7 +16,30 @@ app.use(express.json());
 
 // CORS 設定
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  const allowedOrigins = [
+    'http://localhost:5173',  // Vite 開發服務器
+    'http://localhost',       // Docker 前端容器 (port 80)
+    'http://localhost:80',    // Docker 前端容器 (明確端口)
+    // Railway 部署網址 (需要根據實際情況調整)
+    /^https:\/\/.*\.railway\.app$/  // 所有 Railway 的子域名
+  ];
+  
+  const origin = req.headers.origin;
+  
+  // 檢查 origin 是否在允許列表中，或符合 Railway 網址格式
+  const isAllowed = allowedOrigins.some(allowedOrigin => {
+    if (typeof allowedOrigin === 'string') {
+      return allowedOrigin === origin;
+    } else if (allowedOrigin instanceof RegExp) {
+      return allowedOrigin.test(origin);
+    }
+    return false;
+  });
+  
+  if (isAllowed) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   

@@ -12,6 +12,10 @@ RUN npm install
 # 複製其餘的應用程式檔案
 COPY . .
 
+# 設定環境變數（用於 Docker Compose）
+ARG VITE_BACKEND_API_URL
+ENV VITE_BACKEND_API_URL=$VITE_BACKEND_API_URL
+
 # 建置應用程式
 RUN npm run build
 

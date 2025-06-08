@@ -2,14 +2,16 @@ version: '3'
 
 services:
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      args:
+        VITE_BACKEND_API_URL: http://localhost:3000
     ports:
       - "80:80"
     restart: always
     environment:
       - VERSION=latest
       - ENVIRONMENT=production
-      - BACKEND_API_URL=http://backend:3000  # 確保與 server.js 中的設定一致
     depends_on:
       - backend
   backend:
