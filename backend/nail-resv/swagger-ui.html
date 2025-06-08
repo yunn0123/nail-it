@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美甲預約系統完整 API 文檔</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin:0;
+            background: #fafafa;
+        }
+        .swagger-ui .topbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .swagger-ui .topbar .download-url-wrapper .select-label {
+            color: white;
+        }
+        .swagger-ui .info .title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header-note {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-note">
+        <h2>💅 美甲預約系統完整 API 文檔</h2>
+        <p>包含認證、用戶管理、預約管理、AI 標註、搜尋等所有功能</p>
+        <p><small>🚀 支援離線查看，無需伺服器運行</small></p>
+    </div>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // 完整的 OpenAPI 規格內嵌到 JavaScript 中
+            const completeApiSpec = {
+                "openapi": "3.0.3",
+                "info": {
+                    "title": "美甲預約系統完整 API",
+                    "description": "完整的美甲預約系統 API，包含用戶註冊登入、美甲師管理、預約系統、圖片標註和搜尋功能。\n\n## 主要功能\n- 🔐 用戶註冊登入系統\n- 👤 顧客和美甲師資料管理\n- 📅 預約和時段管理\n- 🎨 美甲圖片 AI 標註\n- 🔍 智能搜尋和篩選\n- ⏰ 美甲師營業時間設定",
+                    "version": "1.0.0",
+                    "contact": {
+                        "name": "美甲預約系統 API 支援",
+                        "email": "support@nailit.com"
+                    }
+                },
+                "servers": [
+                    {
+                        "url": "http://localhost:4000/api",
+                        "description": "開發環境"
+                    }
+                ],
+                "paths": {
+                    "/register": {
+                        "post": {
+                            "tags": ["認證"],
+                            "summary": "用戶註冊",
+                            "description": "註冊新的顧客或美甲師帳號",
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["role", "email", "password"],
+                                            "properties": {
+                                                "role": {"type": "string", "enum": ["customer", "artist"]},
+                                                "email": {"type": "string", "format": "email"},
+                                                "password": {"type": "string", "minLength": 6},
+                                                "username": {"type": "string"},
+                                                "studio_name": {"type": "string"},
+                                                "city": {"type": "string"},
+                                                "district": {"type": "string"}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "201": {"description": "註冊成功"},
+                                "400": {"description": "請求參數錯誤"}
+                            }
+                        }
+                    },
+                    "/login": {
+                        "post": {
+                            "tags": ["認證"],
+                            "summary": "用戶登入",
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["email", "password"],
+                                            "properties": {
+                                                "email": {"type": "string", "format": "email"},
+                                                "password": {"type": "string"}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "200": {"description": "登入成功"},
+                                "401": {"description": "認證失敗"}
+                            }
+                        }
+                    },
+                    "/logout": {
+                        "post": {
+                            "tags": ["認證"],
+                            "summary": "用戶登出",
+                            "responses": {
+                                "200": {"description": "登出成功"}
+                            }
+                        }
+                    },
+                    "/customers/{id}": {
+                        "get": {
+                            "tags": ["顧客管理"],
+                            "summary": "獲取顧客資料",
+                            "parameters": [
+                                {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"},
+                                "404": {"description": "顧客不存在"}
+                            }
+                        },
+                        "put": {
+                            "tags": ["顧客管理"],
+                            "summary": "更新顧客資料",
+                            "parameters": [
+                                {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {"name": {"type": "string"}}
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "200": {"description": "更新成功"}
+                            }
+                        }
+                    },
+                    "/customers/{id}/appointments": {
+                        "get": {
+                            "tags": ["顧客管理"],
+                            "summary": "獲取顧客預約記錄",
+                            "parameters": [
+                                {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"}
+                            }
+                        }
+                    },
+                    "/artists/{id}": {
+                        "get": {
+                            "tags": ["美甲師管理"],
+                            "summary": "獲取美甲師資料",
+                            "parameters": [
+                                {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"},
+                                "404": {"description": "美甲師不存在"}
+                            }
+                        },
+                        "put": {
+                            "tags": ["美甲師管理"],
+                            "summary": "更新美甲師資料",
+                            "parameters": [
+                                {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "studio_name": {"type": "string"},
+                                                "city": {"type": "string"},
+                                                "district": {"type": "string"},
+                                                "bio": {"type": "string"},
+                                                "styles": {"type": "array", "items": {"type": "string"}},
+                                                "priceLow": {"type": "number"},
+                                                "priceHigh": {"type": "number"}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "200": {"description": "更新成功"}
+                            }
+                        }
+                    },
+                    "/artists/{artistId}/availability": {
+                        "get": {
+                            "tags": ["營業時間管理"],
+                            "summary": "獲取美甲師營業時間",
+                            "parameters": [
+                                {"name": "artistId", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"}
+                            }
+                        },
+                        "post": {
+                            "tags": ["營業時間管理"],
+                            "summary": "設定美甲師營業時間",
+                            "parameters": [
+                                {"name": "artistId", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["availability"],
+                                            "properties": {
+                                                "availability": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "Mon": {"type": "array", "items": {"type": "string"}, "example": ["10:00", "14:00"]},
+                                                        "Tue": {"type": "array", "items": {"type": "string"}, "example": ["10:00", "14:00"]},
+                                                        "Wed": {"type": "array", "items": {"type": "string"}, "example": ["10:00", "14:00"]},
+                                                        "Thu": {"type": "array", "items": {"type": "string"}, "example": ["10:00", "14:00"]},
+                                                        "Fri": {"type": "array", "items": {"type": "string"}, "example": ["10:00", "14:00"]},
+                                                        "Sat": {"type": "array", "items": {"type": "string"}, "example": ["10:00", "14:00"]},
+                                                        "Sun": {"type": "array", "items": {"type": "string"}, "example": []}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "201": {"description": "設定成功"}
+                            }
+                        }
+                    },
+                    "/artists/{artistId}/slots": {
+                        "get": {
+                            "tags": ["營業時間管理"],
+                            "summary": "獲取指定日期可預約時段",
+                            "parameters": [
+                                {"name": "artistId", "in": "path", "required": true, "schema": {"type": "string"}},
+                                {"name": "date", "in": "query", "required": true, "schema": {"type": "string", "format": "date"}, "description": "查詢日期 (YYYY-MM-DD)"}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"}
+                            }
+                        }
+                    },
+                    "/reservations/book": {
+                        "post": {
+                            "tags": ["預約管理"],
+                            "summary": "預約美甲服務",
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["customerId", "artistId", "date", "time"],
+                                            "properties": {
+                                                "customerId": {"type": "string"},
+                                                "artistId": {"type": "string"},
+                                                "date": {"type": "string", "format": "date"},
+                                                "time": {"type": "string"},
+                                                "note": {"type": "string"}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "201": {"description": "預約成功"},
+                                "400": {"description": "預約失敗"}
+                            }
+                        }
+                    },
+                    "/reservations/artist/{artistId}": {
+                        "get": {
+                            "tags": ["預約管理"],
+                            "summary": "獲取美甲師的預約列表",
+                            "parameters": [
+                                {"name": "artistId", "in": "path", "required": true, "schema": {"type": "string"}},
+                                {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"]}},
+                                {"name": "date", "in": "query", "schema": {"type": "string", "format": "date"}}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"}
+                            }
+                        }
+                    },
+                    "/reservations/customer/{customerId}": {
+                        "get": {
+                            "tags": ["預約管理"],
+                            "summary": "獲取顧客的預約列表",
+                            "parameters": [
+                                {"name": "customerId", "in": "path", "required": true, "schema": {"type": "string"}},
+                                {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"]}}
+                            ],
+                            "responses": {
+                                "200": {"description": "獲取成功"}
+                            }
+                        }
+                    },
+                    "/reservations/{appointmentId}/status": {
+                        "put": {
+                            "tags": ["預約管理"],
+                            "summary": "更新預約狀態",
+                            "parameters": [
+                                {"name": "appointmentId", "in": "path", "required": true, "schema": {"type": "string"}}
+                            ],
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["status"],
+                                            "properties": {
+                                                "status": {"type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"]},
+                                                "reason": {"type": "string"}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "200": {"description": "更新成功"}
+                            }
+                        }
+                    },
+                    "/tag": {
+                        "post": {
+                            "tags": ["美甲標註"],
+                            "summary": "批量標註美甲圖片",
+                            "description": "上傳美甲圖片並使用 AI 進行自動標註。支援同時上傳最多 10 張圖片，系統會自動分析每張圖片的風格、形狀、顏色、質感、裝飾和主題等屬性。",
+                            "requestBody": {
+                                "required": true,
+                                "content": {
+                                    "multipart/form-data": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["images", "placeId"],
+                                            "properties": {
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {"type": "string", "format": "binary"},
+                                                    "minItems": 1,
+                                                    "maxItems": 10,
+                                                    "description": "美甲圖片文件（支援 JPG, JPEG, PNG 格式，最多 10 張）"
+                                                },
+                                                "placeId": {
+                                                    "type": "string",
+                                                    "description": "美甲店的 Google Places ID",
+                                                    "example": "ChIJN1t_tDeuEmsRUsoyG83frY4"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "responses": {
+                                "200": {"description": "標註處理成功"},
+                                "400": {"description": "請求參數錯誤"}
+                            }
+                        }
+                    },
+                    "/search-supabase": {
+                        "get": {
+                            "tags": ["搜尋"],
+                            "summary": "智能搜尋美甲作品",
+                            "description": "根據多種條件搜尋美甲作品，支援美甲風格、美甲師條件等複合搜尋",
+                            "parameters": [
+                                {
+                                    "name": "style",
+                                    "in": "query",
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {"type": "string", "enum": ["漸層", "跳色", "貓眼", "單色", "法式", "手繪", "鏡面"]}
+                                    },
+                                    "description": "美甲風格篩選"
+                                },
+                                {
+                                    "name": "shape",
+                                    "in": "query",
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {"type": "string", "enum": ["方形（Square）", "圓形（Round）", "橢圓形（Oval）", "方圓形（Squoval）", "尖形（Stiletto）"]}
+                                    },
+                                    "description": "指甲形狀篩選"
+                                },
+                                {
+                                    "name": "color",
+                                    "in": "query",
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {"type": "string", "enum": ["紅色", "橙色", "黃色", "綠色", "藍色", "靛色", "紫色", "黑色", "白色", "灰色", "粉色", "金屬銀", "裸粉色"]}
+                                    },
+                                    "description": "顏色篩選"
+                                },
+                                {"name": "city", "in": "query", "schema": {"type": "string"}, "description": "城市篩選"},
+                                {"name": "district", "in": "query", "schema": {"type": "array", "items": {"type": "string"}}, "description": "區域篩選"},
+                                {"name": "priceMin", "in": "query", "schema": {"type": "number"}, "description": "最低價格篩選"},
+                                {"name": "priceMax", "in": "query", "schema": {"type": "number"}, "description": "最高價格篩選"},
+                                {"name": "rating", "in": "query", "schema": {"type": "number", "minimum": 0, "maximum": 5}, "description": "最低評分篩選"},
+                                {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}, "description": "結果數量限制"}
+                            ],
+                            "responses": {
+                                "200": {"description": "搜尋成功"}
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    {"name": "認證", "description": "用戶註冊、登入、登出相關操作"},
+                    {"name": "顧客管理", "description": "顧客資料管理和預約查詢"},
+                    {"name": "美甲師管理", "description": "美甲師資料管理和服務設定"},
+                    {"name": "營業時間管理", "description": "美甲師營業時間和可預約時段管理"},
+                    {"name": "預約管理", "description": "預約創建、查詢和狀態管理"},
+                    {"name": "美甲標註", "description": "美甲圖片 AI 標註相關操作"},
+                    {"name": "搜尋", "description": "美甲作品智能搜尋和篩選"}
+                ]
+            };
+
+            // 初始化 Swagger UI
+            const ui = SwaggerUIBundle({
+                spec: completeApiSpec,
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                tryItOutEnabled: true,
+                requestInterceptor: function(request) {
+                    console.log('API Request:', request);
+                    return request;
+                },
+                responseInterceptor: function(response) {
+                    console.log('API Response:', response);
+                    return response;
+                },
+                onComplete: function() {
+                    console.log('完整 API 文檔載入完成');
+                },
+                validatorUrl: null,
+                docExpansion: 'list',
+                defaultModelExpandDepth: 2,
+                defaultModelsExpandDepth: 1,
+                displayRequestDuration: true,
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                tagsSorter: 'alpha',
+                operationsSorter: 'alpha'
+            });
+        };
+    </script>
+</body>
+</html> 
