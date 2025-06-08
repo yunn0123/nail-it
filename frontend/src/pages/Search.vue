@@ -152,15 +152,9 @@ import ImageSearch from '../components/ImageSearch.vue'
 import FilterSearch from '../components/FilterSearch.vue'
 import { useLogout } from '../auth.js'
 
-const { handleLogout } = useLogout()
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL
 
-// 導入示例圖片（根據您的項目路徑可能需要調整）
-import design1 from '../assets/temp/design1.jpg'
-import design2 from '../assets/temp/design2.jpg'
-import design3 from '../assets/temp/design3.jpg'
-import work1 from '../assets/temp/work1.jpg'
-import work2 from '../assets/temp/work2.jpg'
-import work3 from '../assets/temp/work3.jpg'
+const { handleLogout } = useLogout()
 
 // 使用 router
 const router = useRouter()
@@ -196,62 +190,6 @@ const searchName = ref('')
 const searchResult = ref([])
 const hasSearched = ref(false) // 追蹤是否已進行過搜尋
 
-// 模擬美甲師資料
-const allArtists = [
-  {
-    id: '1',
-    studio: 'waka.nail',
-    city: '臺北市',
-    district: '大安區',
-    rating: 4.9, 
-    priceLow: 1000, 
-    priceHigh: 1800,
-    bio: '專精於手繪藝術與流行款式，細心且耐心。',
-    styles: ['貓眼', '漸層', '法式', '手繪', '暈染', '日系清新'],
-    image: work1,
-    showFallback: false
-  },
-  {
-    id: '2',
-    studio: 'jolieee_nail',
-    city: '新北市',
-    district: '板橋區',
-    rating: 4.7,
-    priceLow: 800,
-    priceHigh: 1500,
-    bio: '主打簡約美甲與護甲療程，溫柔又高質感。',
-    styles: ['護甲', '簡約風', '水鑽', '跳色', '大理石紋'],
-    image: design2,
-    showFallback: false
-  },
-  {
-    id: '3',
-    studio: '61.nail',
-    city: '高雄市',
-    district: '鼓山區',
-    rating: 4.6,
-    priceLow: 1200,
-    priceHigh: 1500,
-    bio: '主打簡約美甲與護甲療程，溫柔又高質感。',
-    styles: ['金屬質感', '鏡面', '幾何', '極簡', '韓風'],
-    image: design3,
-    showFallback: false
-  },
-  {
-    id: '4',
-    studio: 'test.nail',
-    city: '台中市',
-    district: '西區',
-    rating: 4.5,
-    priceLow: 900,
-    priceHigh: 1600,
-    bio: '新加入的美甲師，尚未設定營業時段。',
-    styles: ['簡約', '清新'],
-    image: design1,
-    showFallback: false
-  }
-]
-
 const tabClass = (tab) => {
   return [
     'px-4 py-2 border-b-2 transition-colors duration-200',
@@ -261,18 +199,38 @@ const tabClass = (tab) => {
   ]
 }
 
-const searchByName = () => {
-  hasSearched.value = true
-  
-  if (searchName.value.trim() !== '') {
-    // 搜尋工作室名稱中包含關鍵字的美甲師
-    searchResult.value = allArtists.filter(artist =>
-      artist.studio.toLowerCase().includes(searchName.value.trim().toLowerCase())
-    )
-  } else {
-    searchResult.value = []
+const searchByName = async () => {
+  if (searchName.value.trim() === '') {
+    searchResult.value = [];
+    return;
   }
-}
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/search-artists?studioName=${encodeURIComponent(searchName.value.trim())}`);
+
+    if (!response.ok) {
+      throw new Error(`伺服器錯誤: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('搜尋結果', result);
+
+    searchResult.value = result.results.map(item => ({
+      id: item.id,
+      studio: item.studioName,
+      rating: item.rating,
+      image: item.avatarUrl,
+      showFallback: false
+    }));
+
+  } catch (err) {
+    console.error('搜尋失敗:', err);
+    searchResult.value = [];
+  }
+  hasSearched.value = true;
+};
+
+
 
 const clearSearch = () => {
   searchName.value = ''

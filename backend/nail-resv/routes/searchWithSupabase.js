@@ -87,7 +87,10 @@ router.get('/search-supabase', async (req, res) => {
       query = query.in('artist_id', filteredArtistIds);
     }
 
-    // 添加美甲風格篩選條件
+    // 檢查是否有任何美甲屬性篩選條件
+    const hasNailFilters = style || shape || color || texture || decorations || theme;
+
+    // 添加美甲風格篩選條件（只有在有篩選條件時才應用）
     if (style) {
       const styles = Array.isArray(style) ? style : [style];
       query = query.overlaps('style', styles);
@@ -116,6 +119,11 @@ router.get('/search-supabase', async (req, res) => {
     if (theme) {
       const themes = Array.isArray(theme) ? theme : [theme];
       query = query.overlaps('theme', themes);
+    }
+
+    // 如果沒有任何篩選條件，按創建時間排序顯示最新的圖片
+    if (!hasNailFilters && !filteredArtistIds) {
+      query = query.order('created_at', { ascending: false });
     }
 
     // 限制結果數量
@@ -283,12 +291,29 @@ router.get('/random', async (req, res) => {
       });
     }
 
+    // 獲取相關的美甲師資訊
+    const artistIds = [...new Set(data.map(item => item.artist_id).filter(Boolean))];
+    let artistsInfo = {};
+
+    if (artistIds.length > 0) {
+      const { data: artistsData, error: artistsError } = await supabase
+        .from('artists')
+        .select('user_id, studio_name, city, district, price_min, price_max, rating')
+        .in('user_id', artistIds);
+
+      if (!artistsError && artistsData) {
+        artistsInfo = artistsData.reduce((acc, artist) => {
+          acc[artist.user_id] = artist;
+          return acc;
+        }, {});
+      }
+    }
+
     const results = data.map(item => ({
       id: item.id,
-      artistId: item.artist_id,
+      filename: item.filename,
       imageUrl: item.image_url,
-      description: item.description,
-      tags: item.tags,
+      placeId: item.place_id,
       createdAt: item.created_at,
       nailAttributes: {
         shape: item.shape,
@@ -297,7 +322,16 @@ router.get('/random', async (req, res) => {
         texture: item.texture,
         theme: item.theme,
         decorations: item.decorations
-      }
+      },
+      artist: artistsInfo[item.artist_id] ? {
+        userId: artistsInfo[item.artist_id].user_id,
+        studioName: artistsInfo[item.artist_id].studio_name,
+        city: artistsInfo[item.artist_id].city,
+        district: artistsInfo[item.artist_id].district,
+        priceMin: artistsInfo[item.artist_id].price_min,
+        priceMax: artistsInfo[item.artist_id].price_max,
+        rating: artistsInfo[item.artist_id].rating
+      } : null
     }));
 
     res.json({
@@ -320,6 +354,7 @@ router.get('/random', async (req, res) => {
 router.get('/search-artists', async (req, res) => {
   try {
     const {
+      artistname, studioName, name, // 新增店名/美甲師名稱搜尋
       city, district, priceMin, priceMax, rating,
       limit = 20
     } = req.query;
@@ -330,6 +365,13 @@ router.get('/search-artists', async (req, res) => {
     let query = supabase
       .from('artists')
       .select('*');
+
+    // 添加名稱搜尋（支援多種參數名稱）
+    const searchName = artistname || studioName || name;
+    if (searchName) {
+      // 使用 ilike 進行模糊搜尋（不區分大小寫）
+      query = query.ilike('studio_name', `%${searchName}%`);
+    }
 
     // 添加地點篩選條件
     if (city) {
@@ -391,6 +433,7 @@ router.get('/search-artists', async (req, res) => {
       count: results.length,
       results: results,
       filters: {
+        artistname: searchName,
         city,
         district,
         priceMin,
