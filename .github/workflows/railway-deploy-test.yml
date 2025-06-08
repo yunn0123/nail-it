@@ -49,6 +49,7 @@ jobs:
           railway up --service=${{ secrets.RAILWAY_FRONTEND_SERVICE_ID }} --detach 
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          BACKEND_API_URL: ${{ secrets.RAILWAY_BACKEND_API_URL }}
 
   deploy-backend:
     name: Deploy Backend to Railway
