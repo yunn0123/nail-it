@@ -354,6 +354,7 @@ router.get('/random', async (req, res) => {
 router.get('/search-artists', async (req, res) => {
   try {
     const {
+      artistname, studioName, name, // 新增店名/美甲師名稱搜尋
       city, district, priceMin, priceMax, rating,
       limit = 20
     } = req.query;
@@ -364,6 +365,13 @@ router.get('/search-artists', async (req, res) => {
     let query = supabase
       .from('artists')
       .select('*');
+
+    // 添加名稱搜尋（支援多種參數名稱）
+    const searchName = artistname || studioName || name;
+    if (searchName) {
+      // 使用 ilike 進行模糊搜尋（不區分大小寫）
+      query = query.ilike('studio_name', `%${searchName}%`);
+    }
 
     // 添加地點篩選條件
     if (city) {
@@ -425,6 +433,7 @@ router.get('/search-artists', async (req, res) => {
       count: results.length,
       results: results,
       filters: {
+        artistname: searchName,
         city,
         district,
         priceMin,
