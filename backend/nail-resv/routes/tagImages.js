@@ -86,47 +86,94 @@ function normalizeTags(tags) {
 }
 
 // 生成符合搜尋邏輯的檔案名稱
-function generateImageName(artistId, timestamp, index) {
-  const placeholderPlaceId = `place-${timestamp}`;
-  return `photo_placeid-${placeholderPlaceId}_idx-${index}_artist-${artistId}.jpg`;
+function generateImageName(placeId, index) {
+  const timestamp = Date.now();
+  return `photo_placeid-${placeId}_idx-${index}_${timestamp}.jpg`;
 }
 
 // 上傳圖片到 Supabase Storage
 async function uploadImageToSupabase(filePath, filename) {
   try {
+    console.log(`🔍 開始上傳: ${filename}`);
+    console.log(`📁 檔案路徑: ${filePath}`);
+    
+    // 檢查檔案是否存在
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ 檔案不存在: ${filePath}`);
+      return null;
+    }
+    
     const fileBuffer = fs.readFileSync(filePath);
+    console.log(`📏 檔案大小: ${(fileBuffer.length / 1024).toFixed(2)} KB`);
     
     const { data, error } = await supabase.storage
       .from('nailimg')
       .upload(`allimgs/${filename}`, fileBuffer, {
         contentType: 'image/jpeg',
-        upsert: false
+        upsert: true // 允許覆蓋現有檔案
       });
 
     if (error) {
-      console.error('Supabase 上傳錯誤:', error);
+      console.error('❌ Supabase 上傳錯誤:');
+      console.error('   錯誤代碼:', error.error);
+      console.error('   錯誤訊息:', error.message);
+      console.error('   狀態碼:', error.statusCode);
+      console.error('   完整錯誤:', JSON.stringify(error, null, 2));
       return null;
     }
+
+    console.log(`✅ 上傳成功: ${data.path}`);
 
     // 獲取公開 URL
     const { data: publicData } = supabase.storage
       .from('nailimg')
       .getPublicUrl(`allimgs/${filename}`);
 
+    console.log(`🔗 公開 URL: ${publicData.publicUrl}`);
     return publicData.publicUrl;
   } catch (error) {
-    console.error('上傳圖片到 Supabase 失敗:', error);
+    console.error('❌ 上傳圖片到 Supabase 失敗:', error);
+    return null;
+  }
+}
+
+// 根據 place_id 查找對應的 artist_id
+async function findArtistByPlaceId(placeId) {
+  try {
+    const { data, error } = await supabase
+      .from('artists')
+      .select('user_id')
+      .eq('place_id', placeId)
+      .single();
+
+    if (error || !data) {
+      console.warn(`⚠️ 找不到 place_id ${placeId} 對應的美甲師`);
+      return null;
+    }
+
+    return data.user_id;
+  } catch (error) {
+    console.error('查找美甲師失敗:', error);
     return null;
   }
 }
 
 // 將資料存到 Supabase nail_images 表
-async function saveToNailImages(artistId, imageUrl, tags, filename) {
+async function saveToNailImages(placeId, imageUrl, tags, filename) {
   try {
+    // 根據 place_id 查找對應的 artist_id
+    const artistId = await findArtistByPlaceId(placeId);
+    
+    if (!artistId) {
+      console.error(`❌ 無法找到 place_id ${placeId} 對應的美甲師，跳過資料庫儲存`);
+      return false;
+    }
+
     const { data, error } = await supabase
       .from('nail_images')
       .insert([{
         artist_id: artistId,
+        place_id: placeId,
         filename: filename,
         image_url: imageUrl,
         style: tags.style || [],
@@ -143,7 +190,7 @@ async function saveToNailImages(artistId, imageUrl, tags, filename) {
       return false;
     }
 
-    console.log(`✅ 成功儲存 ${filename} 到 nail_images 表`);
+    console.log(`✅ 成功儲存 ${filename} 到 nail_images 表 (artist: ${artistId})`);
     return true;
   } catch (error) {
     console.error('儲存到 nail_images 表發生錯誤:', error);
@@ -195,9 +242,11 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
     return res.status(400).json({ error: '請上傳最多 10 張圖片（field: images）' });
   }
 
-  // 從請求中取得 artistId，如果沒有則使用預設值
-  const artistId = req.body.artistId || `artist_${Date.now()}`;
-  const timestamp = Date.now();
+  // 從請求中取得 placeId，這應該是真實的 Google Places ID
+  const placeId = req.body.placeId;
+  if (!placeId) {
+    return res.status(400).json({ error: '請提供 placeId（美甲店的 Google Places ID）' });
+  }
 
   // 1. 讀 all_results.json
   let existing = {};
@@ -217,7 +266,7 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
   const tasks = req.files.map((file, index) => limit(async () => {
     try {
       // 生成符合搜尋邏輯的檔案名稱
-      const filename = generateImageName(artistId, timestamp, index + 1);
+      const filename = generateImageName(placeId, index + 1);
       
       // OpenAI 標註
       const rawTags = await callWithRetry(file.path, file.mimetype);
@@ -246,7 +295,7 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
       }
 
       // 儲存到 nail_images 表
-      const nailImagesSaved = await saveToNailImages(artistId, imageUrl, tags, filename);
+      const nailImagesSaved = await saveToNailImages(placeId, imageUrl, tags, filename);
 
       // 清理臨時檔案
       fs.unlinkSync(file.path);

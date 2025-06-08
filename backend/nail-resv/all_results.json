@@ -10336,5 +10336,97 @@
     "theme": [
       "歐美風"
     ]
+  },
+  "photo_placeid-place-1749367205336_idx-1_artist-test-artist-upload-123.jpg": {
+    "style": [
+      "漸層"
+    ],
+    "shape": [
+      "橢圓形（Oval）"
+    ],
+    "color": [
+      "藍色"
+    ],
+    "texture": [
+      "光澤（Glossy）"
+    ],
+    "decorations": [],
+    "theme": [
+      "優雅"
+    ]
+  },
+  "photo_placeid-place-1749367313188_idx-1_artist-1148c362-6167-46cb-916f-476ac80f13d9.jpg": {
+    "style": [
+      "漸層"
+    ],
+    "shape": [
+      "橢圓形（Oval）"
+    ],
+    "color": [
+      "藍色"
+    ],
+    "texture": [
+      "光澤（Glossy）"
+    ],
+    "decorations": [
+      "亮片（Glitter）"
+    ],
+    "theme": [
+      "優雅"
+    ]
+  },
+  "photo_placeid-place-1749368666044_idx-1_artist-1148c362-6167-46cb-916f-476ac80f13d9.jpg": {
+    "style": [
+      "漸層"
+    ],
+    "shape": [
+      "橢圓形（Oval）"
+    ],
+    "color": [
+      "藍色"
+    ],
+    "texture": [
+      "亮片（Glitter）"
+    ],
+    "decorations": [],
+    "theme": [
+      "優雅"
+    ]
+  },
+  "photo_placeid-place-1749369392311_idx-1_artist-artist_1749369392311.jpg": {
+    "style": [
+      "漸層"
+    ],
+    "shape": [
+      "橢圓形（Oval）"
+    ],
+    "color": [
+      "藍色"
+    ],
+    "texture": [
+      "亮片（Glitter）"
+    ],
+    "decorations": [],
+    "theme": [
+      "優雅"
+    ]
+  },
+  "photo_placeid-ChIJ-9fCcIo9aTQR6kgSIlbD48o_idx-1_1749370281816.jpg": {
+    "style": [
+      "漸層"
+    ],
+    "shape": [
+      "橢圓形（Oval）"
+    ],
+    "color": [
+      "藍色"
+    ],
+    "texture": [
+      "亮片（Glitter）"
+    ],
+    "decorations": [],
+    "theme": [
+      "優雅"
+    ]
   }
 }
