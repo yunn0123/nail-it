@@ -47,7 +47,7 @@ jobs:
         run: npm install -g @railway/cli
       - name: Set Railway Environment Variables
         run: |
-          railway variables BACKEND_API_URL=${{ secrets.RAILWAY_BACKEND_API_URL }} --service=${{ secrets.RAILWAY_FRONTEND_SERVICE_ID }}
+          railway variables --service=${{ secrets.RAILWAY_FRONTEND_SERVICE_ID }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       - name: Deploy Frontend Service
