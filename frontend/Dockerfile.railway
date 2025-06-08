@@ -14,8 +14,8 @@ RUN npm install
 # 複製所有其他檔案
 COPY . .
 
-# 構建時使用Railway環境變數
-# Railway會自動將環境變數傳遞給建置過程
+# 構建時接收建置參數並設定環境變數
+ARG BACKEND_API_URL
 ENV VITE_BACKEND_API_URL=$BACKEND_API_URL
 
 # 構建應用
