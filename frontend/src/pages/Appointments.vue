@@ -56,14 +56,14 @@
           class="bg-white rounded-xl p-4 flex items-center justify-between shadow mb-3"
         >
           <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300">
-                <img 
-                  v-if="appointment.artistImage"
-                  :src="appointment.artistImage" 
-                  alt="" 
-                  class="w-full h-full object-cover" 
-                  @error="$event.target.style.display = 'none'"
-                />
+            <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300 cursor-pointer hover:opacity-80 transition-opacity" @click="goToArtistProfile(appointment)">
+                  <img 
+                    v-if="appointment.artistImage"
+                    :src="appointment.artistImage" 
+                    alt="" 
+                    class="w-full h-full object-cover" 
+                    @error="$event.target.style.display = 'none'"
+                  />
               </div>
             <div>
               <p class="text-gray-700 font-semibold">{{ appointment.artistName }}</p>
@@ -99,7 +99,7 @@
           class="bg-white rounded-xl p-4 flex items-center justify-between shadow mb-3 opacity-80"
         >
           <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300">
+            <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300 cursor-pointer hover:opacity-80 transition-opacity" @click="goToArtistProfile(appointment)">
                 <img 
                   v-if="appointment.artistImage"
                   :src="appointment.artistImage" 
@@ -107,7 +107,7 @@
                   class="w-full h-full object-cover" 
                   @error="$event.target.style.display = 'none'"
                 />
-              </div>
+            </div>
             <div>
               <p class="text-gray-800 font-semibold">{{ appointment.artistName }}</p>
               <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
@@ -136,15 +136,15 @@
           class="bg-white rounded-xl p-4 flex items-center justify-between shadow mb-3 opacity-60"
         >
           <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300">
-              <img 
-                v-if="appointment.artistImage"
-                :src="appointment.artistImage" 
-                alt="" 
-                class="w-full h-full object-cover" 
-                @error="$event.target.style.display = 'none'"
-              />
-            </div>
+            <div class="w-12 h-12 rounded-full overflow-hidden relative bg-gray-300 cursor-pointer hover:opacity-80 transition-opacity" @click="goToArtistProfile(appointment)">
+                <img 
+                  v-if="appointment.artistImage"
+                  :src="appointment.artistImage" 
+                  alt="" 
+                  class="w-full h-full object-cover" 
+                  @error="$event.target.style.display = 'none'"
+                />
+              </div>
             <div>
               <p class="text-gray-800 font-semibold">{{ appointment.artistName }}</p>
               <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
@@ -179,6 +179,10 @@
  
  const showMenu = ref(false)
  const allAppointments = ref([])
+
+ const goToArtistProfile = (appointment) => {
+  router.push(`/profile/${appointment.artistId}`)
+}
  
  // 計算屬性分類預約
  const upcomingAppointments = computed(() => 
@@ -232,14 +236,12 @@
  
  // 與美甲師聊聊
  const chatWithArtist = (appointment) => {
-  router.push({
-    path: '/chat',
-    query: { 
-      artistId: appointment.artistId,
-      artistName: appointment.artistName
-    }
-  })
- }
+  if (appointment.artistLineUrl) {
+    window.open(appointment.artistLineUrl, '_blank')
+  } else {
+    alert('此美甲師尚未提供 LINE 聯絡方式')
+  }
+}
  
  // 查看評分
  const goToReview = (appointment) => {

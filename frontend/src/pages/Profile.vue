@@ -249,6 +249,7 @@
             </div>
           </div>
 
+
           <!-- 價格 -->
           <div v-if="!editMode || isPreviewMode">
             <p class="text-gray-700 mt-2 flex items-center">
@@ -332,6 +333,26 @@
                 新增
               </button>
             </div>
+          </div>
+
+          <!-- LINE 聯絡方式 -->
+          <div v-if="!editMode || isPreviewMode">
+            <div v-if="currentArtist.lineUrl" class="mt-2 flex items-center">
+            </div>
+          </div>
+          <div v-else class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              LINE 連結
+            </label>
+            <input 
+              v-model="editData.lineUrl" 
+              type="url"
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c68f84] focus:border-transparent"
+              placeholder="例如：https://lin.ee/u5FDtHB"
+            />
+            <p class="text-xs text-gray-500 mt-1">
+              請輸入您的 LINE 連結，顧客可透過此連結與您聊聊
+            </p>
           </div>
 
           <!-- 編輯按鈕群組 -->
@@ -1312,7 +1333,10 @@ const artists = ref([
   }
 ])
 
-const currentArtist = ref({})
+const currentArtist = ref({
+  lineUrl: '' 
+})
+
 const editData = ref({})
 const originalData = ref({})
 
@@ -1518,6 +1542,12 @@ const startEdit = () => {
   editMode.value = true
   originalData.value = JSON.parse(JSON.stringify(currentArtist.value))
   editData.value = JSON.parse(JSON.stringify(currentArtist.value))
+  
+  // 確保 lineUrl 也被包含在編輯資料中
+  if (!editData.value.lineUrl) {
+    editData.value.lineUrl = ''
+  }
+  
   updateDistricts()
 }
 
@@ -1563,7 +1593,8 @@ const saveChanges = async () => {
     bio: editData.value.bio || '',
     styles: editData.value.styles || [],
     priceLow: editData.value.priceLow,
-    priceHigh: editData.value.priceHigh
+    priceHigh: editData.value.priceHigh,
+    lineUrl: editData.value.lineUrl?.trim() || '' // ← 加入這行
   }
   console.log('準備發送的資料:', updateData) 
   
@@ -1961,16 +1992,12 @@ const openBookingModal = () => {
 }
 
 const navigateToChat = () => {
-  if (currentArtist.value && currentArtist.value.id) {
-    console.log('Navigating to chat with:', currentArtist.value.studio, currentArtist.value.id)
-    router.push({
-      path: '/chat',
-      query: { 
-        artistId: currentArtist.value.id,
-        artistName: currentArtist.value.studio,
-        artistImage: currentArtist.value.image
-      }
-    })
+  if (currentArtist.value && currentArtist.value.lineUrl) {
+    // 如果有 LINE URL，直接開啟
+    window.open(currentArtist.value.lineUrl, '_blank')
+  } else {
+    // 如果沒有 LINE URL，顯示提醒
+    alert('此美甲師尚未提供 LINE 聯絡方式')
   }
 }
 
@@ -2028,6 +2055,7 @@ const loadArtistData = async (artistId) => {
         bio: artistData.bio,
         styles: artistData.styles || [],
         image: artistData.image,
+        lineUrl: artistData.lineUrl || '', // ← 加入這行
         created_at: artistData.created_at
       }
       console.log('美甲師資料載入成功:', currentArtist.value)
@@ -2044,6 +2072,7 @@ const loadArtistData = async (artistId) => {
     isLoading.value = false
   }
 }
+
 
 // 更新美甲師資料
 const updateArtistData = async (updateData) => {

@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 
 // 獲取美甲師資料
-// 獲取美甲師資料
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -11,10 +10,10 @@ router.get('/:id', async (req, res) => {
 
     console.log('Searching for artist with user_id:', id);
 
-    // 從 artists 表格獲取基本資料，包含 price_min 和 price_max
+    // 從 artists 表格獲取基本資料，包含 price_min、price_max 和 line_url
     const { data: artistData, error: artistError } = await supabase
       .from('artists')
-      .select('user_id, studio_name, city, district, bio, styles, price_min, price_max, avatar_url') // ← 加上 avatar_url
+      .select('user_id, studio_name, city, district, bio, styles, price_min, price_max, avatar_url, line_url') // ← 加上 line_url
       .eq('user_id', id)
       .single();
 
@@ -46,6 +45,7 @@ router.get('/:id', async (req, res) => {
       styles: artistData.styles || [],
       priceLow: artistData.price_min || 0,
       priceHigh: artistData.price_max || 0,
+      lineUrl: artistData.line_url || '', // ← 加上 LINE URL
       rating: 0,
       image: artistData.avatar_url || 'https://uvzjbmxxrkrnmckrifqs.supabase.co/storage/v1/object/public/avatars/avatar.jpg',
     };
@@ -65,11 +65,13 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { studio_name, city, district, bio, styles, priceLow, priceHigh } = req.body;
+    const { studio_name, city, district, bio, styles, priceLow, priceHigh, lineUrl } = req.body; // ← 加上 lineUrl
+
     const supabase = req.supabase;
 
-    console.log('收到的資料:', req.body) // ← 加這行
-    console.log('價格資料:', { priceLow, priceHigh }) // ← 加這行
+    console.log('收到的資料:', req.body);
+    console.log('價格資料:', { priceLow, priceHigh });
+    console.log('LINE URL:', lineUrl); // ← 加這行
 
     // 更新 artists 表格
     const { data, error } = await supabase
@@ -80,8 +82,9 @@ router.put('/:id', async (req, res) => {
         district: district,
         bio: bio,
         styles: styles,
-        price_min: priceLow,    // ← 加上價格更新
-        price_max: priceHigh    // ← 加上價格更新
+        price_min: priceLow,
+        price_max: priceHigh,
+        line_url: lineUrl || null  // ← 加上 LINE URL 更新
       })
       .eq('user_id', id)
       .select();

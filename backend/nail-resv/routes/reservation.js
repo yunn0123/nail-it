@@ -228,7 +228,7 @@ router.get('/customer/:customerId', async (req, res) => {
         status,
         note,
         created_at,
-        artists!inner(user_id, studio_name, avatar_url)
+        artists!inner(user_id, studio_name, avatar_url, line_url)
       `)
      .eq('customer_id', req.params.customerId)
      .order('service_date', { ascending: false })
@@ -256,6 +256,7 @@ router.get('/customer/:customerId', async (req, res) => {
     artistId: apt.artists.user_id,
     artistName: apt.artists.studio_name,
     artistImage: apt.artists.avatar_url,
+    artistLineUrl: apt.artists.line_url,  // ← 加這行
     date: apt.service_date,
     time: apt.service_time,
     status: apt.status,
