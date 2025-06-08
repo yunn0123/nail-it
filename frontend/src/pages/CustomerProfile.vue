@@ -46,7 +46,7 @@
         <li><router-link to="/appointments" class="hover:text-[#c68f84]">預約紀錄</router-link></li>
         <li><router-link to="/reviews" class="hover:text-[#c68f84]">評分紀錄</router-link></li>
         <li><router-link to="/settings" class="hover:text-[#c68f84]">隱私設定</router-link></li>
-        <li><router-link to="/login" class="hover:text-[#c68f84]">登出</router-link></li>
+        <li><a @click="handleLogout" class="hover:text-[#c68f84] cursor-pointer">登出</a></li>
       </ul>
     </div>
 
@@ -164,7 +164,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiRequest } from '../config/api.js' // 新增這行
+import { apiRequest } from '../config/api.js' 
+import { useLogout } from '../auth.js'
+
+const { handleLogout } = useLogout()
 
 const route = useRoute()
 const router = useRouter()

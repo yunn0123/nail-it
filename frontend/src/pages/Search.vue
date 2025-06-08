@@ -34,7 +34,7 @@
         <li><router-link to="/appointments" class="hover:text-[#c68f84]">預約紀錄</router-link></li>
         <li><router-link to="/reviews" class="hover:text-[#c68f84]">評分紀錄</router-link></li>
         <li><router-link to="/settings" class="hover:text-[#c68f84]">隱私設定</router-link></li>
-        <li><router-link to="/login" class="hover:text-[#c68f84]">登出</router-link></li>
+        <li><a @click="handleLogout" class="hover:text-[#c68f84] cursor-pointer">登出</a></li>
       </ul>
     </div>
 
@@ -150,6 +150,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ImageSearch from '../components/ImageSearch.vue'
 import FilterSearch from '../components/FilterSearch.vue'
+import { useLogout } from '../auth.js'
+
+const { handleLogout } = useLogout()
 
 // 導入示例圖片（根據您的項目路徑可能需要調整）
 import design1 from '../assets/temp/design1.jpg'

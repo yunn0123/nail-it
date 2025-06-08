@@ -40,6 +40,7 @@ const searchRouter = require('./routes/search');
 //const tagImagesRouter = require('./routes/tagImages');
 const { router: registerRouter } = require('./routes/register');
 const loginRoute = require('./routes/login');
+const logoutRoute = require('./routes/logout'); 
 const customersRouter = require('./routes/customers');
 const artistsRouter = require('./routes/artists');
 
@@ -50,6 +51,7 @@ app.use('/api', searchRouter);
 //app.use('/api', tagImagesRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
+app.use('/api/logout', logoutRoute);  
 app.use('/api/customers', customersRouter);
 app.use('/api/artists', artistsRouter);          // 先掛基本的 artists 路由
 app.use('/api/artists', availabilityRouter); 
