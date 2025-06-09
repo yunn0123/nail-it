@@ -1,8 +1,14 @@
 <!-- Booking.vue -->
 <template>
   <div class="p-4">
-    <!-- 檢查美甲師是否已設定時段 -->
-    <div v-if="!hasAvailableSchedule" class="text-center py-12">
+    <!-- 檢查中的載入狀態 -->
+    <div v-if="isCheckingSchedule" class="text-center py-12">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#c68f84] mx-auto mb-4"></div>
+      <p class="text-gray-600">檢查美甲師時段中...</p>
+    </div>
+
+    <!-- 沒有設定時段 -->
+    <div v-else-if="hasAvailableSchedule === false" class="text-center py-12">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
@@ -14,8 +20,14 @@
       </button>
     </div>
 
-    <!-- 有設定時段才顯示預約表單 -->
-    <div v-else-if="!showSuccess">
+    <!-- 載入中 -->
+    <div v-else-if="isLoading" class="text-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#c68f84] mx-auto mb-2"></div>
+      <p class="text-gray-600">載入中...</p>
+    </div>
+
+    <!-- 有設定時段，顯示預約表單 -->
+    <div v-else-if="hasAvailableSchedule === true && !showSuccess">
       <h2 class="text-2xl text-gray-700 font-bold mb-6">預約 {{ artistName }}</h2>
 
       <form @submit.prevent="submitBooking" class="space-y-6">
@@ -29,6 +41,7 @@
                 @click="changeMonth(-1)" 
                 class="text-gray-500 hover:text-gray-700"
                 :disabled="!canGoToPrevMonth"
+                type="button"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -39,6 +52,7 @@
                 @click="changeMonth(1)" 
                 class="text-gray-500 hover:text-gray-700"
                 :disabled="!canGoToNextMonth"
+                type="button"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -58,27 +72,30 @@
               <div v-for="n in firstDayOfMonth" :key="`empty-${n}`" class="text-center py-2"></div>
               
               <!-- 實際日期 -->
-              <div
-                v-for="dateObj in daysInCurrentMonth"
-                :key="dateObj.dateString"
-                class="text-center py-2 rounded cursor-pointer text-sm relative"
-                :class="{
-                  'bg-[#f3d7d3] text-[#c67868] font-bold': dateObj.dateString === selectedDate,
-                  'bg-gray-100 text-gray-400 cursor-not-allowed': !dateObj.available,
-                  'hover:bg-[#f9e7e4]': dateObj.available && dateObj.dateString !== selectedDate,
-                  'opacity-50': dateObj.isPastDate
-                }"
-                @click="!dateObj.isPastDate && dateObj.available && selectDate(dateObj.dateString)"
-              >
-                {{ dateObj.day }}
-              </div>
+                <div
+                  v-for="dateObj in daysInCurrentMonth"
+                  :key="dateObj.dateString"
+                  class="text-center py-2 rounded cursor-pointer text-sm relative"
+                  :class="{
+                    'bg-[#f3d7d3] text-[#c67868] font-bold': dateObj.dateString === selectedDate,
+                    'bg-gray-100 text-gray-400 cursor-not-allowed': dateObj.isPastDate || !dateObj.isBusinessDay,
+                    'hover:bg-[#f9e7e4]': !dateObj.isPastDate && dateObj.isBusinessDay && dateObj.dateString !== selectedDate
+                  }"
+                  @click="(!dateObj.isPastDate && dateObj.isBusinessDay) && selectDate(dateObj.dateString)"
+                >
+                  {{ dateObj.day }}
+                </div>
             </div>
           </div>
         </div>
 
         <div>
           <label class="block text-gray-700 mb-2">選擇時間</label>
-          <div v-if="availableTimeSlots.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div v-if="isLoadingSlots" class="text-center py-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#c68f84] mx-auto mb-2"></div>
+            <p class="text-gray-600 text-sm">載入時段中...</p>
+          </div>
+          <div v-else-if="availableTimeSlots.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               v-for="timeSlot in availableTimeSlots"
               :key="timeSlot.time"
@@ -86,14 +103,15 @@
               class="text-center py-2 px-3 rounded text-sm border border-gray-200"
               :class="{
                 'bg-[#f3d7d3] text-[#c67868] font-bold border-[#c67868]': timeSlot.time === selectedTime,
-                'bg-gray-100 text-gray-400 cursor-not-allowed': !timeSlot.available,
-                'hover:bg-[#f9e7e4]': timeSlot.available && timeSlot.time !== selectedTime
+                'hover:bg-[#f9e7e4]': timeSlot.time !== selectedTime
               }"
-              :disabled="!timeSlot.available"
-              @click="timeSlot.available && selectTime(timeSlot.time)"
+              @click="selectTime(timeSlot.time)"
             >
               {{ timeSlot.time }}
             </button>
+          </div>
+          <div v-else-if="selectedDate" class="text-gray-500 text-center py-4">
+            此日期沒有可用時段
           </div>
           <div v-else class="text-gray-500 text-center py-4">
             請先選擇日期以查看可用時段
@@ -109,8 +127,12 @@
           <button type="button" @click="$emit('close')" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">
             取消
           </button>
-          <button type="submit" class="flex-1 bg-[#c68f84] text-white py-2 rounded-lg hover:bg-[#c67868]" :disabled="!selectedDate || !selectedTime">
-            送出預約
+          <button 
+            type="submit" 
+            class="flex-1 bg-[#c68f84] text-white py-2 rounded-lg hover:bg-[#c67868]" 
+            :disabled="!selectedDate || !selectedTime || isLoading"
+          >
+            {{ isLoading ? '預約中...' : '送出預約' }}
           </button>
         </div>
       </form>
@@ -138,35 +160,34 @@
 <script setup>
 import { ref, onMounted, defineProps, defineEmits, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiRequest } from '../config/api.js'
 
 const router = useRouter()
 const emit = defineEmits(['close'])
+const artistAvailability = ref({})
 
-// 接收 artist-id 和 weekly-schedule
+
 const props = defineProps({
   artistId: {
     type: String,
     required: true
   },
-  weeklySchedule: {
-    type: Object,
-    default: () => ({
-      monday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-      tuesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-      wednesday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-      thursday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-      friday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00', '16:00-18:00'] },
-      saturday: { isOpen: true, timeSlots: ['10:00-12:00', '14:00-16:00'] },
-      sunday: { isOpen: false, timeSlots: [] }
-    })
+  hasSchedule: {
+    type: Boolean,
+    default: null
   }
 })
 
+// 狀態管理
 const artistName = ref('')
 const selectedDate = ref('')
 const selectedTime = ref('')
 const notes = ref('')
 const showSuccess = ref(false)
+const isLoading = ref(false)
+const isLoadingSlots = ref(false)
+const isCheckingSchedule = ref(true)
+const hasAvailableSchedule = ref(null) // null=檢查中, true=有時段, false=無時段
 
 // 日曆相關狀態
 const currentDate = ref(new Date())
@@ -183,37 +204,29 @@ const firstDayOfMonth = computed(() => {
   return firstDay
 })
 
-// 當前月份的天數 - 根據美甲師時段設定
+// 當前月份的天數 - 移除基於 weeklySchedule 的邏輯
 const daysInCurrentMonth = computed(() => {
   const daysInMonth = new Date(currentYear.value, currentMonth.value + 1, 0).getDate()
   const today = new Date()
   today.setHours(0, 0, 0, 0) 
   
   const days = []
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const weekdayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   
   for (let i = 1; i <= daysInMonth; i++) {
     const date = new Date(currentYear.value, currentMonth.value, i)
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
     
-    // 獲取星期幾
-    const dayOfWeek = date.getDay()
-    const dayName = dayNames[dayOfWeek]
-    
-    // 檢查是否是過去的日期
     const isPastDate = date < today
-    
-    // 根據美甲師設定的時段判斷是否可預約
-    const daySchedule = props.weeklySchedule[dayName]
-    const isAvailable = daySchedule && daySchedule.isOpen && daySchedule.timeSlots.length > 0 && !isPastDate
+    const weekdayName = weekdayMap[date.getDay()]
+    const hasAvailableSlots = artistAvailability.value[weekdayName]?.length > 0
     
     days.push({
       date: date,
       dateString: dateString,
       day: i,
-      available: isAvailable,
       isPastDate: isPastDate,
-      dayName: dayName
+      isBusinessDay: hasAvailableSlots
     })
   }
   
@@ -243,70 +256,113 @@ const changeMonth = (delta) => {
   // 切換月份時清空選擇
   selectedDate.value = ''
   selectedTime.value = ''
+  availableTimeSlots.value = []
 }
 
 // 可用時間段
 const availableTimeSlots = ref([])
 
-// 檢查美甲師是否有設定可用時段
-const hasAvailableSchedule = computed(() => {
-  if (!props.weeklySchedule) return false
-  
-  // 檢查是否至少有一天營業且有時段
-  return Object.values(props.weeklySchedule).some(day => 
-    day.isOpen && day.timeSlots && day.timeSlots.length > 0
-  )
-})
-
-// 根據選擇的日期更新可用時段
-const updateTimeSlotAvailability = (dateString) => {
-  const dateObj = new Date(dateString)
-  const dayOfWeek = dateObj.getDay()
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-  const dayName = dayNames[dayOfWeek]
-  
-  // 根據美甲師設定的時段更新可用時間
-  const daySchedule = props.weeklySchedule[dayName]
-  
-  if (daySchedule && daySchedule.isOpen && daySchedule.timeSlots.length > 0) {
-    // 更新時間選項為美甲師設定的時段
-    availableTimeSlots.value = daySchedule.timeSlots.map(slot => ({
-      time: slot,
-      available: true
-    }))
+// 載入美甲師資料
+const loadArtistData = async () => {
+  try {
+    console.log('載入美甲師資料，artistId:', props.artistId)
     
-    // 模擬一些時段已被預約
-    const occupiedSlots = getOccupiedSlots(dateString)
-    availableTimeSlots.value.forEach(slot => {
-      if (occupiedSlots.includes(slot.time)) {
-        slot.available = false
-      }
-    })
-  } else {
-    // 如果不營業，清空可用時段
-    availableTimeSlots.value = []
+    const [artistResult, availabilityResult] = await Promise.all([
+      apiRequest(`/artists/${props.artistId}`),
+      apiRequest(`/artists/${props.artistId}/availability`)
+    ])
+    
+    if (artistResult.success) {
+      const artistData = artistResult.data.artist
+      artistName.value = artistData.studio
+      console.log('美甲師資料載入成功:', artistData)
+    }
+
+    // 載入 availability 資料用於日曆顯示
+    if (availabilityResult.success) {
+      const availability = availabilityResult.data?.data?.availability || availabilityResult.data?.availability
+      artistAvailability.value = availability || {}
+      console.log('📅 載入的 availability:', artistAvailability.value)
+    }
+  } catch (error) {
+    console.error('載入資料錯誤:', error)
+    artistName.value = '未知美甲師'
   }
 }
 
-// 獲取已預約時段的函數（模擬）
-const getOccupiedSlots = (dateString) => {
-  // 這裡應該從後端 API 獲取已預約的時段
-  // 目前用模擬資料
-  const occupied = {
-    // 模擬某些日期的已預約時段
+// 檢查美甲師是否有設定任何時段
+// 簡化的檢查函數
+const checkIfHasAnyAvailableSlots = async () => {
+  try {
+    console.log('🔍 檢查美甲師是否有設定時段...')
+    
+    // 如果父組件已經傳遞了 hasSchedule，直接使用
+    if (props.hasSchedule !== null) {
+      console.log('📋 使用父組件傳遞的時段資訊:', props.hasSchedule)
+      hasAvailableSchedule.value = props.hasSchedule
+      return
+    }
+    
+    // 否則進行 API 檢查（保留原邏輯作為備案）
+    const result = await apiRequest(`/artists/${props.artistId}/availability`)
+    console.log('📋 Availability API 回應:', result)
+    
+    if (result.success) {
+      const availability = result.data?.data?.availability || result.data?.availability
+      console.log('📅 Availability 資料:', availability)
+      
+      if (availability && typeof availability === 'object') {
+        const hasAnyTimeSlots = Object.values(availability).some(daySlots => 
+          Array.isArray(daySlots) && daySlots.length > 0
+        )
+        hasAvailableSchedule.value = hasAnyTimeSlots
+      } else {
+        hasAvailableSchedule.value = false
+      }
+    } else {
+      hasAvailableSchedule.value = false
+    }
+  } catch (error) {
+    console.error('❌ 檢查時段錯誤:', error)
+    hasAvailableSchedule.value = false
+  } finally {
+    isCheckingSchedule.value = false
   }
-  
-  // 簡單模擬：隨機讓某些時段不可用
-  const date = new Date(dateString)
-  const day = date.getDate()
-  
-  if (day % 7 === 0) {
-    return ['10:00-12:00'] // 模擬每月7, 14, 21, 28號的10:00-12:00已被預約
-  } else if (day % 5 === 0) {
-    return ['14:00-16:00'] // 模擬每月5, 10, 15, 20, 25, 30號的14:00-16:00已被預約
+}
+
+// 根據選擇的日期更新可用時段
+const updateTimeSlotAvailability = async (dateString) => {
+  try {
+    isLoadingSlots.value = true
+    console.log('查詢可用時段:', dateString)
+    
+    const result = await apiRequest(`/artists/${props.artistId}/slots?date=${dateString}`)
+    
+    if (result.success) {
+      const availableSlots = result.data.availableSlots || []
+      console.log('可用時段:', availableSlots)
+      
+      // 轉換為前端需要的格式
+      availableTimeSlots.value = availableSlots.map(time => ({
+        time: `${time}-${getEndTime(time)}` // 轉換為 "10:00-12:00" 格式
+      }))
+    } else {
+      console.error('載入時段失敗:', result.error)
+      availableTimeSlots.value = []
+    }
+  } catch (error) {
+    console.error('載入時段錯誤:', error)
+    availableTimeSlots.value = []
+  } finally {
+    isLoadingSlots.value = false
   }
-  
-  return occupied[dateString] || []
+}
+
+// 輔助函數 - 計算結束時間
+const getEndTime = (startTime) => {
+  const [hours, minutes] = startTime.split(':').map(Number)
+  const endHours = hours + 2 // 假設每個時段2小時
+  return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 }
 
 // 選擇日期
@@ -329,28 +385,54 @@ const formatDisplayDate = (dateString) => {
   return `${year}/${month}/${day}`
 }
 
-onMounted(() => {
-  // 根據傳入的 Id 設置美甲師名稱
-  if (props.artistId === '1') {
-    artistName.value = 'waka.nail'
-  } else if (props.artistId === '2') {
-    artistName.value = 'jolieee_nail'
-  } else if (props.artistId === '3') {
-    artistName.value = '61.nail'
-  } else if (props.artistId === '4') {
-    artistName.value = 'test.nail'
-  } else {
-    artistName.value = '未知美甲師'
+// 提交預約
+const submitBooking = async () => {
+  if (!selectedDate.value || !selectedTime.value) {
+    alert('請選擇日期和時間')
+    return
   }
-  
-  // 設置當前日期為今天
-  currentDate.value = new Date()
-})
 
-const submitBooking = () => {
-  if (selectedDate.value && selectedTime.value) {
-    // 顯示預約成功提示
-    showSuccess.value = true
+  try {
+    isLoading.value = true
+    
+    // 獲取當前登入的顧客 ID
+    const customerId = localStorage.getItem('userId')
+    if (!customerId) {
+      alert('請先登入')
+      router.push('/login')
+      return
+    }
+    
+    // 從時間格式中提取開始時間 "10:00-12:00" -> "10:00"
+    const startTime = selectedTime.value.split('-')[0]
+    
+    const bookingData = {
+      customerId: customerId,
+      artistId: props.artistId,
+      date: selectedDate.value,
+      time: startTime,
+      note: notes.value || ''
+    }
+    
+    console.log('提交預約資料:', bookingData)
+    
+    const result = await apiRequest('/reservations/book', {
+      method: 'POST',
+      body: JSON.stringify(bookingData)
+    })
+    
+    if (result.success) {
+      console.log('預約成功:', result)
+      showSuccess.value = true
+    } else {
+      console.error('預約失敗:', result.error)
+      alert(`預約失敗：${result.error}`)
+    }
+  } catch (error) {
+    console.error('預約錯誤:', error)
+    alert('預約時發生錯誤，請稍後再試')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -359,6 +441,20 @@ const finishBooking = () => {
   showSuccess.value = false
   emit('close')
 }
+
+onMounted(async () => {
+  console.log('🚀 Booking 組件載入，hasSchedule prop:', props.hasSchedule)
+  
+  // 同時載入美甲師資料和檢查時段
+  await Promise.all([
+    loadArtistData(),
+    checkIfHasAnyAvailableSlots()
+  ])
+  
+  // 設置當前日期為今天
+  currentDate.value = new Date()
+})
+
 </script>
 
 <style scoped>

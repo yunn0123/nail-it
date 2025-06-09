@@ -241,9 +241,9 @@
               v-for="tag in tagCategories[category] || []"
               :key="tag"
               @click="toggleTag(category, tag)"
-              :class="tagButtonClass(selectedTags[category] && selectedTags[category].includes(tag))"
+              :class="tagButtonClass(selectedTags[category]?.includes(tag))"
             >
-              {{ tag }}
+              {{ extractLabel(tag) }}
             </button>
           </div>
         </div>
@@ -296,41 +296,54 @@
       </div>
 
       <!-- 搜尋結果 -->
-      <div v-if="filteredWorks.length">
-      <!-- 搜尋結果標題 -->
-  <div ref="searchResults" class="flex items-center mb-5">
-    <h2 class="text-2xl text-gray-700 mr-2">搜尋結果</h2>
-    <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
-  </div>
-      <div  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        
-        <div 
-          v-for="design in filteredWorks" 
-          :key="design.id" 
-          class="bg-white p-4 rounded-xl shadow hover:shadow-lg cursor-pointer transition-shadow" 
-          @click="goToProfile(design.id)"
-        >
+      <div v-if="filteredWorks && filteredWorks.length">
+        <!-- 搜尋結果標題 -->
+        <div ref="searchResults" class="flex items-center mb-5">
+          <h2 class="text-2xl text-gray-700 mr-2">搜尋結果</h2>
+          <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
+        </div>
+        <div  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           
-          <img :src="design.image" class="w-full h-48 object-cover rounded-md mb-3" />
-          <div class="flex items-center justify-between mb-1">
-            <h3 class="text-[#c68f84] font-medium">{{ design.studio }}</h3>
-            <p class="text-[#dcb876]  text-sm">★ {{ design.rating }}</p>
-          </div>
-          <p class="text-gray-500 text-sm mb-2">$ {{ design.priceLow }} - {{ design.priceHigh }}</p>
-          <div class="mb-2">
-            <div class="flex flex-wrap gap-2">
-              <span 
-                v-for="(tag, index) in design.tags" 
-                :key="index" 
-                class="bg-[#c68f84] text-white text-xs py-1 px-3 rounded-full"
+          <div 
+            v-for="design in filteredWorks" 
+            :key="design.id" 
+            class="bg-white p-4 rounded-xl shadow hover:shadow-lg cursor-pointer transition-shadow" 
+            @click="goToProfile(design.artist?.userId)"
+          >
+            
+            <img :src="design.imageUrl || design.image" class="w-full h-48 object-cover rounded-md mb-3" />
+            <div class="flex items-start justify-between mb-1 gap-2">
+              <h3 
+                class="text-[#c68f84] font-medium text-base flex-1 break-words"
+                style="word-break: break-word; overflow-wrap: anywhere;"
               >
-                {{ tag }}
-              </span>
+                {{ design.artist?.studioName || '未知店名' }}
+              </h3>
+              <p class="text-[#dcb876] text-sm shrink-0 whitespace-nowrap">★ {{ design.artist?.rating ?? '尚無評分' }}</p>
+            </div>
+            <p class="text-gray-500 text-sm mb-2">
+              $ {{ design.artist?.priceMin ?? '-' }} - {{ design.artist?.priceMax ?? '-' }}
+            </p>
+            <div class="mb-2">
+              <div class="flex flex-wrap gap-2">
+                <span 
+                  v-for="(tag, index) in design.tags" 
+                  :key="index" 
+                  class="bg-[#c68f84] text-white text-xs py-1 px-3 rounded-full"
+                >
+                  {{ tag }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <div v-else-if="hasSearched" class="text-center text-gray-500 mt-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-gray-500 mb-4">沒有找到符合條件的美甲師</p>
+      </div>
   </div>
 </div>
 </template>
@@ -338,6 +351,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, reactive, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiRequest } from '../config/api.js'
 
 const router = useRouter()
 const searchResults = ref(null)
@@ -419,8 +433,12 @@ const allSelectedTags = computed(() => {
 })
 
 // 跳轉到 profile 頁面
-const goToProfile = (designId) => {
-  router.push(`/profile/${designId}`)
+const goToProfile = (artistId) => {
+  if (!artistId) {
+    console.warn('⚠️ 無法跳轉：沒有 artistId')
+    return
+  }
+  router.push(`/profile/${artistId}`)
 }
 
 // 自動滾動到搜尋結果
@@ -434,6 +452,7 @@ const scrollToResults = () => {
 }
 
 const reset = () => {
+  hasSearched.value = false
   selectedCity.value = ''
   selectedDistricts.value = []
   selectedRating.value = null
@@ -531,6 +550,7 @@ onBeforeUnmount(() => {
 //===================價格區間===================
 const priceMin = ref(0)
 const priceMax = ref(5000)
+const hasSearched = ref(false)
 
 const onNumberInput = (event, type) => {
   const value = event.target.value
@@ -563,6 +583,11 @@ const categoryDropdownOpen = ref(false)
 const categoryDropdownRef = ref(null)
 const categoryDropdownMenu = ref(null)
 const dropdownDirection = ref('down')
+
+const extractLabel = (tag) => {
+  const match = tag.match(/^(.+?)（/)
+  return match ? match[1] : tag
+}
 
 // 智能判斷下拉選單展開方向
 const toggleCategoryDropdown = () => {
@@ -603,11 +628,11 @@ const tagCategories = {
     "亮片"
   ],
   Shape: [
-    "圓形",
-    "尖形",
-    "方圓形",
-    "方形",
-    "橢圓形",
+    "圓形（Round）",
+    "尖形（Stiletto）",
+    "方圓形（Squoval）",
+    "方形（Square）",
+    "橢圓形（Oval）"
   ],
   Color: [
     "裸粉色",
@@ -625,26 +650,25 @@ const tagCategories = {
     "酒紅色",
     "咖啡色",
     "金屬銀",
-    "銀色",
-    "亮片"
+    "銀色"
   ],
   Texture: [
-    "亮面",
-    "霧面",
-    "亮片",
-    "珠光",
-    "砂糖感",
-    "金屬箔"
+    "光澤（Glossy）",
+    "霧面（Matte）",
+    "亮片（Glitter）",
+    "珠光（Pearlescent）",
+    "砂糖感（Sugar）",
+    "金屬箔（Foil）"
   ],
   Decorations: [
-    "水鑽",
-    "貼紙",
-    "印章",
-    "貝殼",
-    "金屬飾片",
-    "金屬箔",
-    "雕花",
-    "亮片"
+    "水鑽（Rhinestone）",
+    "貼紙（Sticker）",
+    "畫圖章（Stamp）",
+    "貝殼（Shell）",
+    "金屬飾片（Metal pieces）",
+    "金屬箔（Foil）",
+    "雕花（3D art）",
+    "亮片（Glitter）"
   ],
   Theme: [
     "優雅",
@@ -686,11 +710,6 @@ const toggleTag = (category, tag) => {
   else selectedTags[category].push(tag)
 }
 
-// 假資料：你可能會喜歡
-import design1 from '../assets/temp/design1.jpg'
-import design2 from '../assets/temp/design2.jpg'
-import design3 from '../assets/temp/design3.jpg'
-
 const filteredWorks = ref([])
 
 const buttonClass = (selected) => {
@@ -699,45 +718,48 @@ const buttonClass = (selected) => {
     : 'px-4 py-1 bg-gray-100 text-gray-600 rounded-full hover:bg-[#f3e4e1] transition-colors'
 }
 
-const search = () => {
-  filteredWorks.value = [
-    { 
-      id: '1', 
-      studio: '@waka.nail', 
-      rating: 4.9, 
-      priceLow: 1000, priceHigh: 1800,
-      tags: ['貓眼', '清新', '日系', '綠色系'], 
-      image: design1 
-    },
-    { 
-      id: '2', 
-      studio: '@jolieee_nail', 
-      rating: 4.7, 
-      priceLow: 1000, priceHigh: 1500, 
-      tags: ['貓眼', '清新', '藍色系'],
-      image: design2 
-    },
-    { 
-      id: '3', 
-      studio: '@61.nail', 
-      rating: 4.6, 
-      priceLow: 1200, priceHigh: 1500, 
-      tags: ['貓眼', '清新', '可愛','粉色系'],
-      image: design3 
-    },
-    { 
-      id: '4', 
-      studio: '@test.nail', 
-      rating: 4.5, 
-      priceLow: 900, priceHigh: 1600, 
-      tags: ['簡約', '清新'],
-      image: design1 
-    },
-  ]
-  
-  // 搜尋完成後自動滾動到結果
-  nextTick(() => {
-    scrollToResults()
+const search = async () => {
+  const query = {
+    city: selectedCity.value,
+    district: selectedDistricts.value,
+    priceMin: priceMin.value,
+    priceMax: priceMax.value,
+    rating: selectedRating.value,
+    style: selectedTags.Style,
+    shape: selectedTags.Shape,
+    color: selectedTags.Color,
+    texture: selectedTags.Texture,
+    decorations: selectedTags.Decorations,
+    theme: selectedTags.Theme
+  }
+
+  console.log('📦 發送前的參數:', query)
+
+  const queryString = new URLSearchParams()
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach(v => queryString.append(key, v))
+    } else if (value !== '' && value != null) {
+      queryString.append(key, value)
+    }
   })
+
+  const { success, data, error } = await apiRequest(`/search-supabase?${queryString.toString()}`, {
+    method: 'GET'
+  })
+
+  if (success) {
+    console.log('✅ 收到後端回應:', data)
+    filteredWorks.value = data.results
+  } else {
+    console.error('❌ 搜尋失敗:', error)
+  }
+  hasSearched.value = true
 }
+
+
+
 </script>
+
+

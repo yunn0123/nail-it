@@ -111,7 +111,7 @@ import design3 from '../assets/temp/design3.jpg'
 const contacts = ref([
   {
     id: '1',
-    name: 'waka.nail',
+    name: '77nail',
     type: 'artist', // 添加類型標識
     image: work1, // 直接使用導入的圖片
     createdAt: new Date('2025-01-01'),
