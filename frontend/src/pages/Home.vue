@@ -62,6 +62,20 @@
         <h2 class="text-2xl text-gray-700 mr-2">你可能會喜歡</h2>
         <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
       </div>
+
+      <!-- 🔥 新增 loading 狀態 -->
+      <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div v-for="n in 6" :key="n" class="bg-white p-4 rounded-xl shadow animate-pulse">
+          <div class="w-full h-48 bg-gray-200 rounded-md mb-3"></div>
+          <div class="h-4 bg-gray-200 rounded mb-2"></div>
+          <div class="h-3 bg-gray-200 rounded mb-2 w-1/2"></div>
+          <div class="flex gap-2">
+            <div class="h-6 bg-gray-200 rounded-full w-12"></div>
+            <div class="h-6 bg-gray-200 rounded-full w-16"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div 
           v-for="design in sortedDesign" 
@@ -78,7 +92,7 @@
           <div class="mb-2">
             <div class="flex flex-wrap gap-2">
               <span v-for="(tag, index) in design.tags" :key="index" class="bg-[#c68f84] text-white text-xs py-1 px-3 rounded-full">
-                {{ tag }}
+                {{ cleanTag(tag) }}
               </span>
             </div>
           </div>
@@ -89,14 +103,13 @@
   </template>
   
   <script setup>
-  import { ref, computed } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
-
+  import { apiRequest } from '../config/api.js' 
   import { useLogout } from '../auth.js'
 
   const { handleLogout } = useLogout()
 
-  // 在 Home.vue 的 <script setup> 裡隨便找個地方加入
   console.log('測試環境變數:', import.meta.env.VITE_BACKEND_API_URL)
   
   const router = useRouter()
@@ -152,44 +165,125 @@
   const sortedWorks = computed(() => {
     return [...works].sort((a, b) => b.rating - a.rating)
   })
+
+  const cleanTag = (tag) => {
+  if (!tag) return ''
+  // 移除英文括號和中文括號內的內容，只保留中文部分
+  return tag.replace(/\s*[\(（][^)）]*[\)）]\s*/g, '').trim()
+}
   
   // 假資料：你可能會喜歡
   import design1 from '../assets/temp/design1.jpg'
   import design2 from '../assets/temp/design2.jpg'
   import design3 from '../assets/temp/design3.jpg'
   
-  const design = [
+  const design = ref([]) // ← 改成 ref
+  const isLoading = ref(true) // ← 新增
+
+// 載入推薦美甲師資料（只顯示有作品的美甲師）
+const loadRecommendedArtists = async () => {
+  try {
+    isLoading.value = true
+    
+    // 步驟1：獲取更多美甲師來篩選
+    const result = await apiRequest('/artists/recommended?limit=12') // 🔥 增加數量以便篩選
+    
+    console.log('🔍 完整 API 回應:', result)
+    
+    const artists = result.data?.data?.artists || result.data?.artists
+    
+    if (result.success && artists && artists.length > 0) {
+      
+      // 步驟2：為每個美甲師獲取作品，並過濾出有作品的
+      const artistsWithWorks = []
+      
+      for (const artist of artists) {
+        try {
+          console.log(`🔍 正在檢查美甲師:`, artist.studio)
+          
+          // 獲取該美甲師的作品
+          const worksResult = await apiRequest(`/works/artist/${artist.user_id}?limit=1`)
+          
+          // 🔥 檢查是否有作品
+          const works = worksResult.data?.works || []
+          
+          if (worksResult.success && Array.isArray(works) && works.length > 0) {
+            const representativeWork = works[0]
+            const workTags = representativeWork.tags || []
+            const workImage = representativeWork.image || artist.image || design1
+            
+            artistsWithWorks.push({
+              id: artist.user_id,
+              studio: artist.studio,
+              rating: artist.rating,
+              priceLow: artist.priceLow,
+              priceHigh: artist.priceHigh,
+              city: artist.city,
+              district: artist.district,
+              image: workImage,
+              tags: workTags.slice(0, 6)
+            })
+            
+            console.log(`✅ 美甲師 ${artist.studio} 有作品，已加入列表`)
+            
+            // 🔥 當我們有足夠的有作品美甲師時就停止
+            if (artistsWithWorks.length >= 6) {
+              break
+            }
+          } else {
+            console.log(`⚠️ 美甲師 ${artist.studio} 沒有作品，跳過`)
+          }
+          
+        } catch (error) {
+          console.warn(`檢查美甲師 ${artist.user_id} 作品失敗:`, error)
+        }
+      }
+      
+      design.value = artistsWithWorks
+      
+      console.log('✅ 最終顯示的有作品美甲師:', design.value.length, '位')
+      console.log('詳細資訊:', design.value)
+      
+      // 🔥 如果有作品的美甲師太少，顯示警告
+      if (artistsWithWorks.length < 3) {
+        console.warn('⚠️ 有作品的美甲師數量較少，考慮增加美甲師總數或放寬篩選條件')
+      }
+      
+    } else {
+      console.warn('⚠️ API 回應格式不正確或無資料:', result)
+      loadFallbackData()
+    }
+  } catch (error) {
+    console.error('💥 載入推薦美甲師失敗:', error)
+    loadFallbackData()
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 備用假資料
+const loadFallbackData = () => {
+  design.value = [
     { 
-      id: '1', 
-      studio: '@waka.nail', 
+      id: 'e4408908-bc53-4f33-880e-f2c289d37e2f', 
+      studio: 'waka.nail', 
       rating: 4.9, 
-      priceLow: 1000 , priceHigh: 1800,
+      priceLow: 1000, priceHigh: 1800,
       tags: ['貓眼', '清新', '日系', '綠色系'], 
-      image: design1 },
-    { 
-      id: '2', 
-      studio: '@jolieee_nail', 
-      rating: 4.7, 
-      priceLow: 1000 , priceHigh: 1500, 
-      tags: ['貓眼', '清新', '藍色系'],
-      image: design2 },
-    { 
-      id: '3', 
-      studio: '@61.nail', 
-      rating: 4.6, 
-      priceLow: 1200 , priceHigh: 1500, 
-      tags: ['貓眼', '清新', '可愛','粉色系'],
-      image: design3 },
-    { 
-      id: '4', 
-      studio: '@test.nail', 
-      rating: 4.5, 
-      priceLow: 900 , priceHigh: 1600, 
-      tags: ['簡約', '清新'],
-      image: design1 },
+      image: design1
+    }
+    // ... 其他假資料
   ]
+}
   
-  const sortedDesign = computed(() => {
-    return [...design].sort((a, b) => b.rating - a.rating)
-  })
+const sortedDesign = computed(() => {
+  return [...design.value].sort((a, b) => b.rating - a.rating) // ← 加入 .value
+})
+
+
+onMounted(() => {
+  loadRecommendedArtists()
+})
+
+
   </script>
