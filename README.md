@@ -39,7 +39,7 @@
 
 
 ### Low fidelity Wireframes 或 Figma 介面設計
-可參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
+請參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
 ### EER diagram
 ![image](https://github.com/Enid1123/nail-it/blob/main/assets/EER%20diagram.png)
 ### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
@@ -103,6 +103,8 @@
 
 ---
 ### 資料庫
+採用 Supabase PostgreSQL 資料庫儲存專案資料，並整合 Supabase Auth 進行使用者身份驗證。<br>
+所有資料表皆透過 Foreign Key 建立關聯性，確保資料一致性與完整性。
 
 ---
 ### 部署     
