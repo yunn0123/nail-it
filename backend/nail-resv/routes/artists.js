@@ -196,6 +196,108 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+router.put('/:id/avatar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageData } = req.body; // base64 圖片資料
+    const supabase = req.supabase;
+
+    // 驗證必要欄位
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Image data is required'
+      });
+    }
+
+    // 驗證用戶權限（確保只能更新自己的頭像）
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user || user.id !== id) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+
+    // 生成檔案名稱
+    const timestamp = Date.now();
+    const filename = `${id}/avatar_${timestamp}.jpg`;
+
+    // 處理 base64 圖片
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // 刪除舊頭像（如果存在）
+    try {
+      const { data: existingFiles } = await supabase.storage
+        .from('avatars')
+        .list(id);
+
+      if (existingFiles && existingFiles.length > 0) {
+        const filesToDelete = existingFiles.map(file => `${id}/${file.name}`);
+        await supabase.storage
+          .from('avatars')
+          .remove(filesToDelete);
+        console.log('已刪除舊頭像');
+      }
+    } catch (deleteError) {
+      console.warn('刪除舊頭像失敗:', deleteError);
+      // 不阻止上傳新頭像
+    }
+
+    // 上傳新頭像到 Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filename, buffer, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Supabase 頭像上傳錯誤:', uploadError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to upload avatar'
+      });
+    }
+
+    // 獲取公開 URL
+    const { data: publicData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filename);
+
+    const avatarUrl = publicData.publicUrl;
+
+    // 更新資料庫中的 avatar_url
+    const { error: updateError } = await supabase
+      .from('artists')
+      .update({ avatar_url: avatarUrl })
+      .eq('user_id', id);
+
+    if (updateError) {
+      console.error('更新頭像 URL 失敗:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update avatar URL in database'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Avatar updated successfully',
+      avatarUrl: avatarUrl
+    });
+
+  } catch (error) {
+    console.error('頭像上傳錯誤:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
 
 
 module.exports = router;
