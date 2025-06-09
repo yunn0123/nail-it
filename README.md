@@ -10,7 +10,7 @@
 ---
 
 ## 專案說明
-本專案旨在解決顧客與美甲師雙方在媒合上之通點。現行美甲的商業模式缺乏統一平台整合作品、價格、評價與時段等資訊，導致顧客進行難以比較選擇，美甲師也需耗費心力應對重複詢問。
+本專案旨在解決顧客與美甲師雙方在媒合上之痛點。現行美甲的商業模式缺乏統一平台整合作品、價格、評價與時段等資訊，導致顧客進行難以比較選擇，美甲師也需耗費心力應對重複詢問。
 
 因此我們打造一站式美甲體驗的平台，以效率與透明為核心價值，整合多項功能以提升使用者與美甲師的互動與服務品質。顧客可以依據地點、價格、風格、評價等條件進行篩選，並新增以圖搜圖功能，提升搜尋效率。預約功能則讓美甲師設定可預約時段，顧客可直接查詢並預約服務。平台上亦包含評價功能，讓使用者能夠交流經驗與技巧。
 
@@ -39,7 +39,7 @@
 
 
 ### Low fidelity Wireframes 或 Figma 介面設計
-可參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
+請參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
 ### EER diagram
 ![image](https://github.com/Enid1123/nail-it/blob/main/assets/EER%20diagram.png)
 ### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
@@ -103,11 +103,20 @@
 
 ---
 ### 資料庫
+採用 Supabase 作為主要資料庫系統，負責儲存平台核心資料，如會員資訊、美甲師資料、預約紀錄與評價等。每張表之間的關聯可參考以上的EER diagram。因兩方使用者登入方式一致，所以使用 Supabase Auth 進行登入驗證，通過 RLS 政策，限制數據訪問、更改。添加觸發器實現3個功能：
+*“insert_review_on_completed()”function當appointments表裡的預約狀態更新為“completed”時會同時在reviews(評價表)裡插入有關該預約的資訊且設評分與評論為空值。
+*“restrict_review_update()function” 限制客戶在30天內更新評分和評論空值的部分,從service_date 開始算起。
+*確保每次顧客對美甲師的預約進行評分後，若他們修改了評分就會觸發 trigger 執行 “update_artist_rating()” function自動更新該美甲師在 artists 表中的 rating 欄位（平均分，保留 1 位小數）。
 
 ---
+### 資料蒐集
+
+以 google map API 抓取店家資訊，分別蒐集他們店家基本資訊，如 : 店名、地址、電話和圖片等。
+
+---  
 ### 部署     
 
-以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
+railway service分別部署前後端，並透過railway後端公開網址連接前後端。
 
 **服務網址**
 - 前端應用：[nailed-it](https://nail-it-frontend.up.railway.app)
