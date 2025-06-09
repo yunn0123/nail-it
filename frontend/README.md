@@ -49,7 +49,7 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 
 # 搜尋功能  
 
-使用者可以點擊頁面正上方的搜尋白框，進入搜尋頁面
+使用者可以點擊頁面正上方的搜尋白框，進入搜尋頁面 <br>
 接下來可選擇想要的搜尋方式：  
 - **以名稱搜尋**  
 - **以圖搜尋**  
