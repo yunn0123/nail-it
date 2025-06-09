@@ -7,6 +7,6 @@ junit.xml
 
 # 測試環境變數檔案
 .env.test
-
+.env
 # 測試暫存檔案
 tests/tmp/
