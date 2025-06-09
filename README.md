@@ -100,8 +100,8 @@
 
 ---
 ### 部署
-[![Build Status](https://github.com/yunn0123/nail-it/actions/workflows/ci.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions)
-
+[![Test Status](https://github.com/yunn0123/nail-it/actions/workflows/tests.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml)
+[![Deploy Status](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml)
 [![Frontend Deploy](https://img.shields.io/badge/Frontend-Deployed-brightgreen)](https://nail-it-frontend.up.railway.app)
 [![Backend Deploy](https://img.shields.io/badge/Backend-Deployed-brightgreen)](https://nail-it-backend.up.railway.app)       
 
