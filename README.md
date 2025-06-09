@@ -103,8 +103,10 @@
 
 ---
 ### 資料庫
-採用 Supabase PostgreSQL 資料庫儲存專案資料，並整合 Supabase Auth 進行使用者身份驗證。<br>
-所有資料表皆透過 Foreign Key 建立關聯性，確保資料一致性與完整性。
+採用 Supabase 作為主要資料庫系統，負責儲存平台核心資料，如會員資訊、美甲師資料、預約紀錄與評價等。每張表之間的關聯可參考以上的EER diagram。因兩方使用者登入方式一致，所以使用 Supabase Auth 進行登入驗證，通過 RLS 政策，限制數據訪問、更改。添加觸發器實現3個功能：
+*“insert_review_on_completed()”function當appointments表裡的預約狀態更新為“completed”時會同時在reviews(評價表)裡插入有關該預約的資訊且設評分與評論為空值。
+*“restrict_review_update()function” 限制客戶在30天內更新評分和評論空值的部分,從service_date 開始算起。
+*確保每次顧客對美甲師的預約進行評分後，若他們修改了評分就會觸發 trigger 執行 “update_artist_rating()” function自動更新該美甲師在 artists 表中的 rating 欄位（平均分，保留 1 位小數）。
 
 ---
 ### 部署     
