@@ -96,7 +96,9 @@
 * 美甲師設定可預約時段  
 * 查詢美甲師目前的空檔時段  
 * 顧客預約美甲師時段  
-* (以圖搜圖跟搜尋) *待編輯*  
+* 搜尋功能：原本我們都是以 OPEN AI 的 API，但後來想挑戰「以圖搜圖」自己完成，因此做了嘗試，
+  可惜時間太趕，因此雖然後端已經完成，但想再微調，所以先放在branch"searh_with_photo"當中。
+　  
 
 詳細後端操作可至`/backend/nail-resv/README.md`閱覽  
 連結：[Backend README](https://github.com/Enid1123/nail-it/blob/main/backend/nail-resv/API_DOCS_README.md)
