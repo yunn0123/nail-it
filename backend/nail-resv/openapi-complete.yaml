@@ -498,6 +498,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /tag-base64:
+    post:
+      tags: [美甲標註]
+      summary: Base64 圖片標註
+      description: |
+        接收 Base64 編碼的圖片資料，使用 AI 進行快速標註分析。
+        主要用於即時預覽和標籤建議功能，不會儲存圖片到系統中。
+      operationId: tagBase64Image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  description: Base64 編碼的圖片資料 (支援 data:image/jpeg;base64,... 格式)
+                  example: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+      responses:
+        '200':
+          description: 標註分析成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagBase64Response'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ========== 搜尋 API ==========
   /search-supabase:
     get:
@@ -1061,6 +1096,23 @@ components:
           type: integer
           description: 總共標註過的圖片數量
           example: 125
+
+    TagBase64Response:
+      type: object
+      required:
+        - success
+        - tags
+      properties:
+        success:
+          type: boolean
+          description: 是否分析成功
+          example: true
+        tags:
+          type: array
+          items:
+            type: string
+          description: AI 分析得出的標籤列表，包含風格、形狀、顏色、質感、裝飾和主題等屬性
+          example: ["簡約", "優雅", "粉色", "光澤", "日常", "可愛"]
 
     SuccessfulImage:
       type: object

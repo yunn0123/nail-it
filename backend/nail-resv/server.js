@@ -71,7 +71,19 @@ app.get('/swagger-ui.html', (req, res) => {
 });
 
 app.get('/swagger-ui-complete.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'swagger-ui-complete.html'));
+  res.sendFile(path.join(__dirname, 'swagger-ui-standalone.html'));
+});
+
+app.get('/swagger-ui-latest.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger-ui-latest.html'));
+});
+
+app.get('/swagger-ui-latest-standalone.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger-ui-latest-standalone.html'));
+});
+
+app.get('/swagger-ui-complete-new.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger-ui-complete-new.html'));
 });
 
 app.get('/openapi.yaml', (req, res) => {
@@ -91,14 +103,17 @@ app.get('/', (req, res) => {
     <p>歡迎使用美甲預約系統 API！</p>
     <h2>📚 API 文檔</h2>
     <ul>
-      <li><a href="/swagger-ui.html">🎨 美甲標註 API 文檔 (Swagger UI)</a></li>
-      <li><a href="/swagger-ui-complete.html">📋 完整系統 API 文檔 (Swagger UI)</a></li>
-      <li><a href="/openapi.yaml">📄 美甲標註 OpenAPI 規格</a></li>
-      <li><a href="/openapi-complete.yaml">📄 完整系統 OpenAPI 規格</a></li>
+      <li><a href="/swagger-ui-complete-new.html">🎯 完整系統 API 文檔 (包含所有功能) - 最推薦！</a></li>
+      <li><a href="/swagger-ui.html">🎨 美甲標註 API 文檔 (基礎版)</a></li>
+      <li><a href="/swagger-ui-latest-standalone.html">✨ 最新完整系統 API 文檔 (離線版)</a></li>
+      <li><a href="/swagger-ui-latest.html">📋 最新完整系統 API 文檔 (線上版)</a></li>
+      <li><a href="/swagger-ui-complete.html">📄 舊版完整系統 API 文檔</a></li>
+      <li><a href="/openapi-complete.yaml">📄 完整系統 OpenAPI 規格文件</a></li>
     </ul>
     <h2>🔗 主要 API 端點</h2>
     <ul>
-      <li><a href="/api/tag">🎨 美甲標註 API</a></li>
+      <li><a href="/api/tag">🎨 美甲標註 API (批量上傳)</a></li>
+      <li><a href="/api/tag-base64">✨ Base64 圖片標註 API (新功能)</a></li>
       <li><a href="/api/search-supabase">🔍 美甲搜尋 API</a></li>
       <li><a href="/api/register">👤 用戶註冊 API</a></li>
       <li><a href="/api/login">🔑 用戶登入 API</a></li>
