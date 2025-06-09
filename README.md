@@ -1,5 +1,10 @@
 # Milestone 4 文件 README
 
+[![Test Status](https://github.com/yunn0123/nail-it/actions/workflows/tests.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml)
+[![Deploy Status](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml)
+
+[![Frontend Deploy](https://img.shields.io/badge/Frontend-Deployed-brightgreen)](https://nail-it-frontend.up.railway.app)
+[![Backend Deploy](https://img.shields.io/badge/Backend-Deployed-brightgreen)](https://nail-it-backend.up.railway.app)  
 
 
 ---
@@ -99,11 +104,7 @@
 ### 資料庫
 
 ---
-### 部署
-[![Test Status](https://github.com/yunn0123/nail-it/actions/workflows/tests.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml)
-[![Deploy Status](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions/workflows/railway-deploy-test.yml)
-[![Frontend Deploy](https://img.shields.io/badge/Frontend-Deployed-brightgreen)](https://nail-it-frontend.up.railway.app)
-[![Backend Deploy](https://img.shields.io/badge/Backend-Deployed-brightgreen)](https://nail-it-backend.up.railway.app)       
+### 部署     
 
 以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
 
