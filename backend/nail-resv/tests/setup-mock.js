@@ -273,11 +273,11 @@ global.mockSupabase = {
 // 全域測試設定
 beforeAll(async () => {
   console.log('🧪 開始執行單元測試...');
-  console.log('📌 使用 Mock 模式 - 不會操作真實數據庫');
+  console.log('使用 Mock 模式 - 不會操作真實數據庫');
 });
 
 afterAll(async () => {
-  console.log('✅ 單元測試執行完成');
+  console.log('單元測試執行完成');
 });
 
 // 全域錯誤處理

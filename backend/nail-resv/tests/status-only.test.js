@@ -25,10 +25,10 @@ app.use('/api/logout', logoutRoute);
 app.use('/api/customers', customersRouter);
 app.use('/api/artists', artistsRouter);
 
-describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
+describe('HTTP 狀態碼測試 (不操作真實數據庫)', () => {
   
-  describe('🔐 認證 API 狀態測試', () => {
-    test('✅ POST /api/register - 註冊應回傳正確狀態', async () => {
+  describe('認證 API 狀態測試', () => {
+    test('POST /api/register - 註冊應回傳正確狀態', async () => {
       const response = await request(app)
         .post('/api/register')
         .send({
@@ -43,7 +43,7 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
       expect(response.body).toBeDefined();
     });
 
-    test('✅ POST /api/login - 登入應回傳正確狀態', async () => {
+    test('POST /api/login - 登入應回傳正確狀態', async () => {
       const response = await request(app)
         .post('/api/login')
         .send({
@@ -55,7 +55,7 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
       expect(response.body).toBeDefined();
     });
 
-    test('✅ POST /api/logout - 登出應回傳正確狀態', async () => {
+    test('POST /api/logout - 登出應回傳正確狀態', async () => {
       const response = await request(app)
         .post('/api/logout');
 
@@ -64,8 +64,8 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
     });
   });
 
-  describe('👤 用戶管理 API 狀態測試', () => {
-    test('✅ GET /api/customers/:id - 獲取顧客應回傳狀態', async () => {
+  describe('用戶管理 API 狀態測試', () => {
+    test('GET /api/customers/:id - 獲取顧客應回傳狀態', async () => {
       const response = await request(app)
         .get('/api/customers/customer-123');
 
@@ -73,7 +73,7 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
       expect(response.body).toBeDefined();
     });
 
-    test('✅ PUT /api/customers/:id - 更新顧客應回傳狀態', async () => {
+    test('PUT /api/customers/:id - 更新顧客應回傳狀態', async () => {
       const response = await request(app)
         .put('/api/customers/customer-123')
         .send({
@@ -85,15 +85,15 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
       expect(response.body).toBeDefined();
     });
 
-    test('✅ GET /api/artists/recommended - 推薦美甲師應回傳狀態', async () => {
+    test('GET /api/artists/recommended - 推薦美甲師應回傳狀態', async () => {
       const response = await request(app)
-        .get('/api/artists/recommended?limit=6');
+        .get('/api/artists/recommended?limit=1');
 
       expect([200, 500]).toContain(response.status);
       expect(response.body).toBeDefined();
     });
 
-    test('✅ GET /api/artists/:id - 美甲師詳情應回傳狀態', async () => {
+    test('GET /api/artists/:id - 美甲師詳情應回傳狀態', async () => {
       const response = await request(app)
         .get('/api/artists/artist-123');
 
@@ -102,8 +102,8 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
     });
   });
 
-  describe('🏥 健康檢查', () => {
-    test('✅ 確認所有端點都有回應', async () => {
+  describe('健康檢查', () => {
+    test('確認所有端點都有回應', async () => {
       const endpoints = [
         { method: 'post', path: '/api/register', data: { email: 'test@example.com', password: 'test', role: 'customer' }},
         { method: 'post', path: '/api/login', data: { email: 'test@example.com', password: 'test' }},
@@ -134,8 +134,8 @@ describe('🎯 HTTP 狀態碼測試 (不操作真實數據庫)', () => {
     });
   });
 
-  describe('📊 API 可用性統計', () => {
-    test('✅ 統計 API 回應狀態', async () => {
+  describe('API 可用性統計', () => {
+    test('統計 API 回應狀態', async () => {
       const testResults = {
         total: 0,
         success: 0,
