@@ -99,7 +99,7 @@ https://github.com/yunn0123/nail-it 為有CI/CD程式碼的版本
 * 查詢美甲師目前的空檔時段  
 * 顧客預約美甲師時段  
 * 搜尋功能：原本我們都是以 OPEN AI 的 API，但後來想挑戰「以圖搜圖」自己完成，因此做了嘗試，
-  可惜時間太趕，因此雖然後端已經完成，但想再微調，所以先放在feature/image-search當中。
+  可惜時間太趕，因此雖然後端已經完成，但想於後續繼續做微調，所以暫時先放在 `feature/image-search`當中。
 　  
 
 詳細後端操作可至`/backend/nail-resv/README.md`閱覽  
