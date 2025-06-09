@@ -268,7 +268,7 @@
             :key="`${tag}-${index}`"
             class="inline-flex items-center bg-[#f1e4e2] text-gray-600 rounded-full px-3 py-1 text-sm"
           >
-            {{ tag }}
+            {{ extractLabel(tag) }}
             <button 
               @click="removeTag(tag)"
               class="ml-2 text-gray-400 hover:text-gray-600"
