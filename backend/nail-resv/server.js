@@ -47,7 +47,7 @@ const logoutRoute = require('./routes/logout');
 const customersRouter = require('./routes/customers');
 const artistsRouter = require('./routes/artists');
 const worksRouter = require('./routes/works');
-
+app.use('/api/reviews', require('./routes/reviews').router)
 app.use('/api/reservations', reservationRouter);
 app.use('/api/technicians', availabilityRouter);
 app.use('/api', searchRouter);
