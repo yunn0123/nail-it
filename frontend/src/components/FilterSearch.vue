@@ -29,13 +29,14 @@
         <div class="relative" ref="dropdownRef">
           <div 
             @click="dropdownOpen = !dropdownOpen" 
-            class="border border-gray-300 px-4 py-2 rounded cursor-pointer bg-white text-gray-600 hover:border-[#c68f84] transition-colors min-h-[42px] flex items-center justify-between"
+            class="border border-gray-300 px-4 py-2 rounded cursor-pointer bg-white text-gray-600 hover:border-[#c68f84] transition-colors min-h-[42px] flex flex-wrap gap-2"
           >
-            <span class="truncate">
+            <div class="w-full break-words whitespace-normal text-sm text-gray-600 leading-relaxed">
               {{ selectedDistricts.length ? selectedDistricts.join(', ') : '請選擇區域（可多選）' }}
-            </span>
+            </div>
+
             <svg 
-              class="w-4 h-4 ml-2 transform transition-transform"
+              class="w-4 h-4 ml-auto transform transition-transform"
               :class="{ 'rotate-180': dropdownOpen }"
               fill="none" 
               stroke="currentColor" 
