@@ -111,11 +111,12 @@
 ---
 ### 資料蒐集
 
-*以 google map API 抓取店家資訊，分別蒐集他們店家基本資訊，如 : 店名、地址、電話和圖片等。
+以 google map API 抓取店家資訊，分別蒐集他們店家基本資訊，如 : 店名、地址、電話和圖片等。
+
 ---  
 ### 部署     
 
-以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
+railway service分別部署前後端，並透過railway後端公開網址連接前後端。
 
 **服務網址**
 - 前端應用：[nailed-it](https://nail-it-frontend.up.railway.app)
