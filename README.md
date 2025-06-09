@@ -62,7 +62,8 @@
 * 顧客預約美甲師時段  
 * (以圖搜圖跟搜尋) *待編輯*  
 
-詳細後端操作可至`/backend/nail-resv/README.md`閱覽
+詳細後端操作可至`/backend/nail-resv/README.md`閱覽  
+連結：https://github.com/Enid1123/nail-it/blob/main/backend/nail-resv/README.md 
 
 ---
 ### 資料庫
