@@ -45,7 +45,6 @@
 
 ### Low fidelity Wireframes 或 Figma 介面設計
 ### EER diagram
-### Testing
 ### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
 * CICD雲端部署
 * mock單元測試（僅測試API是否有正確回應）   
