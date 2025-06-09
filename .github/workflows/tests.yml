@@ -1,0 +1,63 @@
+name: 🧪 API Status Tests (No DB Operations)
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 🧪 Backend API Status Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/nail-resv/package.json
+
+    - name: 📦 Install dependencies
+      working-directory: backend/nail-resv
+      run: npm install
+
+    - name: 🧪 Run API status tests (Mock mode)
+      working-directory: backend/nail-resv
+      run: npm test -- --testNamePattern="HTTP 狀態碼測試|API 可用性統計"
+      env:
+        NODE_ENV: test
+        # 使用 Mock 數據，不需要真實 Supabase 連接
+        SUPABASE_URL: "https://mock-supabase-url.supabase.co"
+        SUPABASE_ANON_KEY: "mock-anon-key"
+
+    - name: 🎯 Run status-only tests
+      working-directory: backend/nail-resv
+      run: npm test tests/status-only.test.js
+      env:
+        NODE_ENV: test
+
+    - name: 📊 Generate coverage report
+      working-directory: backend/nail-resv
+      run: npm run test:coverage
+      continue-on-error: true
+
+    - name: 📤 Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: backend/nail-resv/coverage/
+      if: always()
+
+    - name: 📋 Test Summary
+      if: always()
+      run: |
+        echo "🎯 測試摘要:"
+        echo "   ✅ 測試類型: API 狀態碼測試 (Mock 模式)"
+        echo "   🔒 數據庫: 使用 Mock，不操作真實數據"
+        echo "   📊 目標: 驗證 API 端點可用性和正確狀態回應"

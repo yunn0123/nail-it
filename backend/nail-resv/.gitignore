@@ -1,0 +1,12 @@
+# Jest 測試覆蓋報告
+coverage/
+
+# 測試輸出檔案
+test-results.xml
+junit.xml
+
+# 測試環境變數檔案
+.env.test
+
+# 測試暫存檔案
+tests/tmp/
