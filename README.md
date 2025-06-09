@@ -46,7 +46,9 @@
 ### Low fidelity Wireframes 或 Figma 介面設計
 ### EER diagram
 ### Testing
-
+### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
+* CICD雲端部署
+* mock單元測試（僅測試API是否有正確回應）   
 ---
 
 ## 專案原始碼說明及操作方式
@@ -66,3 +68,33 @@
 ### 資料庫
 
 ---
+### 部署
+以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
+
+**服務網址**
+- 前端應用：[nailed-it](https://nail-it-frontend.up.railway.app)
+- 後端 API：[nailed-it-backend](https://nail-it-backend.up.railway.app)
+
+**部署架構**
+```
+Frontend (Vue)      → Railway Frontend Service
+
+     ↓ API 呼叫
+
+Backend (Next.js)   → Railway Backend Service
+
+     ↓ 資料庫連接
+
+supabase
+```
+
+**環境配置**
+- **生產環境變數**：已透過 Railway 環境變數設定
+- **資料庫**：使用 supabase 服務
+- **域名**：使用 Railway 自動生成的 `.railway.app` 域名
+- **HTTPS**：Railway 自動提供 SSL 憑證
+
+**部署監控**
+- 服務健康狀態可透過 Railway Dashboard 監控
+- 自動化部署：推送至 main 分支時自動重新部署
+- 日誌查看：可在 Railway 控制台查看即時日誌
