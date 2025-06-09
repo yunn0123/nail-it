@@ -1,40 +1,35 @@
 version: '3.8'
- 
+
 services:
   frontend:
-    image: yunn0123/nail-it-frontend:latest
-    build:
+    build: 
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "5173:5173"  # 對外 3000，內部 5173 (Vite 開發端口)
+    restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+      - VITE_BACKEND_API_URL=http://localhost:4000
     depends_on:
       - backend
-    restart: always
- 
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # 避免覆蓋 node_modules
+      
   backend:
-    image: yunn0123/nail-it-backend:latest
-    build:
+    build: 
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
-    environment:
-      # - {database}
-      - PORT=5000
-    depends_on:
-      - mongo
+      - "4000:4000"
     restart: always
-  # supabase:
-  #   image: supabase/postgres:latest
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_PASSWORD: password
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_DB: nailit
-  #   restart: always
-volumes:
-  todo-db-data:
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    volumes:
+      - ./backend/nail-resv:/app
+      - /app/node_modules  # 避免覆蓋 node_modules
+      - ./backend/nail-resv/uploads:/app/uploads  # 持久化上傳檔案

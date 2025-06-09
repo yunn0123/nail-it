@@ -1,30 +1,23 @@
-# ===== 第一階段：建置應用 =====
-FROM node:18-alpine AS builder
+# 本地開發專用 Dockerfile
+FROM node:18-alpine
 
+# 設定工作目錄
 WORKDIR /app
 
-# 先複製 package.json 以利用快取
+# 複製 package.json 檔案
 COPY package*.json ./
+
+# 安裝依賴
 RUN npm install
 
-# 設置 Git 相關環境變數（可選）
-ARG GITHUB_SHA
-ENV VITE_GIT_COMMIT=${GITHUB_SHA}
-
-# 複製其餘文件
+# 複製專案檔案
 COPY . .
-# 如果有任何環境變數設置
-RUN if [ -f .env.production ]; then cp .env.production .env; fi
-RUN npm run build
 
-# ===== 第二階段：部署靜態檔案 =====
-FROM nginx:alpine
+# 設置環境變數
+ENV VITE_BACKEND_API_URL=http://localhost:4000
 
-# 複製建置完成的檔案到 nginx 的公開資料夾
-COPY --from=builder /app/dist /usr/share/nginx/html
+# 暴露 5173 端口 (Vite 預設開發端口)
+EXPOSE 5173
 
-# 添加 nginx 配置以支持 SPA 路由
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# 啟動開發伺服器
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

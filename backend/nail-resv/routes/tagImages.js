@@ -6,11 +6,15 @@ const path = require('path');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 
-// p-limit 导入兼容处理
-let createLimit = require('p-limit');
-if (typeof createLimit !== 'function' && createLimit.default) {
-  createLimit = createLimit.default;
-}
+// 動態載入 p-limit ES module
+let createLimit;
+const initPLimit = async () => {
+  if (!createLimit) {
+    const pLimit = await import('p-limit');
+    createLimit = pLimit.default;
+  }
+  return createLimit;
+};
 
 const { OpenAI } = require('openai');
 
@@ -259,8 +263,9 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
     }
   }
 
-  // 2. 并发限制器
-  const limit = createLimit(MAX_CONCURRENCY);
+  // 2. 初始化並發限制器
+  const limitFunction = await initPLimit();
+  const limit = limitFunction(MAX_CONCURRENCY);
 
   // 3. 處理每個圖片：標註 + 上傳 + 儲存
   const tasks = req.files.map((file, index) => limit(async () => {
