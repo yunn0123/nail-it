@@ -100,6 +100,9 @@
 
 ---
 ### 部署
+[![Build Status](https://github.com/yunn0123/nail-it/actions/workflows/ci.yml/badge.svg)](https://github.com/yunn0123/nail-it/actions)
+[![Frontend Deploy](https://img.shields.io/badge/Frontend-Deployed-brightgreen)](https://nail-it-frontend.up.railway.app)
+[![Backend Deploy](https://img.shields.io/badge/Backend-Deployed-brightgreen)](https://nail-it-backend.up.railway.app)
 以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
 
 **服務網址**
