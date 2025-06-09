@@ -63,7 +63,7 @@
 * (以圖搜圖跟搜尋) *待編輯*  
 
 詳細後端操作可至`/backend/nail-resv/README.md`閱覽  
-連結：https://github.com/Enid1123/nail-it/blob/main/backend/nail-resv/README.md 
+連結：[Backend README](https://github.com/Enid1123/nail-it/blob/main/backend/nail-resv/API_DOCS_README.md)
 
 ---
 ### 資料庫
