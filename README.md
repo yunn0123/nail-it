@@ -18,7 +18,32 @@
 **美甲師 User Story Map**
 ![Artists USM](assets/UserStoriesMapping/user_story_mapping_artist.png)
 
-此 User Stories Mapping 為專案設計初期所規劃，並於後續進行多次討論與調整，因此目前所呈現之 MVP 以實際專案內容及下方說明為主：
+此 User Stories Mapping 為專案設計初期所規劃，並於後續進行多次討論與調整，因此目前所呈現之 MVP 以實際專案內容及下方[「專案原始碼說明及操作方式」](#專案原始碼說明及操作方式)說明為主。
+
+### Business Process Modeling Notation (BPMN)
+**顧客註冊與登入**
+![Customer Register and Login BPMN](assets/BPMN/CustomerReg.png)
+以上包含的顧客功能有登入及註冊，而註冊方式又可分為手動註冊及連動外部帳號。目前MVP已開發手動註冊功能。
+
+**美甲師註冊與登入**
+![Artist Register and Login BPMN](assets/BPMN/ArtistReg.png)
+以上包含的美甲師功能有登入及創建美甲師帳號。對於創建美甲師帳號部分，我們已在MVP實作出輸入資料功能，匯入IG貼文功能則為開發的下一階段。
+
+**顧客美甲師使用系統**
+![Interacting with System BPMN](assets/BPMN/EnterSystem.png)
+
+
+### Low fidelity Wireframes 或 Figma 介面設計
+可參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
+### EER diagram
+### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
+* CICD雲端部署
+* mock單元測試（僅測試API是否有正確回應）   
+---
+
+## 專案原始碼說明及操作方式
+
+### 前端與操作方式
 
 #### 關於顧客，目前系統已開發出的功能如下：
 詳細操作說明請參考：[frontend/README.md](frontend/README.md)
@@ -58,31 +83,7 @@
 * AI流行趨勢報告、營運分析報告
 * 內建的聊天室功能、自動回覆功能
 * 投放廣告的功能
-
-### Business Process Modeling Notation (BPMN)
-**顧客註冊與登入**
-![Customer Register and Login BPMN](assets/BPMN/CustomerReg.png)
-以上包含的顧客功能有登入及註冊，而註冊方式又可分為手動註冊及連動外部帳號。目前MVP已開發手動註冊功能。
-
-**美甲師註冊與登入**
-![Artist Register and Login BPMN](assets/BPMN/ArtistReg.png)
-以上包含的美甲師功能有登入及創建美甲師帳號。對於創建美甲師帳號部分，我們已在MVP實作出輸入資料功能，匯入IG貼文功能則為開發的下一階段。
-
-**顧客美甲師使用系統**
-![Interacting with System BPMN](assets/BPMN/EnterSystem.png)
-
-
-### Low fidelity Wireframes 或 Figma 介面設計
-可參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
-### EER diagram
-### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
-* CICD雲端部署
-* mock單元測試（僅測試API是否有正確回應）   
----
-
-## 專案原始碼說明及操作方式
-
-### 前端與操作方式
+  
 ### 後端
 對於後端，我們實作了以下功能：  
 * 用戶註冊與登入(分美甲師註冊與顧客註冊)  
