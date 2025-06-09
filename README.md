@@ -109,6 +109,10 @@
 *確保每次顧客對美甲師的預約進行評分後，若他們修改了評分就會觸發 trigger 執行 “update_artist_rating()” function自動更新該美甲師在 artists 表中的 rating 欄位（平均分，保留 1 位小數）。
 
 ---
+### 資料蒐集
+
+以 google map API 抓取店家資訊，分別蒐集他們店家基本資訊，如 : 店名、地址、電話和圖片等。
+---  
 ### 部署     
 
 以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
