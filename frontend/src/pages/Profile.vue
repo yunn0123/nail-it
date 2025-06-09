@@ -190,14 +190,30 @@
             </svg>
           </div>
           <!-- 編輯模式下的頭像上傳按鈕 - 只在編輯模式且非預覽模式顯示 -->
-          <div v-if="editMode && !isPreviewMode" class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer" @click="triggerImageUpload">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <div v-if="editMode && !isPreviewMode" class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer" @click="triggerImageUpload">
+              <!-- 上傳中顯示載入動畫 -->
+              <div v-if="isUploadingAvatar" class="text-white">
+                <svg class="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"></path>
+                </svg>
+              </div>
+              <!-- 一般狀態顯示相機圖示 -->
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            
+            <!-- 隱藏的檔案輸入 -->
+            <input 
+              ref="imageInput" 
+              type="file" 
+              accept="image/*" 
+              @change="handleImageUpload" 
+              class="hidden" 
+            />
           </div>
-          <input ref="imageInput" type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
-        </div>
         
         <div class="flex-1">
           <!-- 工作室名稱 -->
@@ -439,30 +455,30 @@
               :key="appointment.id" 
               class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow"
             >
-              <div class="flex items-center space-x-4">
-                <!-- 顧客頭像 -->
-                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                  <img 
-                    :src="appointment.customerImage" 
-                    alt="" 
-                    class="w-full h-full object-cover" 
-                    @error="appointment.showFallback = true"
-                    v-show="!appointment.showFallback"
-                  />
-                  <!-- 默認頭像 -->
-                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
-                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
-                      <circle cx="50" cy="35" r="15" />
-                      <path d="M20,85 C20,60 80,60 80,85" />
-                    </svg>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
-                  <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
-                </div>
-              </div>
+            <div class="flex items-center space-x-4">
+  <!-- 顧客頭像 -->
+  <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <img 
+      :src="appointment.customerImage" 
+      alt="" 
+      class="w-full h-full object-cover" 
+      @error="appointment.showFallback = true"
+      v-show="!appointment.showFallback && appointment.customerImage"
+    />
+    <!-- 默認頭像 -->
+    <div v-if="appointment.showFallback || !appointment.customerImage" class="absolute inset-0 flex items-center justify-center">
+      <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+        <circle cx="50" cy="35" r="15" />
+        <path d="M20,85 C20,60 80,60 80,85" />
+      </svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+    <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+    <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
+  </div>
+</div>
               
               <div class="flex items-center space-x-3">
                 <!-- 聊聊按鈕 -->
@@ -510,30 +526,30 @@
               :key="appointment.id" 
               class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow"
             >
-              <div class="flex items-center space-x-4">
-                <!-- 顧客頭像 -->
-                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                  <img 
-                    :src="appointment.customerImage" 
-                    alt="" 
-                    class="w-full h-full object-cover" 
-                    @error="appointment.showFallback = true"
-                    v-show="!appointment.showFallback"
-                  />
-                  <!-- 默認頭像 -->
-                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
-                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
-                      <circle cx="50" cy="35" r="15" />
-                      <path d="M20,85 C20,60 80,60 80,85" />
-                    </svg>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
-                  <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
-                </div>
-              </div>
+            <div class="flex items-center space-x-4">
+  <!-- 顧客頭像 -->
+  <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <img 
+      :src="appointment.customerImage" 
+      alt="" 
+      class="w-full h-full object-cover" 
+      @error="appointment.showFallback = true"
+      v-show="!appointment.showFallback && appointment.customerImage"
+    />
+    <!-- 默認頭像 -->
+    <div v-if="appointment.showFallback || !appointment.customerImage" class="absolute inset-0 flex items-center justify-center">
+      <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+        <circle cx="50" cy="35" r="15" />
+        <path d="M20,85 C20,60 80,60 80,85" />
+      </svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+    <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+    <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
+  </div>
+</div>
               
               <div class="flex items-center space-x-3">
                 <!-- 聊聊按鈕 -->
@@ -590,29 +606,30 @@
               :key="appointment.id" 
               class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow opacity-80"
             >
-              <div class="flex items-center space-x-4">
-                <!-- 顧客頭像 -->
-                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                  <img 
-                    :src="appointment.customerImage" 
-                    alt="" 
-                    class="w-full h-full object-cover" 
-                    @error="appointment.showFallback = true"
-                    v-show="!appointment.showFallback"
-                  />
-                  <!-- 默認頭像 -->
-                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
-                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
-                      <circle cx="50" cy="35" r="15" />
-                      <path d="M20,85 C20,60 80,60 80,85" />
-                    </svg>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
-                </div>
-              </div>
+            <div class="flex items-center space-x-4">
+  <!-- 顧客頭像 -->
+  <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <img 
+      :src="appointment.customerImage" 
+      alt="" 
+      class="w-full h-full object-cover" 
+      @error="appointment.showFallback = true"
+      v-show="!appointment.showFallback && appointment.customerImage"
+    />
+    <!-- 默認頭像 -->
+    <div v-if="appointment.showFallback || !appointment.customerImage" class="absolute inset-0 flex items-center justify-center">
+      <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+        <circle cx="50" cy="35" r="15" />
+        <path d="M20,85 C20,60 80,60 80,85" />
+      </svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+    <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+    <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
+  </div>
+</div>
               
               <div class="flex items-center space-x-3">
                 <!-- 聊聊按鈕 -->
@@ -644,29 +661,30 @@
               :key="appointment.id" 
               class="bg-white rounded-xl p-4 shadow flex items-center justify-between hover:shadow-md transition-shadow opacity-60"
             >
-              <div class="flex items-center space-x-4">
-                <!-- 顧客頭像 -->
-                <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                  <img 
-                    :src="appointment.customerImage" 
-                    alt="" 
-                    class="w-full h-full object-cover" 
-                    @error="appointment.showFallback = true"
-                    v-show="!appointment.showFallback"
-                  />
-                  <!-- 默認頭像 -->
-                  <div v-if="appointment.showFallback" class="absolute inset-0 flex items-center justify-center">
-                    <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
-                      <circle cx="50" cy="35" r="15" />
-                      <path d="M20,85 C20,60 80,60 80,85" />
-                    </svg>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
-                  <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
-                </div>
-              </div>
+            <div class="flex items-center space-x-4">
+  <!-- 顧客頭像 -->
+  <div class="avatar-container w-12 h-12 rounded-full overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <img 
+      :src="appointment.customerImage" 
+      alt="" 
+      class="w-full h-full object-cover" 
+      @error="appointment.showFallback = true"
+      v-show="!appointment.showFallback && appointment.customerImage"
+    />
+    <!-- 默認頭像 -->
+    <div v-if="appointment.showFallback || !appointment.customerImage" class="absolute inset-0 flex items-center justify-center">
+      <svg width="100" height="100" viewBox="0 0 100 100" class="w-full h-full" fill="none" stroke="#c68f84" stroke-width="4">
+        <circle cx="50" cy="35" r="15" />
+        <path d="M20,85 C20,60 80,60 80,85" />
+      </svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-gray-700 font-medium">{{ appointment.customerName }}</p>
+    <p class="text-gray-500 text-sm">{{ formatDate(appointment.date) }} {{ formatTime(appointment.time) }}</p>
+    <p v-if="appointment.note" class="text-gray-500 text-xs mt-1 italic">備註: {{ appointment.note }}</p>
+  </div>
+</div>
               
               <div class="flex items-center space-x-3">
                 <!-- 聊聊按鈕 -->
@@ -1120,6 +1138,9 @@ const activeSection = ref('basic-info')
 const isLoading = ref(false)
 const isAnalyzing = ref(false)
 const suggestedTagsMapping = ref({})
+
+const isUploadingAvatar = ref(false)
+
 
 // 新增預覽模式狀態
 const isPreviewMode = ref(false)
@@ -1649,21 +1670,15 @@ const removeStyle = (index) => {
 // 頭像上傳
 const imageInput = ref(null)
 
+// 修改 triggerImageUpload 函數（加入上傳中的防護）
 const triggerImageUpload = () => {
+  if (isUploadingAvatar.value) {
+    alert('正在上傳中，請稍候...')
+    return
+  }
   imageInput.value?.click()
 }
 
-const handleImageUpload = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      editData.value.image = e.target.result
-      showFallback.value = false
-    }
-    reader.readAsDataURL(file)
-  }
-}
 
 // 作品管理
 // 更新 removeWork 函數
@@ -2334,20 +2349,27 @@ const loadArtistSchedule = async (artistId) => {
 }
 
 // 載入美甲師的預約資料
+// 在 Profile.vue 中的 loadArtistAppointments 函數
+
 const loadArtistAppointments = async (artistId) => {
   try {
     const result = await apiRequest(`/reservations/artist/${artistId}/manage`)
     
+    console.log('🔍 預約 API 回應:', result) // debug
+    
     if (result.success) {
-      // 更新預約資料
       const appointmentData = result.data.appointments
+      
+      // 🔥 確保每個預約都有顧客資訊
       appointments.value = [
-        ...appointmentData.pending,
-        ...appointmentData.confirmed,
-        ...appointmentData.completed,
-        ...appointmentData.cancelled
+        ...appointmentData.pending.map(apt => ({ ...apt, showFallback: false })),
+        ...appointmentData.confirmed.map(apt => ({ ...apt, showFallback: false })),
+        ...appointmentData.completed.map(apt => ({ ...apt, showFallback: false })),
+        ...appointmentData.cancelled.map(apt => ({ ...apt, showFallback: false }))
       ]
-      console.log('預約資料載入成功:', appointmentData)
+      
+      console.log('✅ 預約資料載入成功:', appointments.value)
+      console.log('🔍 第一個預約的顧客頭像:', appointments.value[0]?.customerImage)
     } else {
       console.error('載入預約資料失敗:', result.error)
     }
@@ -2434,6 +2456,76 @@ const formatTime = (timeString) => {
   return timeString
 }
 
+
+// 🔥 替換現有的 handleImageUpload 函數
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 檢查檔案大小（限制 5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    alert('圖片檔案不能超過 5MB')
+    return
+  }
+
+  // 檢查檔案類型
+  if (!file.type.startsWith('image/')) {
+    alert('請選擇圖片檔案')
+    return
+  }
+
+  try {
+    isUploadingAvatar.value = true
+
+    // 轉換為 base64
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const base64Data = e.target.result
+
+      try {
+        // 上傳到後端
+        const result = await apiRequest(`/artists/${currentArtist.value.id}/avatar`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            imageData: base64Data
+          })
+        })
+
+        if (result.success) {
+          // 更新本地圖片 URL
+          currentArtist.value.image = result.data.avatarUrl
+          editData.value.image = result.data.avatarUrl
+          showFallback.value = false
+          alert('頭像已成功更新！')
+        } else {
+          console.error('頭像上傳失敗:', result.error)
+          alert(`頭像上傳失敗：${result.error}`)
+        }
+      } catch (error) {
+        console.error('頭像上傳錯誤:', error)
+        alert('頭像上傳時發生錯誤')
+      } finally {
+        isUploadingAvatar.value = false
+      }
+    }
+
+    reader.onerror = () => {
+      alert('讀取圖片失敗')
+      isUploadingAvatar.value = false
+    }
+
+    reader.readAsDataURL(file)
+
+  } catch (error) {
+    console.error('處理圖片錯誤:', error)
+    alert('處理圖片時發生錯誤')
+    isUploadingAvatar.value = false
+  }
+}
+
+
+
+
 onMounted(async () => {
   const id = route.params.id
   
@@ -2458,6 +2550,10 @@ onMounted(async () => {
   window.scrollTo(0, 0)
   window.addEventListener('scroll', handleScroll)
 })
+
+
+
+
 
 </script>
 

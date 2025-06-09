@@ -366,7 +366,7 @@ router.put('/:appointmentId/status', async (req, res) => {
 });
 
 // GET /api/reservations/artist/:artistId/manage
-// 美甲師獲取自己的所有預約（用於預約管理）
+
 router.get('/artist/:artistId/manage', async (req, res) => {
   console.log('🔍 API 被呼叫，artistId:', req.params.artistId);
   try {
@@ -386,7 +386,7 @@ router.get('/artist/:artistId/manage', async (req, res) => {
       return res.status(404).json({ error: 'Artist not found' });
     }
 
-    // 查預約
+    // 🔥 修改查詢，直接 JOIN 顧客表來獲取頭像
     let query = supabase
       .from('appointments')
       .select(`
@@ -396,7 +396,12 @@ router.get('/artist/:artistId/manage', async (req, res) => {
         status,
         note,
         created_at,
-        customer_id
+        customer_id,
+        customers!inner(
+          user_id,
+          user_name,
+          avatar_url
+        )
       `)
       .eq('artist_id', artistId)
       .order('service_date', { ascending: true })
@@ -413,17 +418,7 @@ router.get('/artist/:artistId/manage', async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch appointments' });
     }
 
-    // 查詢客戶資料
-    let customers = [];
-    if (appointments && appointments.length > 0) {
-      const customerIds = appointments.map(apt => apt.customer_id);
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('user_id, user_name')
-        .in('user_id', customerIds);
-      
-      customers = customerData || [];
-    }
+    console.log('🔍 查到的預約:', appointments?.[0]); // debug
 
     // 按狀態分組
     const grouped = {
@@ -434,25 +429,25 @@ router.get('/artist/:artistId/manage', async (req, res) => {
     };
 
     appointments.forEach(apt => {
-      const customer = customers.find(c => c.user_id === apt.customer_id);
-      
       const formattedApt = {
         id: apt.id,
         customerId: apt.customer_id,
-        customerName: customer?.user_name || '未知顧客',
-        customerImage: null,
+        customerName: apt.customers.user_name,
+        customerImage: apt.customers.avatar_url, // 🔥 加入顧客頭像
         date: apt.service_date,
         time: apt.service_time,
         status: apt.status,
         note: apt.note,
         createdAt: apt.created_at,
-        showFallback: true
+        showFallback: false // 🔥 改為 false，讓前端判斷是否顯示預設頭像
       };
 
       if (grouped[apt.status]) {
         grouped[apt.status].push(formattedApt);
       }
     });
+
+    console.log('✅ 格式化後的預約:', grouped.pending?.[0]); // debug
 
     res.json({
       success: true,

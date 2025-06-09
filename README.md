@@ -5,7 +5,7 @@
 ---
 
 ## 專案說明
-
+這是一個提供一站式美甲體驗的平台，整合多項功能以提升使用者與美甲師的互動與服務品質。目前平台上包含評價功能，讓使用者能夠交流經驗與技巧。透過媒合功能，使用者可以依據地點、價格、風格、評價及日期等條件進行篩選，並新增以圖搜圖功能，提升搜尋效率。預約功能則讓美甲師設定可預約時段，使用者可直接查詢並預約服務。
 
 
 ---
@@ -44,9 +44,11 @@
 
 
 ### Low fidelity Wireframes 或 Figma 介面設計
+可參考[figma](https://www.figma.com/design/Rjf409oAztkTuLwwuXXj2c/SAD-final-project?node-id=0-1&t=IZL3rwFdYMREtpGF-1)
 ### EER diagram
-### Testing
-
+### Testing (詳細可看部署用[fork repo](https://github.com/yunn0123/nail-it/actions))
+* CICD雲端部署
+* mock單元測試（僅測試API是否有正確回應）   
 ---
 
 ## 專案原始碼說明及操作方式
@@ -60,9 +62,40 @@
 * 顧客預約美甲師時段  
 * (以圖搜圖跟搜尋) *待編輯*  
 
-詳細後端操作可至`/backend/nail-resv/README.md`閱覽
+詳細後端操作可至`/backend/nail-resv/README.md`閱覽  
+連結：[Backend README](https://github.com/Enid1123/nail-it/blob/main/backend/nail-resv/API_DOCS_README.md)
 
 ---
 ### 資料庫
 
 ---
+### 部署
+以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
+
+**服務網址**
+- 前端應用：[nailed-it](https://nail-it-frontend.up.railway.app)
+- 後端 API：[nailed-it-backend](https://nail-it-backend.up.railway.app)
+
+**部署架構**
+```
+Frontend (Vue)      → Railway Frontend Service
+
+     ↓ API 呼叫
+
+Backend (Next.js)   → Railway Backend Service
+
+     ↓ 資料庫連接
+
+supabase
+```
+
+**環境配置**
+- **生產環境變數**：已透過 Railway 環境變數設定
+- **資料庫**：使用 supabase 服務
+- **域名**：使用 Railway 自動生成的 `.railway.app` 域名
+- **HTTPS**：Railway 自動提供 SSL 憑證
+
+**部署監控**
+- 服務健康狀態可透過 Railway Dashboard 監控
+- 自動化部署：推送至 main 分支時自動重新部署
+- 日誌查看：可在 Railway 控制台查看即時日誌

@@ -53,30 +53,49 @@
     <div class="p-6 mx-5 mr-8">
       <div class="flex flex-col md:flex-row md:items-center mb-8">
         
-        <!-- 頭像 -->
+        <!-- 修正頭像區塊 -->
         <div class="avatar-container w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6 overflow-hidden relative" style="background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
           <img 
-            :src="customer.avatar_url || '/default-avatar.png'" 
+            :key="customer.avatar_url"
+            :src="customer.avatar_url" 
             alt="" 
             class="w-full h-full object-cover" 
             @error="handleImageError"
-            v-show="!showFallback"
+            v-show="!showFallback && customer.avatar_url"
+            @load="showFallback = false"
           />
           <!-- 默認頭像 -->
-          <div v-if="showFallback" class="absolute inset-0 flex items-center justify-center">
+          <div v-if="showFallback || !customer.avatar_url" class="absolute inset-0 flex items-center justify-center">
             <svg width="100" height="100" viewBox="0 0 100 100" class="w-30 h-30" fill="none" stroke="#c68f84" stroke-width="4">
               <circle cx="50" cy="35" r="15" />
               <path d="M20,85 C20,60 80,60 80,85" />
             </svg>
           </div>
+          
           <!-- 編輯模式下的頭像上傳按鈕 -->
           <div v-if="editMode" class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer" @click="triggerImageUpload">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- 上傳中顯示載入動畫 -->
+            <div v-if="isUploadingAvatar" class="text-white">
+              <svg class="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
+                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"></path>
+              </svg>
+            </div>
+            <!-- 一般狀態顯示相機圖示 -->
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <input ref="imageInput" type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
+          
+          <!-- 隱藏的檔案輸入 -->
+          <input 
+            ref="imageInput" 
+            type="file" 
+            accept="image/*" 
+            @change="handleImageUpload" 
+            class="hidden" 
+          />
         </div>
         
         <div class="flex-1">
@@ -204,6 +223,102 @@ const editMode = ref(false)
 const showFallback = ref(false)
 const isLoading = ref(false)
 const isUpdating = ref(false)
+
+// 在 CustomerProfile.vue 的 script setup 中加入這些
+
+// 新增變數
+const isUploadingAvatar = ref(false)
+const imageInput = ref(null)
+
+// 觸發圖片上傳
+const triggerImageUpload = () => {
+  if (isUploadingAvatar.value) {
+    alert('正在上傳中，請稍候...')
+    return
+  }
+  imageInput.value?.click()
+}
+
+// 處理頭像上傳
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 檢查檔案大小（限制 5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    alert('圖片檔案不能超過 5MB')
+    return
+  }
+
+  // 檢查檔案類型
+  if (!file.type.startsWith('image/')) {
+    alert('請選擇圖片檔案')
+    return
+  }
+
+  try {
+    isUploadingAvatar.value = true
+
+    // 轉換為 base64
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const base64Data = e.target.result
+
+      try {
+        // 上傳到後端
+        const result = await apiRequest(`/customers/${customer.value.id}/avatar`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            imageData: base64Data
+          })
+        })
+
+        if (result.success) {
+        // 🔥 加入時間戳記避免快取問題
+        const newAvatarUrl = `${result.data.avatarUrl}?t=${Date.now()}`
+        
+        // 更新本地圖片 URL
+        customer.value.avatar_url = newAvatarUrl
+        if (editData.value) {
+          editData.value.avatar_url = newAvatarUrl
+        }
+        
+        showFallback.value = false
+        
+        // 🔥 強制重新載入圖片
+        const imgElements = document.querySelectorAll('.avatar-container img')
+        imgElements.forEach(img => {
+          img.src = newAvatarUrl
+        })
+        
+        alert('頭像已成功更新！')
+        
+        console.log('✅ 頭像更新成功，新 URL:', newAvatarUrl)
+      } else {
+        console.error('頭像上傳失敗:', result.error)
+        alert(`頭像上傳失敗：${result.error}`)
+      }
+      } catch (error) {
+        console.error('頭像上傳錯誤:', error)
+        alert('頭像上傳時發生錯誤')
+      } finally {
+        isUploadingAvatar.value = false
+      }
+    }
+
+    reader.onerror = () => {
+      alert('讀取圖片失敗')
+      isUploadingAvatar.value = false
+    }
+
+    reader.readAsDataURL(file)
+
+  } catch (error) {
+    console.error('處理圖片錯誤:', error)
+    alert('處理圖片時發生錯誤')
+    isUploadingAvatar.value = false
+  }
+}
 
 // 從路由參數或 localStorage 取得當前用戶 ID
 const currentUserId = ref(route.params.id || localStorage.getItem('userId') || '946e489b-4c38-446a-b3ca-75a5d0ec3a30')
@@ -343,7 +458,22 @@ const goToSelfProfile = () => {
   }
 }
 
-const handleImageError = () => {
+const forceReloadAvatar = () => {
+  if (customer.value.avatar_url) {
+    // 移除時間戳參數
+    const baseUrl = customer.value.avatar_url.split('?')[0]
+    // 加入新的時間戳
+    customer.value.avatar_url = `${baseUrl}?t=${Date.now()}`
+    
+    // 重置錯誤狀態
+    showFallback.value = false
+    
+    console.log('🔄 強制重新載入頭像:', customer.value.avatar_url)
+  }
+}
+
+const handleImageError = (event) => {
+  console.error('頭像載入失敗:', event.target.src)
   showFallback.value = true
 }
 
