@@ -76,7 +76,7 @@
             <p class="text-sm text-gray-500">預約時間</p>
             <p class="font-bold text-gray-700">{{ formatDate(review.date) }}</p>
             <p class="text-xs text-gray-400 mt-1">
-              {{ isWithinDeadline(review.date) ? (review.rating === 0 ? '可評論' : '已評論') : '已過評論期限' }}
+              {{ isWithinDeadline(review.date) ? (review.rating === 0 ? '可評分' : '已評分') : '已過評分期限' }}
             </p>
           </div>
         </div>
@@ -120,28 +120,43 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast 通知區域 -->
+  <div
+    v-if="toast.visible"
+    :class="`fixed bottom-6 right-6 bg-gray-400 text-white px-4 py-2 rounded-lg shadow transition-opacity duration-500 ${toast.visible ? 'opacity-100' : 'opacity-0'}`"
+  >
+    {{ toast.message }}
+  </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLogout } from '../auth.js'
+import { onMounted } from 'vue'
+import { apiRequest } from '../config/api.js'
 
 const { handleLogout } = useLogout()
-
 const router = useRouter()
-
 const showMenu = ref(false)
 const toggleMenu = () => (showMenu.value = !showMenu.value)
 const closeMenu = () => (showMenu.value = false)
-
-const reviews = ref([
-  { id: 1, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-05-21 13:30', rating: 5, comment: '1232424' },
-  { id: 2, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-02-19 15:00', rating: 5, comment: '完美體驗！' },
-  { id: 3, studio: 'abc nails💅', avatar: 'https://placehold.co/80x80', date: '2025-01-10 13:30', rating: 4, comment: '不錯但等太久' }
-])
-
 const editMode = reactive({})
+const reviews = ref([])
+const toast = reactive({
+  message: '',
+  visible: false
+})
+
+const showToast = (msg, duration = 3000) => {
+  toast.message = msg
+  toast.visible = true
+
+  setTimeout(() => {
+    toast.visible = false
+  }, duration)
+}
 
 const setRating = (id, value) => {
   const review = reviews.value.find(r => r.id === id)
@@ -150,10 +165,98 @@ const setRating = (id, value) => {
   }
 }
 
-const submitReview = (id) => {
+const originalData = reactive({})  // 🔥 新增
+
+onMounted(async () => {
+  const customerId = localStorage.getItem('userId') || '1'
+  const res = await apiRequest(`/reviews/pending/${customerId}`)
+
+  if (res.success) {
+    reviews.value = res.data.reviews.map(r => {
+      originalData[r.appointmentId] = {
+        rating: r.rating,
+        comment: r.comment
+      }
+      const editable = r.rating === 0 && r.comment.trim() === ''
+      if (editable) editMode[r.appointmentId] = true
+
+      return {
+        id: r.appointmentId,
+        studio: r.studio,
+        avatar: r.avatar,
+        date: r.date,
+        rating: r.rating,
+        comment: r.comment
+      }
+    })
+  }
+})
+
+
+
+const submitReview = async (id) => {
+  const review = reviews.value.find(r => r.id === id)
+  if (!review) return
+
+  if (review.rating === 0) {
+    showToast('請給予評分星等才能送出評論')
+    return
+  }
+
+  const res = await apiRequest(`/reviews/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      rating: review.rating,
+      review_text: review.comment
+    })
+  })
+
+  if (res.success) {
+    showToast('評分已成功送出！')
+    editMode[id] = false
+    originalData[id] = {
+      rating: review.rating,
+      comment: review.comment
+    }
+  } else {
+    showToast('評分送出失敗：' + res.error)
+  }
+
+if (res.success) {
+  console.log('✅ 評分送出成功')
   editMode[id] = false
-  // 模擬送出 API
-  console.log('已送出', reviews.value.find(r => r.id === id))
+
+  // 同步更新原始資料
+  originalData[id] = {
+    rating: review.rating,
+    comment: review.comment
+  }
+} else {
+  console.error('❌ 送出失敗：', res.error)
+  alert('評論送出失敗：' + res.error)
+}
+}
+
+const cancelEdit = (id) => {
+  const original = originalData[id]
+  const r = reviews.value.find(r => r.id === id)
+
+  if (!r || !original) return
+
+  // 🔥 核心：如果真的什麼都沒填，就留在空白狀態
+  const isEmpty = r.rating === 0 && r.comment.trim() === ''
+  const wasEmpty = original.rating === 0 && original.comment.trim() === ''
+
+  if (wasEmpty && isEmpty) {
+    // 沒編輯過 → 不還原 → 保持空白
+    editMode[id] = false
+    return
+  }
+
+  // 有填過 → 還原
+  r.rating = original.rating
+  r.comment = original.comment
+  editMode[id] = false
 }
 
 
@@ -170,9 +273,6 @@ const goToSelfProfile = () => {
   }
   }
 
-const cancelEdit = (id) => {
-  editMode[id] = false
-}
 
 const formatDate = (datetime) => {
   const d = new Date(datetime)
@@ -182,7 +282,7 @@ const formatDate = (datetime) => {
 const isWithinDeadline = (datetime) => {
   const now = new Date()
   const deadline = new Date(datetime)
-  deadline.setDate(deadline.getDate() + 7)
+  deadline.setDate(deadline.getDate() + 30)
   return now <= deadline
 }
 </script>

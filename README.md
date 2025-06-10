@@ -14,6 +14,8 @@
 
 因此我們打造一站式美甲體驗的平台，以效率與透明為核心價值，整合多項功能以提升使用者與美甲師的互動與服務品質。顧客可以依據地點、價格、風格、評價等條件進行篩選，並新增以圖搜圖功能，提升搜尋效率。預約功能則讓美甲師設定可預約時段，顧客可直接查詢並預約服務。平台上亦包含評價功能，讓使用者能夠交流經驗與技巧。
 
+https://github.com/yunn0123/nail-it 為有CI/CD程式碼的版本
+
 ---
 
 ## 研究方法
@@ -96,7 +98,9 @@
 * 美甲師設定可預約時段  
 * 查詢美甲師目前的空檔時段  
 * 顧客預約美甲師時段  
-* (以圖搜圖跟搜尋) *待編輯*  
+* 搜尋功能：原本我們都是以 OPEN AI 的 API，但後來想挑戰「以圖搜圖」自己完成，因此做了嘗試，
+  可惜時間太趕，因此雖然後端已經完成，但想於後續繼續做微調，所以暫時先放在 `feature/image-search`當中。
+　  
 
 詳細後端操作可至`/backend/nail-resv/README.md`閱覽  
 連結：[Backend README](https://github.com/Enid1123/nail-it/blob/main/backend/nail-resv/API_DOCS_README.md)
@@ -109,9 +113,14 @@
 *確保每次顧客對美甲師的預約進行評分後，若他們修改了評分就會觸發 trigger 執行 “update_artist_rating()” function自動更新該美甲師在 artists 表中的 rating 欄位（平均分，保留 1 位小數）。
 
 ---
+### 資料蒐集
+
+以 google map API 抓取店家資訊，分別蒐集他們店家基本資訊，如 : 店名、地址、電話和圖片等。
+
+---  
 ### 部署     
 
-以railway service分別部署前後端，並透過railway後端公開網址連接前後端。
+railway service分別部署前後端，並透過railway後端公開網址連接前後端。
 
 **服務網址**
 - 前端應用：[nailed-it](https://nail-it-frontend.up.railway.app)
