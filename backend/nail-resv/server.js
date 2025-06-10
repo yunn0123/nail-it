@@ -41,18 +41,23 @@ const { router: reservationRouter } = require('./routes/reservation');
 const searchRouter = require('./routes/search');
 const searchSupabaseRouter = require('./routes/searchWithSupabase');
 const tagImagesRouter = require('./routes/tagImages');
+
+const searchImageRouter = require('./routes/searchImage');
 const { router: registerRouter } = require('./routes/register');
 const loginRoute = require('./routes/login');
 const logoutRoute = require('./routes/logout'); 
 const customersRouter = require('./routes/customers');
 const artistsRouter = require('./routes/artists');
 const worksRouter = require('./routes/works');
+
 app.use('/api/reviews', require('./routes/reviews').router)
 app.use('/api/reservations', reservationRouter);
 app.use('/api/technicians', availabilityRouter);
 app.use('/api', searchRouter);
 app.use('/api', searchSupabaseRouter);
 app.use('/api', tagImagesRouter);
+app.use('/api', searchImageRouter);
+
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
 app.use('/api/logout', logoutRoute);  
