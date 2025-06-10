@@ -13,7 +13,7 @@ RUN npm install
 # install Python for image search utilities
 RUN apk add --no-cache python3 py3-pip
 COPY python/requirements.txt ./python/requirements.txt
-RUN pip3 install --no-cache-dir -r python/requirements.txt
+RUN pip3 install --break-system-packages --no-cache-dir -r python/requirements.txt
 
 
 # 複製專案文件
