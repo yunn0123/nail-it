@@ -1,0 +1,1239 @@
+# 美甲預約系統完整 API 文檔
+openapi: 3.0.3
+info:
+  title: 美甲預約系統完整 API
+  description: |
+    完整的美甲預約系統 API，包含用戶註冊登入、美甲師管理、預約系統、圖片標註和搜尋功能。
+    
+    ## 主要功能
+    - 🔐 用戶註冊登入系統
+    - 👤 顧客和美甲師資料管理
+    - 📅 預約和時段管理
+    - 🎨 美甲圖片 AI 標註
+    - 🔍 智能搜尋和篩選
+    - ⏰ 美甲師營業時間設定
+  version: 1.0.0
+  contact:
+    name: 美甲預約系統 API 支援
+    email: support@nailit.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:4000/api
+    description: 開發環境
+  - url: https://api.nailit.com/api
+    description: 生產環境
+
+paths:
+  # ========== 認證相關 API ==========
+  /register:
+    post:
+      tags: [認證]
+      summary: 用戶註冊
+      description: 註冊新的顧客或美甲師帳號
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role, email, password]
+              properties:
+                role:
+                  type: string
+                  enum: [customer, artist]
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                username:
+                  type: string
+                studio_name:
+                  type: string
+                city:
+                  type: string
+                district:
+                  type: string
+                bio:
+                  type: string
+                styles:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: 註冊成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /login:
+    post:
+      tags: [認證]
+      summary: 用戶登入
+      description: 用戶登入系統
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: 登入成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: 認證失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /logout:
+    post:
+      tags: [認證]
+      summary: 用戶登出
+      description: 用戶登出系統
+      operationId: logoutUser
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logout successful"
+
+  # ========== 顧客管理 API ==========
+  /customers/{id}:
+    get:
+      tags: [顧客管理]
+      summary: 獲取顧客資料
+      description: 根據用戶ID獲取顧客詳細資料
+      operationId: getCustomer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 顧客的用戶ID
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '404':
+          description: 顧客不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [顧客管理]
+      summary: 更新顧客資料
+      description: 更新顧客的基本資料
+      operationId: updateCustomer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 顧客的用戶ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerResponse'
+
+  /customers/{id}/appointments:
+    get:
+      tags: [顧客管理]
+      summary: 獲取顧客預約記錄
+      description: 獲取指定顧客的所有預約記錄
+      operationId: getCustomerAppointments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 顧客的用戶ID
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAppointmentsResponse'
+
+  # ========== 美甲師管理 API ==========
+  /artists/{id}:
+    get:
+      tags: [美甲師管理]
+      summary: 獲取美甲師資料
+      description: 根據用戶ID獲取美甲師詳細資料
+      operationId: getArtist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 美甲師的用戶ID
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistResponse'
+        '404':
+          description: 美甲師不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [美甲師管理]
+      summary: 更新美甲師資料
+      description: 更新美甲師的基本資料和服務資訊
+      operationId: updateArtist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 美甲師的用戶ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateArtistRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateArtistResponse'
+
+  # ========== 營業時間管理 API ==========
+  /artists/{artistId}/availability:
+    get:
+      tags: [營業時間管理]
+      summary: 獲取美甲師營業時間
+      description: 獲取指定美甲師的每週營業時間設定
+      operationId: getArtistAvailability
+      parameters:
+        - name: artistId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 美甲師的用戶ID
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+
+    post:
+      tags: [營業時間管理]
+      summary: 設定美甲師營業時間
+      description: 設定或更新美甲師的每週營業時間
+      operationId: setArtistAvailability
+      parameters:
+        - name: artistId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 美甲師的用戶ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetAvailabilityRequest'
+      responses:
+        '201':
+          description: 設定成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetAvailabilityResponse'
+
+  /artists/{artistId}/slots:
+    get:
+      tags: [營業時間管理]
+      summary: 獲取指定日期可預約時段
+      description: 獲取美甲師在指定日期的可預約時段
+      operationId: getAvailableSlots
+      parameters:
+        - name: artistId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 美甲師的用戶ID
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 查詢日期 (YYYY-MM-DD 格式)
+          example: "2024-01-15"
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotsResponse'
+
+  # ========== 預約管理 API ==========
+  /reservations/book:
+    post:
+      tags: [預約管理]
+      summary: 預約美甲服務
+      description: 顧客預約美甲服務
+      operationId: bookAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookAppointmentRequest'
+      responses:
+        '201':
+          description: 預約成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookAppointmentResponse'
+        '400':
+          description: 預約失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/artist/{artistId}:
+    get:
+      tags: [預約管理]
+      summary: 獲取美甲師的預約列表
+      description: 獲取指定美甲師的所有預約記錄
+      operationId: getArtistReservations
+      parameters:
+        - name: artistId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 美甲師的用戶ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, completed, cancelled]
+          description: 篩選預約狀態
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: 篩選特定日期的預約
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistReservationsResponse'
+
+  /reservations/customer/{customerId}:
+    get:
+      tags: [預約管理]
+      summary: 獲取顧客的預約列表
+      description: 獲取指定顧客的所有預約記錄
+      operationId: getCustomerReservations
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 顧客的用戶ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, completed, cancelled]
+          description: 篩選預約狀態
+      responses:
+        '200':
+          description: 獲取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerReservationsResponse'
+
+  /reservations/{appointmentId}/status:
+    put:
+      tags: [預約管理]
+      summary: 更新預約狀態
+      description: 確認、取消或完成預約
+      operationId: updateAppointmentStatus
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 預約ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppointmentStatusRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAppointmentStatusResponse'
+
+  # ========== 美甲標註 API ==========
+  /tag:
+    post:
+      tags: [美甲標註]
+      summary: 批量標註美甲圖片
+      description: |
+        上傳美甲圖片並使用 AI 進行自動標註。支援同時上傳最多 10 張圖片，
+        系統會自動分析每張圖片的風格、形狀、顏色、質感、裝飾和主題等屬性。
+      operationId: tagNailImages
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+                - placeId
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  maxItems: 10
+                  description: 美甲圖片文件（支援 JPG, JPEG, PNG 格式，最多 10 張）
+                placeId:
+                  type: string
+                  description: 美甲店的 Google Places ID
+                  example: "ChIJN1t_tDeuEmsRUsoyG83frY4"
+            encoding:
+              images:
+                contentType: image/jpeg, image/png, image/jpg
+      responses:
+        '200':
+          description: 標註處理成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ========== 搜尋 API ==========
+  /search-supabase:
+    get:
+      tags: [搜尋]
+      summary: 智能搜尋美甲作品
+      description: |
+        根據多種條件搜尋美甲作品，支援美甲風格、美甲師條件等複合搜尋
+      operationId: searchNailImages
+      parameters:
+        - name: style
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["漸層", "跳色", "貓眼", "單色", "法式", "手繪", "鏡面"]
+          description: 美甲風格篩選
+        - name: shape
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["方形（Square）", "圓形（Round）", "橢圓形（Oval）", "方圓形（Squoval）", "尖形（Stiletto）"]
+          description: 指甲形狀篩選
+        - name: color
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["紅色", "橙色", "黃色", "綠色", "藍色", "靛色", "紫色", "黑色", "白色", "灰色", "粉色", "金屬銀", "裸粉色"]
+          description: 顏色篩選
+        - name: texture
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["光澤（Glossy）", "霧面（Matte）", "亮片（Glitter）", "珠光（Pearlescent）", "砂糖感（Sugar）", "金屬箔（Foil）", "絲絨（Velvet）"]
+          description: 質感篩選
+        - name: decorations
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["水鑽（Rhinestone）", "雕花（3D art）", "金屬飾片（Metal pieces）", "貝殼（Shell）", "貼紙（Sticker）", "畫圖章（Stamp）"]
+          description: 裝飾元素篩選
+        - name: theme
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["日常", "春", "夏", "秋", "冬", "韓系", "日系", "歐美風", "簡約", "可愛", "優雅", "繽紛"]
+          description: 主題風格篩選
+        - name: city
+          in: query
+          schema:
+            type: string
+          description: 城市篩選
+        - name: district
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: 區域篩選
+        - name: priceMin
+          in: query
+          schema:
+            type: number
+          description: 最低價格篩選
+        - name: priceMax
+          in: query
+          schema:
+            type: number
+          description: 最高價格篩選
+        - name: rating
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+          description: 最低評分篩選
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: 結果數量限制
+      responses:
+        '200':
+          description: 搜尋成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+components:
+  schemas:
+    # ========== 認證相關 Schema ==========
+    RegisterRequest:
+      type: object
+      required:
+        - role
+        - email
+        - password
+      properties:
+        role:
+          type: string
+          enum: [customer, artist]
+          description: 用戶角色
+        email:
+          type: string
+          format: email
+          description: 電子郵件
+        password:
+          type: string
+          minLength: 6
+          description: 密碼（至少6個字符）
+        username:
+          type: string
+          description: 用戶名稱（顧客必填）
+        studio_name:
+          type: string
+          description: 工作室名稱（美甲師必填）
+        city:
+          type: string
+          description: 城市（美甲師可填）
+        district:
+          type: string
+          description: 區域（美甲師可填）
+        bio:
+          type: string
+          description: 個人簡介（美甲師可填）
+        styles:
+          type: array
+          items:
+            type: string
+          description: 擅長風格（美甲師可填）
+
+    RegisterResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Registration successful"
+        id:
+          type: string
+          description: 用戶ID
+        user:
+          type: object
+          properties:
+            email:
+              type: string
+            role:
+              type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login successful"
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            role:
+              type: string
+            name:
+              type: string
+
+    # ========== 顧客管理 Schema ==========
+    CustomerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        customer:
+          $ref: '#/components/schemas/Customer'
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        avatar_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+
+    UpdateCustomerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        customer:
+          type: object
+
+    CustomerAppointmentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        appointments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointment'
+
+    # ========== 美甲師管理 Schema ==========
+    ArtistResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        artist:
+          $ref: '#/components/schemas/Artist'
+
+    Artist:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        studio:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        bio:
+          type: string
+        styles:
+          type: array
+          items:
+            type: string
+        priceLow:
+          type: number
+        priceHigh:
+          type: number
+        rating:
+          type: number
+        image:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateArtistRequest:
+      type: object
+      properties:
+        studio_name:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        bio:
+          type: string
+        styles:
+          type: array
+          items:
+            type: string
+        priceLow:
+          type: number
+        priceHigh:
+          type: number
+
+    UpdateArtistResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        artist:
+          type: object
+
+    # ========== 營業時間管理 Schema ==========
+    AvailabilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        artistId:
+          type: string
+        data:
+          type: object
+          properties:
+            availability:
+              $ref: '#/components/schemas/WeeklyAvailability'
+
+    WeeklyAvailability:
+      type: object
+      properties:
+        Mon:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00"]
+        Tue:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00"]
+        Wed:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00"]
+        Thu:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00"]
+        Fri:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00"]
+        Sat:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00"]
+        Sun:
+          type: array
+          items:
+            type: string
+          example: []
+
+    SetAvailabilityRequest:
+      type: object
+      required:
+        - availability
+      properties:
+        availability:
+          $ref: '#/components/schemas/WeeklyAvailability'
+
+    SetAvailabilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        availability:
+          $ref: '#/components/schemas/WeeklyAvailability'
+
+    SlotsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        artistId:
+          type: string
+        artistName:
+          type: string
+        date:
+          type: string
+          format: date
+        availableSlots:
+          type: array
+          items:
+            type: string
+          example: ["10:00", "14:00", "16:00"]
+        bookedSlots:
+          type: array
+          items:
+            type: string
+          example: ["12:00"]
+
+    # ========== 預約管理 Schema ==========
+    BookAppointmentRequest:
+      type: object
+      required:
+        - customerId
+        - artistId
+        - date
+        - time
+      properties:
+        customerId:
+          type: string
+          description: 顧客ID
+        artistId:
+          type: string
+          description: 美甲師ID
+        date:
+          type: string
+          format: date
+          description: 預約日期
+        time:
+          type: string
+          description: 預約時間
+        note:
+          type: string
+          description: 備註
+
+    BookAppointmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        appointment:
+          $ref: '#/components/schemas/Appointment'
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+        customerName:
+          type: string
+        artistName:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ArtistReservationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        artistId:
+          type: string
+        artistName:
+          type: string
+        appointments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointment'
+        total:
+          type: integer
+
+    CustomerReservationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        customerId:
+          type: string
+        customerName:
+          type: string
+        appointments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointment'
+        total:
+          type: integer
+
+    UpdateAppointmentStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+        reason:
+          type: string
+          description: 取消原因（狀態為cancelled時可填）
+
+    UpdateAppointmentStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        appointment:
+          type: object
+          properties:
+            id:
+              type: string
+            customerName:
+              type: string
+            artistName:
+              type: string
+            date:
+              type: string
+            time:
+              type: string
+            oldStatus:
+              type: string
+            newStatus:
+              type: string
+            reason:
+              type: string
+
+    # ========== 美甲標註 Schema ==========
+    TagResponse:
+      type: object
+      required:
+        - message
+        - successful
+        - failed
+        - totalInAllResults
+      properties:
+        message:
+          type: string
+          description: 處理結果摘要訊息
+          example: "處理完成！成功: 3 張，失敗: 0 張"
+        successful:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuccessfulImage'
+          description: 成功處理的圖片列表
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailedImage'
+          description: 處理失敗的圖片列表
+        totalInAllResults:
+          type: integer
+          description: 總共標註過的圖片數量
+          example: 125
+
+    SuccessfulImage:
+      type: object
+      required:
+        - originalName
+        - filename
+        - imageUrl
+        - tags
+        - nailImagesSaved
+      properties:
+        originalName:
+          type: string
+          description: 原始檔案名稱
+          example: "nail_design_1.jpg"
+        filename:
+          type: string
+          description: 系統生成的唯一檔案名稱
+          example: "photo_placeid-ChIJN1t_tDeuEmsRUsoyG83frY4_idx-1_1703123456789.jpg"
+        imageUrl:
+          type: string
+          format: uri
+          description: 圖片的公開存取 URL
+          example: "https://example.supabase.co/storage/v1/object/public/nailimg/allimgs/photo_placeid-ChIJN1t_tDeuEmsRUsoyG83frY4_idx-1_1703123456789.jpg"
+        tags:
+          $ref: '#/components/schemas/NailTags'
+        nailImagesSaved:
+          type: boolean
+          description: 是否已成功儲存至資料庫
+          example: true
+
+    FailedImage:
+      type: object
+      required:
+        - originalName
+        - error
+      properties:
+        originalName:
+          type: string
+          description: 原始檔案名稱
+          example: "corrupted_image.jpg"
+        error:
+          type: string
+          description: 失敗原因
+          example: "AI 標註失敗"
+
+    NailTags:
+      type: object
+      properties:
+        style:
+          type: array
+          items:
+            type: string
+            enum: ["漸層", "跳色", "貓眼", "單色", "法式", "手繪", "鏡面"]
+          description: 美甲風格
+          example: ["漸層", "手繪"]
+        shape:
+          type: array
+          items:
+            type: string
+            enum: ["方形（Square）", "圓形（Round）", "橢圓形（Oval）", "方圓形（Squoval）", "尖形（Stiletto）"]
+          description: 指甲形狀
+          example: ["方圓形"]
+        color:
+          type: array
+          items:
+            type: string
+            enum: ["紅色", "橙色", "黃色", "綠色", "藍色", "靛色", "紫色", "黑色", "白色", "灰色", "粉色", "金屬銀", "裸粉色"]
+          description: 顏色
+          example: ["粉色", "白色"]
+        texture:
+          type: array
+          items:
+            type: string
+            enum: ["光澤（Glossy）", "霧面（Matte）", "亮片（Glitter）", "珠光（Pearlescent）", "砂糖感（Sugar）", "金屬箔（Foil）", "絲絨（Velvet）"]
+          description: 質感
+          example: ["光澤"]
+        decorations:
+          type: array
+          items:
+            type: string
+            enum: ["水鑽（Rhinestone）", "雕花（3D art）", "金屬飾片（Metal pieces）", "貝殼（Shell）", "貼紙（Sticker）", "畫圖章（Stamp）"]
+          description: 裝飾元素
+          example: ["水鑽"]
+        theme:
+          type: array
+          items:
+            type: string
+            enum: ["日常", "春", "夏", "秋", "冬", "韓系", "日系", "歐美風", "簡約", "可愛", "優雅", "繽紛"]
+          description: 主題風格
+          example: ["優雅", "日常"]
+
+    # ========== 搜尋 Schema ==========
+    SearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
+          type: integer
+          description: 搜尋結果數量
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        filters:
+          type: object
+          description: 使用的篩選條件
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        imageUrl:
+          type: string
+        placeId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        nailAttributes:
+          $ref: '#/components/schemas/NailTags'
+        artist:
+          type: object
+          properties:
+            userId:
+              type: string
+            studioName:
+              type: string
+            city:
+              type: string
+            district:
+              type: string
+            priceMin:
+              type: number
+            priceMax:
+              type: number
+            rating:
+              type: number
+
+    # ========== 通用 Schema ==========
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: 錯誤訊息
+          example: "請求參數錯誤"
+        detail:
+          type: string
+          description: 詳細錯誤資訊
+          example: "Missing required field: customerId"
+
+tags:
+  - name: 認證
+    description: 用戶註冊、登入、登出相關操作
+  - name: 顧客管理
+    description: 顧客資料管理和預約查詢
+  - name: 美甲師管理
+    description: 美甲師資料管理和服務設定
+  - name: 營業時間管理
+    description: 美甲師營業時間和可預約時段管理
+  - name: 預約管理
+    description: 預約創建、查詢和狀態管理
+  - name: 美甲標註
+    description: 美甲圖片 AI 標註相關操作
+  - name: 搜尋
+    description: 美甲作品智能搜尋和篩選
+
+externalDocs:
+  description: 專案 GitHub Repository
+  url: https://github.com/your-org/nail-it 

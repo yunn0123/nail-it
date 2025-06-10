@@ -1,0 +1,25 @@
+{
+  "name": "nail-resv",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test-docs": "node test-api-docs.js",
+    "docs": "echo \"API 文檔已準備就緒！請訪問 http://localhost:4000/swagger-ui.html\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.9",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.0",
+    "node-fetch": "^2.7.0",
+    "openai": "^4.103.0",
+    "p-limit": "^6.2.0"
+  }
+}
