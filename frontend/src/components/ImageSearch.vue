@@ -46,11 +46,11 @@
     <img src="../assets/flower.png" alt="Flower" class="w-10 h-auto" /> 
   </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <div 
-          v-for="work in similarWorks" 
-          :key="work.id" 
-          class="bg-white p-4 rounded-xl shadow hover:shadow-lg cursor-pointer" 
-          @click="goToProfile(work.id)"
+        <div
+          v-for="work in similarWorks"
+          :key="work.id"
+          class="bg-white p-4 rounded-xl shadow hover:shadow-lg cursor-pointer"
+          @click="goToProfile(work.artistId)"
         >
           <img :src="work.image" class="w-full h-48 object-cover rounded-md mb-3" />
           <div class="flex items-center justify-between mb-1">
@@ -96,15 +96,16 @@ const resetUpload = () => {
 const router = useRouter()
 
 // 跳轉到 profile 頁面
-const goToProfile = (designId) => {
-  // 使用 designId 作為參數來進入 profile 頁面
-  router.push(`/profile/${designId}`)
+const goToProfile = (artistId) => {
+  if (!artistId) {
+    console.warn('⚠️ 無法跳轉：沒有 artistId')
+    return
+  }
+  router.push(`/profile/${artistId}`)
 }
 
 
-import design1 from '../assets/temp/design1.jpg'
-import design2 from '../assets/temp/design2.jpg'
-import design3 from '../assets/temp/design3.jpg'
+import { API_BASE_URL } from '../config/api.js'
 
 // const sortedDesign = computed(() => {
 //   return [...design].sort((a, b) => b.rating - a.rating)
@@ -120,47 +121,36 @@ const handleUpload = (e) => {
   }
 }
 
-const searchSimilar  = () => {
-  
+const searchSimilar  = async () => {
   if (!uploadedFile.value) return
 
   isLoading.value = true
-  
-  // 模擬後端分析圖片花2秒
-  setTimeout(() => {
-    isLoading.value = false  // 結束 loading
-  
-    // 假資料
-    similarWorks.value = [
-      { 
-        id: '1', 
-        studio: '@waka.nail', 
-        rating: 4.9, 
-        priceLow: 1000 , priceHigh: 1800,
-        tags: ['貓眼', '清新', '日系', '綠色系'], 
-        image: design1 },
-      { 
-        id: '2', 
-        studio: '@jolieee_nail', 
-        rating: 4.7, 
-        priceLow: 1000 , priceHigh: 1500, 
-        tags: ['貓眼', '清新', '藍色系'],
-        image: design2 },
-      { 
-        id: '3', 
-        studio: '@61.nail', 
-        rating: 4.6, 
-        priceLow: 1200 , priceHigh: 1500, 
-        tags: ['貓眼', '清新', '可愛','粉色系'],
-        image: design3 },
-      { 
-        id: '4', 
-        studio: '@test.nail', 
-        rating: 4.5, 
-        priceLow: 900 , priceHigh: 1600, 
-        tags: ['簡約', '清新'],
-        image: design1 },
-    ]
-  }, 2000)
+  try {
+    // 轉成 base64 字串
+    const base64 = await new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.readAsDataURL(uploadedFile.value)
+    })
+
+    const resp = await fetch(`${API_BASE_URL}/search-image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageData: base64 })
+    })
+
+    const data = await resp.json()
+    if (resp.ok && data.success) {
+      // 後端已回傳完整資料
+      similarWorks.value = data.results
+    } else {
+      console.error('search-image failed', data.error)
+      similarWorks.value = []
+    }
+  } catch (err) {
+    console.error('search-image error', err)
+    similarWorks.value = []
+  }
+  isLoading.value = false
 }
 </script>
