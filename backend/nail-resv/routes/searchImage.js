@@ -46,7 +46,7 @@ router.post('/search-image', async (req, res) => {
     const items = JSON.parse(lastLine || '[]');
 
     if (!items.length) {
-      return res.json({ success: true, results: [] });
+      return res.json({ success: false, error: 'no nails detected' });
     }
 
     const ids = items.map(it => it.id);
