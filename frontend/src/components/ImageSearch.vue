@@ -38,7 +38,8 @@
       </svg>
       <span class="ml-2 text-[#c68f84]">正在搜尋類似作品...</span>
     </div>
-
+    <div v-if="errorMsg" class="text-red-600 mt-2">{{ errorMsg }}</div>
+    
     <!-- 搜尋結果區 -->
     <div v-if="uploadedImage && similarWorks.length">
       <div class="flex items-center mt-6 mb-7">
@@ -85,12 +86,14 @@ const uploadedFile = ref(null)        // 暫存原始 file
 const uploadedImage = ref(null)       // 圖片預覽
 const similarWorks = ref([])          // 類似作品結果
 const isLoading = ref(false)
+const errorMsg = ref('')               // 錯誤訊息
 
 const resetUpload = () => {
   uploadedFile.value = null
   uploadedImage.value = null
   similarWorks.value = []
   isLoading.value = false
+  errorMsg.value = ''
 }
 
 const router = useRouter()
@@ -118,6 +121,7 @@ const handleUpload = (e) => {
     uploadedFile.value = file
     uploadedImage.value = URL.createObjectURL(file)
     similarWorks.value = []         // 清空結果
+    errorMsg.value = ''
   }
 }
 
@@ -141,15 +145,21 @@ const searchSimilar  = async () => {
 
     const data = await resp.json()
     if (resp.ok && data.success) {
-      // 後端已回傳完整資料
-      similarWorks.value = data.results
+      similarWorks.value = Array.isArray(data.results) ? data.results : []
+      errorMsg.value = ''
+    } else if (data && data.error === 'no nails detected') {
+      resetUpload()
+      errorMsg.value = '❗ 請上傳含有指甲的照片'
+      similarWorks.value = []
     } else {
       console.error('search-image failed', data.error)
       similarWorks.value = []
+      errorMsg.value = '搜尋失敗'
     }
   } catch (err) {
     console.error('search-image error', err)
     similarWorks.value = []
+    errorMsg.value = '搜尋失敗'
   }
   isLoading.value = false
 }
