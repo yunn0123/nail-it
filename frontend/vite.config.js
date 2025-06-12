@@ -24,14 +24,8 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000, // 開發服務器端口
-    host: true,  // 監聽所有網路介面
-  },
-  define: {
-    'process.env.BACKEND_API_URL': JSON.stringify(process.env.VITE_BACKEND_API_URL || process.env.BACKEND_API_URL),
-    'process.env.VERSION_TAG': JSON.stringify(process.env.VITE_VERSION_TAG || process.env.VERSION_TAG)
-    host: '0.0.0.0',
     port: 5173,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
@@ -39,6 +33,10 @@ export default defineConfig({
         secure: false,
       },
     },
+  },
+  define: {
+    'process.env.BACKEND_API_URL': JSON.stringify(process.env.VITE_BACKEND_API_URL || process.env.BACKEND_API_URL),
+    'process.env.VERSION_TAG': JSON.stringify(process.env.VITE_VERSION_TAG || process.env.VERSION_TAG)
   }
   
 })
