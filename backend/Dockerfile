@@ -1,5 +1,6 @@
 # 使用 Node.js 作為基礎映像
-FROM node:18-alpine
+# Use debian-based node image so Python packages with binary wheels work
+FROM node:18-slim
 
 # 設定工作目錄
 WORKDIR /app
@@ -13,7 +14,9 @@ RUN npm install
 RUN npm install dotenv multer openai p-limit@3.1.0 @supabase/supabase-js --save
 
 # install Python for image search utilities
-RUN apk add --no-cache python3 py3-pip
+RUN apt-get update \
+  && apt-get install -y python3 python3-pip \
+  && rm -rf /var/lib/apt/lists/*
 COPY python/requirements.txt ./python/requirements.txt
 RUN pip3 install --break-system-packages --no-cache-dir -r python/requirements.txt
 
