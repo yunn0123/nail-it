@@ -11,8 +11,17 @@ COPY nail-resv/package*.json ./
 RUN npm uninstall p-limit || true
 RUN npm install
 RUN npm install dotenv multer openai p-limit@3.1.0 @supabase/supabase-js --save
+
+# install Python for image search utilities
+RUN apk add --no-cache python3 py3-pip
+COPY python/requirements.txt ./python/requirements.txt
+RUN pip3 install --break-system-packages --no-cache-dir -r python/requirements.txt
+
+
 # 複製專案文件
 COPY nail-resv/ ./
+COPY python/ ./python/
+COPY models/ ./models/
 
 # 設置環境變數
 ENV PORT=3000
@@ -25,3 +34,4 @@ EXPOSE 3000
 
 # 啟動命令
 CMD ["node", "server.js"]
+

@@ -16,41 +16,9 @@ const supabase = createClient(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// CORS 設定
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    // Railway 部署網址 (需要根據實際情況調整)
-    /^https:\/\/.*\.railway\.app$/,  // 所有 Railway 的子域名
-    'http://localhost:5173',  // Vite 開發服務器
-    'http://localhost',       // Docker 前端容器 (port 80)
-    'http://localhost:80',    // Docker 前端容器 (明確端口)
-  ];
-  
-  const origin = req.headers.origin;
-  
-  // 檢查 origin 是否在允許列表中，或符合 Railway 網址格式
-  const isAllowed = allowedOrigins.some(allowedOrigin => {
-    if (typeof allowedOrigin === 'string') {
-      return allowedOrigin === origin;
-    } else if (allowedOrigin instanceof RegExp) {
-      return allowedOrigin.test(origin);
-    }
-    return false;
-  });
-  
-  if (isAllowed) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
+// CORS 設定 (開發環境允許多個 LAN 位址)
+const corsDev = require('./middleware/cors-dev');
+app.use(corsDev);
 
 // inject supabase client into req
 app.use((req, res, next) => {
@@ -64,18 +32,23 @@ const { router: reservationRouter } = require('./routes/reservation');
 const searchRouter = require('./routes/search');
 const searchSupabaseRouter = require('./routes/searchWithSupabase');
 const tagImagesRouter = require('./routes/tagImages');
+
+const searchImageRouter = require('./routes/searchImage');
 const { router: registerRouter } = require('./routes/register');
 const loginRoute = require('./routes/login');
 const logoutRoute = require('./routes/logout'); 
 const customersRouter = require('./routes/customers');
 const artistsRouter = require('./routes/artists');
 const worksRouter = require('./routes/works');
+
 app.use('/api/reviews', require('./routes/reviews').router)
 app.use('/api/reservations', reservationRouter);
 app.use('/api/technicians', availabilityRouter);
 app.use('/api', searchRouter);
 app.use('/api', searchSupabaseRouter);
 app.use('/api', tagImagesRouter);
+app.use('/api', searchImageRouter);
+
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRoute);
 app.use('/api/logout', logoutRoute);  
@@ -94,7 +67,19 @@ app.get('/swagger-ui.html', (req, res) => {
 });
 
 app.get('/swagger-ui-complete.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'swagger-ui-complete.html'));
+  res.sendFile(path.join(__dirname, 'swagger-ui-standalone.html'));
+});
+
+app.get('/swagger-ui-latest.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger-ui-latest.html'));
+});
+
+app.get('/swagger-ui-latest-standalone.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger-ui-latest-standalone.html'));
+});
+
+app.get('/swagger-ui-complete-new.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'swagger-ui-complete-new.html'));
 });
 
 app.get('/openapi.yaml', (req, res) => {
@@ -114,14 +99,17 @@ app.get('/', (req, res) => {
     <p>歡迎使用美甲預約系統 API！</p>
     <h2>📚 API 文檔</h2>
     <ul>
-      <li><a href="/swagger-ui.html">🎨 美甲標註 API 文檔 (Swagger UI)</a></li>
-      <li><a href="/swagger-ui-complete.html">📋 完整系統 API 文檔 (Swagger UI)</a></li>
-      <li><a href="/openapi.yaml">📄 美甲標註 OpenAPI 規格</a></li>
-      <li><a href="/openapi-complete.yaml">📄 完整系統 OpenAPI 規格</a></li>
+      <li><a href="/swagger-ui-complete-new.html">🎯 完整系統 API 文檔 (包含所有功能) - 最推薦！</a></li>
+      <li><a href="/swagger-ui.html">🎨 美甲標註 API 文檔 (基礎版)</a></li>
+      <li><a href="/swagger-ui-latest-standalone.html">✨ 最新完整系統 API 文檔 (離線版)</a></li>
+      <li><a href="/swagger-ui-latest.html">📋 最新完整系統 API 文檔 (線上版)</a></li>
+      <li><a href="/swagger-ui-complete.html">📄 舊版完整系統 API 文檔</a></li>
+      <li><a href="/openapi-complete.yaml">📄 完整系統 OpenAPI 規格文件</a></li>
     </ul>
     <h2>🔗 主要 API 端點</h2>
     <ul>
-      <li><a href="/api/tag">🎨 美甲標註 API</a></li>
+      <li><a href="/api/tag">🎨 美甲標註 API (批量上傳)</a></li>
+      <li><a href="/api/tag-base64">✨ Base64 圖片標註 API (新功能)</a></li>
       <li><a href="/api/search-supabase">🔍 美甲搜尋 API</a></li>
       <li><a href="/api/register">👤 用戶註冊 API</a></li>
       <li><a href="/api/login">🔑 用戶登入 API</a></li>

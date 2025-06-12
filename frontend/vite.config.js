@@ -30,6 +30,15 @@ export default defineConfig({
   define: {
     'process.env.BACKEND_API_URL': JSON.stringify(process.env.VITE_BACKEND_API_URL || process.env.BACKEND_API_URL),
     'process.env.VERSION_TAG': JSON.stringify(process.env.VITE_VERSION_TAG || process.env.VERSION_TAG)
+    host: '0.0.0.0',
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   }
   
 })

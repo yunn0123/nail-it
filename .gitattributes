@@ -12,3 +12,5 @@ frontend/package-lock.json merge=union
 
 .env merge=ours
 .env.example merge=ours
+# Auto detect text files and perform LF normalization
+* text=auto
