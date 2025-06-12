@@ -151,7 +151,7 @@ import { useRouter } from 'vue-router'
 import ImageSearch from '../components/ImageSearch.vue'
 import FilterSearch from '../components/FilterSearch.vue'
 import { useLogout } from '../auth.js'
-import { API_BASE_URL } from '../config/api.js'
+import { apiRequest } from '../config/api.js'
 
 const { handleLogout } = useLogout()
 
@@ -205,22 +205,19 @@ const searchByName = async () => {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/search-artists?studioName=${encodeURIComponent(searchName.value.trim())}`);
+    const { success, data } = await apiRequest(`/search-artists?studioName=${encodeURIComponent(searchName.value.trim())}`)
 
-    if (!response.ok) {
-      throw new Error(`伺服器錯誤: ${response.status}`);
+    if (success) {
+      searchResult.value = data.results.map(item => ({
+        id: item.id,
+        studio: item.studioName,
+        rating: item.rating,
+        image: item.avatarUrl,
+        showFallback: false
+      }))
+    } else {
+      throw new Error('搜尋失敗')
     }
-
-    const result = await response.json();
-    console.log('搜尋結果', result);
-
-    searchResult.value = result.results.map(item => ({
-      id: item.id,
-      studio: item.studioName,
-      rating: item.rating,
-      image: item.avatarUrl,
-      showFallback: false
-    }));
 
   } catch (err) {
     console.error('搜尋失敗:', err);

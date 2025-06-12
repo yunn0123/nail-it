@@ -9,7 +9,7 @@
 const RAW_BASE = import.meta.env.VITE_BACKEND_API_URL?.trim();   // '' | undefined | 'https://…'
 
 export const API_BASE_URL = RAW_BASE
-  ? `${RAW_BASE.replace(/\/$/, '')}/api`   // 確保只加一個 /
+  ? RAW_BASE.replace(/\/$/, '')
   : '/api';
 
 // 通用的 API 請求函數
