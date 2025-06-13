@@ -1,10 +1,10 @@
 # Python dependencies for image_search.py
 numpy
-opencv-python
+opencv-python-headless
 Pillow
 supabase
 faiss-cpu
-torch
-torchvision
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
 timm
 ultralytics

@@ -1,6 +1,11 @@
-# 使用 Node.js 作為基礎映像
-# Use debian-based node image so Python packages with binary wheels work
-FROM node:18-slim
+# 使用 Python 作為基礎映像，另外安裝 Node.js
+# Build on a slim Python image and install Node.js from apt
+FROM python:3.11-slim
+
+# Install Node.js (Debian provides Node 18)
+RUN apt-get update \
+    && apt-get install -y nodejs npm \
+    && rm -rf /var/lib/apt/lists/*
 
 # 設定工作目錄
 WORKDIR /app
@@ -13,13 +18,10 @@ RUN npm uninstall p-limit || true
 RUN npm install
 RUN npm install dotenv multer openai p-limit@3.1.0 @supabase/supabase-js --save
 
-# install Python for image search utilities
-RUN apt-get update \
-  && apt-get install -y python3 python3-pip \
-  && rm -rf /var/lib/apt/lists/*
+# install Python dependencies for image search utilities
 COPY python/requirements.txt ./python/requirements.txt
-RUN pip3 install --break-system-packages --no-cache-dir -r python/requirements.txt
-
+RUN pip3 install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r python/requirements.txt
 
 # 複製專案文件
 COPY nail-resv/ ./
