@@ -3,6 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
+// Determine Python script path in both dev & Docker environments
+const LOCAL_SCRIPT = path.join(__dirname, '../../python/image_search.py');
+const DOCKER_SCRIPT = path.join(__dirname, '../python/image_search.py');
+const PY_SCRIPT = fs.existsSync(DOCKER_SCRIPT) ? DOCKER_SCRIPT : LOCAL_SCRIPT;
+
 const router = express.Router();
 
 router.post('/search-image', async (req, res) => {
@@ -25,7 +30,7 @@ router.post('/search-image', async (req, res) => {
     fs.writeFileSync(tmpPath, buffer);
     const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
     const result = spawnSync(pythonCmd, [
-      path.join(__dirname, '../../python/image_search.py'),
+      PY_SCRIPT,
       'search',
       tmpPath,
       '--supabase-url',

@@ -5,6 +5,11 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// Resolve python helper script path for dev & Docker
+const LOCAL_SCRIPT = path.join(__dirname, '../../python/image_search.py');
+const DOCKER_SCRIPT = path.join(__dirname, '../python/image_search.py');
+const PY_SCRIPT = fs.existsSync(DOCKER_SCRIPT) ? DOCKER_SCRIPT : LOCAL_SCRIPT;
+
 // 獲取美甲師的所有作品
 router.get('/artist/:artistId', async (req, res) => {
   try {
@@ -257,7 +262,7 @@ router.post('/artist/:artistId', async (req, res) => {
       fs.writeFileSync(tmpPath, buffer);
       const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
       const py = spawn(pythonCmd, [
-        path.join(__dirname, "../../python/image_search.py"),
+        PY_SCRIPT,
         "extract",
         tmpPath,
         String(data.id),

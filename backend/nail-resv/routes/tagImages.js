@@ -4,6 +4,10 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+// Resolve python helper script path for dev & Docker
+const LOCAL_SCRIPT = path.join(__dirname, '../../python/image_search.py');
+const DOCKER_SCRIPT = path.join(__dirname, '../python/image_search.py');
+const PY_SCRIPT = fs.existsSync(DOCKER_SCRIPT) ? DOCKER_SCRIPT : LOCAL_SCRIPT;
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -306,7 +310,7 @@ router.post('/tag', upload.array('images', 10), async (req, res) => {
       if (imageId) {
         const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
         spawnSync(pythonCmd, [
-          path.join(__dirname, '../../python/image_search.py'),
+          PY_SCRIPT,
           'extract',
           file.path,
           String(imageId),
