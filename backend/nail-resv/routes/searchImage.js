@@ -36,7 +36,9 @@ router.post('/search-image', async (req, res) => {
       '--supabase-url',
       process.env.SUPABASE_URL,
       '--supabase-key',
-      process.env.SUPABASE_SERVICE_KEY
+      process.env.SUPABASE_SERVICE_KEY,
+      '--cache',
+      path.join(tmpDir, 'embeddings.npy')
     ], {
       env: { ...process.env, KMP_DUPLICATE_LIB_OK: 'TRUE' }
     });

@@ -93,23 +93,32 @@ def search(args):
     supabase = create_client(args.supabase_url, args.supabase_key)
     device, model, transform, yolo = load_models()
 
-    # fetch all embeddings
-    rows = supabase.table('nail_roi_embeddings').select('nail_image_id, embedding').execute().data
-    if not rows:
-        print(json.dumps([]))
-        return
+
     ids = []
-    vectors = []
-    for r in rows:
-        vec = r['embedding']
-        if isinstance(vec, str):
-            try:
-                vec = json.loads(vec)
-            except Exception:
-                vec = [float(x) for x in vec.strip('{}[]').split(',') if x]
-        ids.append(r['nail_image_id'])
-        vectors.append(vec)
-    embeddings = np.stack(vectors).astype('float32')
+    embeddings = None
+    if args.cache and os.path.exists(args.cache) and not args.rebuild_cache:
+        cache = np.load(args.cache, allow_pickle=True).item()
+        ids = cache['ids']
+        embeddings = cache['embeddings']
+    else:
+        rows = supabase.table('nail_roi_embeddings').select('nail_image_id, embedding').execute().data
+        if not rows:
+            print(json.dumps([]))
+            return
+        vectors = []
+        for r in rows:
+            vec = r['embedding']
+            if isinstance(vec, str):
+                try:
+                    vec = json.loads(vec)
+                except Exception:
+                    vec = [float(x) for x in vec.strip('{}[]').split(',') if x]
+            ids.append(r['nail_image_id'])
+            vectors.append(vec)
+        embeddings = np.stack(vectors).astype('float32')
+        if args.cache:
+            np.save(args.cache, {'ids': ids, 'embeddings': embeddings})
+
     index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(embeddings)
 
@@ -165,6 +174,9 @@ def main():
     p_s.add_argument('--topk', type=int, default=5)
     p_s.add_argument('--supabase-url', required=True)
     p_s.add_argument('--supabase-key', required=True)
+    p_s.add_argument('--cache', help='optional path to store embeddings cache')
+    p_s.add_argument('--rebuild-cache', action='store_true',
+                     help='force rebuild of embeddings cache')    
 
     args = parser.parse_args()
     if args.cmd == 'extract':
