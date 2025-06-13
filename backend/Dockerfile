@@ -30,6 +30,7 @@ COPY models/ ./models/
 
 # 設置環境變數
 ENV PORT=3000
+ENV NODE_ENV=production
 
 # 確保不會創建 VOLUME（Railway 不允許使用 VOLUME）
 RUN mkdir -p /app/uploads && chmod -R 777 /app/uploads
