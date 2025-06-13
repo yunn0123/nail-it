@@ -1,5 +1,5 @@
 # Python dependencies for image_search.py
-numpy
+numpy>=1.26,<2
 opencv-python-headless
 Pillow
 supabase
